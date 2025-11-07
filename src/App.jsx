@@ -1,0 +1,40 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./Login";
+import Dashboard from "./Dashboard";
+import PrivateRoute from "./PrivateRoute";
+import Solicitacao from "./Solicitacao";
+import Header from "./Header";
+import { Toaster } from "react-hot-toast";
+
+export default function App() {
+  return (
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route
+            path="/solicitacao"
+            element={
+              <div>
+                {" "}
+                <Header />
+                <Solicitacao />
+              </div>
+            }
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Header />
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+      <Toaster position="top-right" />
+    </>
+  );
+}
