@@ -64,7 +64,7 @@ const addMonths = (date, months) => {
   return d;
 };
 
-// Lógica de Parcelamento (Gera o cronograma inicial para o Boleto parcelado)
+// Lógica de Parcelamento (Gera o cronograma inicial)
 const calculateInstallments = (totalValueRaw, count, startDateStr) => {
   const totalValueDigits = totalValueRaw.replace(/\D/g, "");
   if (!totalValueDigits || count < 1 || !startDateStr) return [];
@@ -106,7 +106,6 @@ const calculateInstallments = (totalValueRaw, count, startDateStr) => {
 };
 
 // --- Dados Mock para Dropdowns e Valores Fixos ---
-const solicitanteLockedValue = "João Silva";
 const obrasMock = [
   "Projeto Alpha",
   "Construção Beta",
@@ -132,7 +131,6 @@ const Tela1 = () => {
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    solicitante: solicitanteLockedValue,
     obra: "",
     referente: "",
     valor: "",
@@ -143,8 +141,8 @@ const Tela1 = () => {
     // Comuns
     titular: "",
     cpfCnpj: "",
-    // Boleto/Data
-    dataVencimento: "", // Usado como 1º Vencimento Boleto
+    // Usados para PIX, Boleto e Cheque
+    dataVencimento: "", // Usado como 1º Vencimento
     installmentsCount: 1, // Número de parcelas
     // Anexo
     anexo: null,
@@ -154,12 +152,15 @@ const Tela1 = () => {
   const [editableInstallmentSchedule, setEditableInstallmentSchedule] =
     useState([]);
 
+  // Se o método de pagamento exige parcelamento/data de vencimento (sempre TRUE agora)
+  const requiresInstallments = useMemo(() => true, []);
+
   // Efeito para inicializar ou resetar o cronograma de parcelas ao mudar valor, data ou contagem
   useEffect(() => {
-    const isMultiInstallmentBoleto =
-      formData.paymentMethod === "Boleto" && formData.installmentsCount > 1;
+    const isMultiInstallment =
+      requiresInstallments && formData.installmentsCount > 1;
 
-    if (isMultiInstallmentBoleto && formData.valor && formData.dataVencimento) {
+    if (isMultiInstallment && formData.valor && formData.dataVencimento) {
       const currentSchedule = calculateInstallments(
         formData.valor,
         formData.installmentsCount,
@@ -180,12 +181,12 @@ const Tela1 = () => {
         setEditableInstallmentSchedule(currentSchedule);
       }
     } else {
-      // Limpa se não for Boleto ou se for apenas 1 parcela
+      // Limpa se for apenas 1 parcela
       setEditableInstallmentSchedule([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    formData.paymentMethod,
+    requiresInstallments,
     formData.valor,
     formData.installmentsCount,
     formData.dataVencimento,
@@ -203,8 +204,6 @@ const Tela1 = () => {
         // Garante que o valor exibido tenha o formato R$ X,XX
         newValue = formatCurrencyDisplay(rawDigits.substring(0, 15));
       }
-
-      // Se for date, o valor já está no formato ISO (YYYY-MM-DD)
 
       newSchedule[index] = {
         ...newSchedule[index],
@@ -261,20 +260,20 @@ const Tela1 = () => {
       return;
     }
 
-    // Se o método de pagamento for alterado, reseta as informações específicas
+    // Se o método de pagamento for alterado:
     if (name === "paymentMethod") {
+      const newMethod = value;
+      // Mantém dataVencimento e installmentsCount, pois todos os métodos os utilizam
       const resetFields = {
-        pixKey: "",
+        pixKey: "", // Limpa a chave PIX
         pixKeyType: "CPF",
-        installmentsCount: 1,
-        dataVencimento: "",
       };
+
       setFormData((prevData) => ({
         ...prevData,
         ...resetFields,
-        [name]: newValue,
+        [name]: newMethod,
       }));
-      setEditableInstallmentSchedule([]); // Garante que o schedule seja limpo
       return;
     }
 
@@ -293,19 +292,16 @@ const Tela1 = () => {
       "cpfCnpj",
     ];
 
-    let conditionalRequiredFields = [];
+    let conditionalRequiredFields = ["dataVencimento"];
 
+    // Chave PIX é obrigatória apenas se PIX for selecionado
     if (formData.paymentMethod === "PIX") {
-      conditionalRequiredFields = ["pixKey"]; // PIX não exige data
-    } else if (formData.paymentMethod === "Boleto") {
-      // Data de 1º vencimento é obrigatória para Boleto (mesmo em 1x)
-      conditionalRequiredFields = ["dataVencimento"];
+      conditionalRequiredFields.push("pixKey");
+    }
 
-      // Se for parcelado (> 1)
-      if (
-        formData.installmentsCount > 1 &&
-        editableInstallmentSchedule.length === 0
-      ) {
+    // Validação de Parcelamento
+    if (formData.installmentsCount > 1) {
+      if (editableInstallmentSchedule.length === 0) {
         toast.error(
           "Erro ao calcular parcelamento. Verifique o valor e a data de vencimento."
         );
@@ -314,26 +310,23 @@ const Tela1 = () => {
       }
 
       // Validação: Soma das parcelas deve ser igual ao Valor Total
-      if (formData.installmentsCount > 1) {
-        const totalCents = parseInt(formData.valor.replace(/\D/g, ""), 10) || 0;
+      const totalCents = parseInt(formData.valor.replace(/\D/g, ""), 10) || 0;
 
-        const sumOfInstallmentsCents = editableInstallmentSchedule.reduce(
-          (sum, item) => {
-            // Remove R$ . , e converte para centavos (ex: "R$ 1.500,00" -> 150000)
-            const rawDigits = item.value.replace(/\D/g, "");
-            const cents = parseInt(rawDigits, 10) || 0;
-            return sum + cents;
-          },
-          0
+      const sumOfInstallmentsCents = editableInstallmentSchedule.reduce(
+        (sum, item) => {
+          const rawDigits = item.value.replace(/\D/g, "");
+          const cents = parseInt(rawDigits, 10) || 0;
+          return sum + cents;
+        },
+        0
+      );
+
+      if (sumOfInstallmentsCents !== totalCents) {
+        toast.error(
+          "ERRO DE VALIDAÇÃO: A soma das parcelas editadas não corresponde ao Valor Total."
         );
-
-        if (sumOfInstallmentsCents !== totalCents) {
-          toast.error(
-            "ERRO DE VALIDAÇÃO: A soma das parcelas editadas não corresponde ao Valor Total."
-          );
-          setIsLoading(false);
-          return;
-        }
+        setIsLoading(false);
+        return;
       }
     }
 
@@ -345,11 +338,28 @@ const Tela1 = () => {
     const isInvalid = allRequiredFields.some(
       (field) =>
         !formData[field] ||
-        (field === "valor" && formData.valor.replace(/\D/g, "") === "")
+        (field === "valor" && formData.valor.replace(/\D/g, "") === "") ||
+        // Validação específica para PIX
+        (formData.paymentMethod === "PIX" &&
+          field === "pixKey" &&
+          formData.pixKey.trim() === "")
     );
 
     if (isInvalid) {
       toast.error("Preencha todos os campos obrigatórios (*).");
+      setIsLoading(false);
+      return;
+    }
+
+    // **NOVA VALIDAÇÃO DO ANEXO:**
+    const isAttachmentRequired =
+      formData.paymentMethod === "Boleto" ||
+      formData.paymentMethod === "Cheque";
+
+    if (isAttachmentRequired && !formData.anexo) {
+      toast.error(
+        `O campo Anexo é obrigatório para pagamento via ${formData.paymentMethod}.`
+      );
       setIsLoading(false);
       return;
     }
@@ -359,14 +369,11 @@ const Tela1 = () => {
       ...formData,
       valorDisplay: formatCurrencyDisplay(formData.valor),
       valorRaw: formData.valor.replace(/\D/g, ""),
+      // A lógica de parcelamento se aplica se installmentsCount > 1
       installmentSchedule:
-        formData.paymentMethod === "Boleto" && formData.installmentsCount > 1
-          ? editableInstallmentSchedule
-          : null,
+        formData.installmentsCount > 1 ? editableInstallmentSchedule : null,
       singlePaymentVencimento:
-        formData.paymentMethod === "Boleto" && formData.installmentsCount === 1
-          ? formData.dataVencimento
-          : null,
+        formData.installmentsCount === 1 ? formData.dataVencimento : null,
     };
 
     // Lógica de envio (simulação)
@@ -376,7 +383,6 @@ const Tela1 = () => {
 
       // Resetar o formulário
       setFormData({
-        solicitante: solicitanteLockedValue,
         obra: "",
         referente: "",
         valor: "",
@@ -396,7 +402,9 @@ const Tela1 = () => {
 
   const displayValor = formatCurrencyDisplay(formData.valor);
   const cpfCnpjPlaceholder = "000.000.000-00 ou 00.000.000/0000-00";
-  const isBoleto = formData.paymentMethod === "Boleto";
+  const isPix = formData.paymentMethod === "PIX";
+  const isAttachmentRequired =
+    formData.paymentMethod === "Boleto" || formData.paymentMethod === "Cheque"; // Variável para a Label
 
   // Classes de estilo base
   const baseInputStyle =
@@ -404,8 +412,6 @@ const Tela1 = () => {
 
   // Estilo específico para inputs
   const inputStyle = `${baseInputStyle} px-4`;
-  // Estilo para campo travado (aplicado ao div)
-  const disabledStyle = "bg-gray-100 cursor-not-allowed text-gray-600";
   const selectStyle = `${baseInputStyle} pl-4 pr-10 appearance-none bg-white`;
 
   const labelStyle =
@@ -413,7 +419,14 @@ const Tela1 = () => {
   const iconColor = "text-blue-600";
   const requiredSpan = <span className="text-red-500 ml-1 font-bold">*</span>;
 
-  const activePixLimit = PIX_LIMITS[formData.pixKeyType];
+  // Opções de pagamento
+  const paymentMethods = ["PIX", "Boleto", "Cheque"];
+
+  // Configurações ativas da chave PIX (para placeholder e maxLength)
+  const activePixLimit = PIX_LIMITS[formData.pixKeyType] || {
+    len: 50,
+    type: "text",
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center py-12 px-4 sm:px-6 lg:px-8 font-inter">
@@ -426,22 +439,8 @@ const Tela1 = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-7">
-          {/* GRUPO 1: Solicitante (FIXO) e Obra (Dropdown) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-            {/* Solicitante (FIXO) */}
-            <div>
-              <label htmlFor="solicitante-display" className={labelStyle}>
-                <User className={`w-4 h-4 mr-2 ${iconColor}`} /> Solicitante{" "}
-                {requiredSpan}
-              </label>
-              <div
-                id="solicitante-display"
-                className={`${inputStyle} ${disabledStyle} h-[46px] flex items-center`}
-              >
-                {formData.solicitante}
-              </div>
-            </div>
-
+          {/* GRUPO 1: Obra (Dropdown) */}
+          <div className="grid grid-cols-1 gap-7">
             {/* Obra (Dropdown) */}
             <div>
               <label htmlFor="obra" className={labelStyle}>
@@ -508,14 +507,14 @@ const Tela1 = () => {
             </div>
           </div>
 
-          {/* GRUPO 3: FORMA DE PAGAMENTO (PIX / BOLETO) */}
+          {/* GRUPO 3: FORMA DE PAGAMENTO (PIX / BOLETO / CHEQUE) */}
           <div className="border-t border-gray-200 pt-6">
             <label className={labelStyle}>
               <CreditCard className={`w-4 h-4 mr-2 ${iconColor}`} /> Forma de
               Pagamento {requiredSpan}
             </label>
             <div className="flex space-x-4 mt-2">
-              {["PIX", "Boleto"].map((method) => (
+              {paymentMethods.map((method) => (
                 <label
                   key={method}
                   className={`inline-flex items-center px-4 py-2 border rounded-full text-sm font-medium cursor-pointer transition ${
@@ -538,58 +537,8 @@ const Tela1 = () => {
             </div>
           </div>
 
-          {/* --- BLOCO PIX (CONDICIONAL) --- */}
-          {formData.paymentMethod === "PIX" && (
-            <div className="space-y-7">
-              {/* PIX KEY INPUTS */}
-              <div>
-                <label className={labelStyle}>
-                  <Key className={`w-4 h-4 mr-2 ${iconColor}`} /> Chave PIX{" "}
-                  {requiredSpan}
-                </label>
-                <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                  {/* Tipo de Chave (Dropdown) */}
-                  <div className="relative sm:w-1/3">
-                    <select
-                      name="pixKeyType"
-                      value={formData.pixKeyType}
-                      onChange={handleChange}
-                      className={`${selectStyle} w-full`}
-                    >
-                      {pixKeyTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
-                  </div>
-
-                  {/* Input da Chave */}
-                  <input
-                    type={activePixLimit.type === "numeric" ? "tel" : "text"}
-                    name="pixKey"
-                    value={formData.pixKey}
-                    onChange={handleChange}
-                    placeholder={`Insira a chave (${formData.pixKeyType})`}
-                    className={`${inputStyle} sm:w-2/3`}
-                    inputMode={
-                      activePixLimit.type === "numeric" ? "numeric" : "text"
-                    }
-                    maxLength={
-                      activePixLimit.type === "text"
-                        ? activePixLimit.len
-                        : undefined
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          {/* --- FIM BLOCO PIX --- */}
-
-          {/* --- BLOCO BOLETO (CONDICIONAL) --- */}
-          {isBoleto && (
+          {/* --- BLOCO PARCELAMENTO / VENCIMENTO (COMUM A PIX, BOLETO e CHEQUE) --- */}
+          {requiresInstallments && (
             <div className="space-y-7">
               {/* Data de Vencimento e Número de Parcelas */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
@@ -712,26 +661,79 @@ const Tela1 = () => {
                   </div>
                 )}
 
-              {/* Aviso para Boleto de 1x */}
+              {/* Aviso para Pagamento de 1x */}
               {formData.installmentsCount === 1 && (
                 <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-3 rounded-md text-sm">
                   Pagamento em parcela única com vencimento em **
-                  {formData.dataVencimento}**.
+                  {formData.dataVencimento}** via **{formData.paymentMethod}**.
                 </div>
               )}
             </div>
           )}
-          {/* --- FIM BLOCO BOLETO --- */}
+          {/* --- FIM BLOCO PARCELAMENTO / VENCIMENTO --- */}
 
-          {/* GRUPO 4: Titular e CPF/CNPJ (COMUM A AMBOS) */}
+          {/* --- BLOCO DE INFORMAÇÕES PIX (CONDICIONAL) --- */}
+          {isPix && (
+            <div className="space-y-7 border border-blue-100 p-4 rounded-xl bg-blue-50">
+              <h3 className="text-sm font-bold text-blue-800">
+                Detalhes da Chave PIX (Obrigatório para PIX)
+              </h3>
+              {/* PIX KEY INPUTS */}
+              <div>
+                <label className={labelStyle}>
+                  <Key className={`w-4 h-4 mr-2 ${iconColor}`} /> Chave PIX{" "}
+                  {requiredSpan}
+                </label>
+                <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                  {/* Tipo de Chave (Dropdown) */}
+                  <div className="relative sm:w-1/3">
+                    <select
+                      name="pixKeyType"
+                      value={formData.pixKeyType}
+                      onChange={handleChange}
+                      className={`${selectStyle} w-full`}
+                    >
+                      {pixKeyTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+                  </div>
+
+                  {/* Input da Chave */}
+                  <input
+                    type={activePixLimit.type === "numeric" ? "tel" : "text"}
+                    name="pixKey"
+                    value={formData.pixKey}
+                    onChange={handleChange}
+                    placeholder={`Insira a chave (${formData.pixKeyType})`}
+                    className={`${inputStyle} sm:w-2/3`}
+                    inputMode={
+                      activePixLimit.type === "numeric" ? "numeric" : "text"
+                    }
+                    maxLength={
+                      activePixLimit.type === "text"
+                        ? activePixLimit.len
+                        : undefined
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          {/* --- FIM BLOCO PIX --- */}
+
+          {/* GRUPO 4: Titular e CPF/CNPJ (COMUM A TODOS) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-7 border-t border-gray-200 pt-6">
             <h3 className="md:col-span-2 text-lg font-bold text-gray-800 border-b pb-2 mb-2">
               Dados do Recebedor
             </h3>
-            {/* Titular */}
+            {/* Fornecedor */}
             <div>
-              <label htmlFor="titular" className={labelStyle}>
-                <User className={`w-4 h-4 mr-2 ${iconColor}`} /> Titular{" "}
+              <label htmlFor="Fornecedor" className={labelStyle}>
+                <User className={`w-4 h-4 mr-2 ${iconColor}`} /> Fornecedor{" "}
                 {requiredSpan}
               </label>
               <input
@@ -765,11 +767,12 @@ const Tela1 = () => {
             </div>
           </div>
 
-          {/* GRUPO 5: Anexo (Opcional - Customizado) */}
+          {/* GRUPO 5: Anexo (Opcional/Obrigatório Condicional) */}
           <div>
             <label htmlFor="anexo" className={labelStyle}>
-              <Paperclip className={`w-4 h-4 mr-2 ${iconColor}`} /> Anexo
-              (Opcional)
+              <Paperclip className={`w-4 h-4 mr-2 ${iconColor}`} /> Anexo (
+              {isAttachmentRequired ? "Obrigatório" : "Opcional"})
+              {isAttachmentRequired && requiredSpan}
             </label>
 
             <input
