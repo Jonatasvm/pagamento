@@ -5,6 +5,7 @@ import PrivateRoute from "./PrivateRoute";
 import Solicitacao from "./Solicitacao";
 import Header from "./Header";
 import { Toaster } from "react-hot-toast";
+import DashboardUsers from "./DashboardUsers";
 
 export default function App() {
   return (
@@ -17,8 +18,10 @@ export default function App() {
             element={
               <div>
                 {" "}
-                <Header />
-                <Solicitacao />
+                <PrivateRoute>
+                  <Header />
+                  <Solicitacao />
+                </PrivateRoute>
               </div>
             }
           />
@@ -29,6 +32,16 @@ export default function App() {
               <PrivateRoute>
                 <Header />
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/users"
+            element={
+              <PrivateRoute>
+                <Header />
+                <DashboardUsers />
               </PrivateRoute>
             }
           />
