@@ -7,10 +7,12 @@ import {
   X,
   Loader2,
   ChevronDown,
-  FileText, // Ícone para CSV
+  FileText,
+  Filter,
+  RotateCcw,
 } from "lucide-react";
 
-// --- Funções de Máscara (MANTIDAS) ---
+// --- Funções de Máscara ---
 const formatCurrencyDisplay = (rawDigits) => {
   const digits = String(rawDigits).replace(/\D/g, "").substring(0, 15);
   if (!digits) return "";
@@ -36,7 +38,7 @@ const formatCpfCnpj = (value) => {
   }
 };
 
-// --- Dados Mock e Opções (AJUSTADOS) ---
+// --- Dados Mock e Opções ---
 
 const mockUsuarios = {
   1: "João Silva",
@@ -83,7 +85,6 @@ const initialRequestsMock = [
     quemPaga: 10,
     obra: 43,
     conta: 1,
-    indiceEtapa: "",
     formaDePagamento: "PIX",
     statusGeradoCSV: false,
     cpfCnpjTitularConta: "123.456.789-00",
@@ -106,7 +107,6 @@ const initialRequestsMock = [
     quemPaga: 11,
     obra: 44,
     conta: 2,
-    indiceEtapa: "",
     formaDePagamento: "Boleto",
     statusGeradoCSV: true,
     cpfCnpjTitularConta: "11.222.333/0001-44",
@@ -119,17 +119,15 @@ const initialRequestsMock = [
 const formaPagamentoOptions = ["PIX", "DINHEIRO", "BOLETO", "CHEQUE"];
 const categoriaOptions = ["Sem NF", "Com NF", "Outros"];
 
-// --- FUNÇÃO AJUSTADA PARA O NOVO STATUS BOOLEAN ---
 const getStatusClasses = (isLancado) => {
   return isLancado
     ? "bg-green-100 text-green-800" // LANÇADO
     : "bg-red-100 text-red-800"; // NÃO LANÇADO
 };
 
-// --- Configuração das Colunas (AJUSTADAS PARA NOVA ORDEM/VISIBILIDADE) ---
+// --- Configuração das Colunas ---
 const tableColumns = [
   {
-    // ID (Posição 1)
     key: "id",
     label: "ID",
     minWidth: "50px",
@@ -137,47 +135,41 @@ const tableColumns = [
     editable: false,
   },
   {
-    // Data de Lançamento (NOVA Posição 2)
     key: "dataLancamento",
     label: "Data de Lançamento",
     minWidth: "150px",
     type: "date",
-    editable: false, // Mantido como não editável no cabeçalho
+    editable: false,
     format: (val) => (val ? new Date(val).toLocaleDateString("pt-BR") : "—"),
   },
   {
-    // Solicitante (NOVA Posição 3)
     key: "solicitante",
     label: "Solicitante",
     minWidth: "150px",
     type: "text",
-    editable: false, // Mantido como não editável no cabeçalho
+    editable: false,
     format: (id) => `${getNomePorId(id, mockUsuarios)}`,
   },
   {
-    // Titular (NOVA Posição 4)
     key: "titular",
     label: "Titular",
     minWidth: "200px",
     type: "text",
-    format: (id) => `${getNomePorId(id, mockTitulares)}`, // Mostra só o nome no cabeçalho
+    format: (id) => `${getNomePorId(id, mockTitulares)}`,
   },
   {
-    // Referente (Posição 5)
     key: "referente",
     label: "Referente",
     minWidth: "200px",
     type: "text",
   },
   {
-    // Valor (Posição 6)
     key: "valor",
     label: "VALOR",
     minWidth: "130px",
     type: "currency",
   },
   {
-    // Obra (Posição 7)
     key: "obra",
     label: "Obra",
     minWidth: "180px",
@@ -186,7 +178,6 @@ const tableColumns = [
     format: (id) => `${getNomePorId(id, mockObras)}`,
   },
   {
-    // Data Pagamento (Posição 8)
     key: "dataPagamento",
     label: "Data Pagamento",
     minWidth: "150px",
@@ -194,7 +185,6 @@ const tableColumns = [
     format: (val) => (val ? new Date(val).toLocaleDateString("pt-BR") : "—"),
   },
   {
-    // Forma Pagto (Posição 9)
     key: "formaDePagamento",
     label: "Forma Pagto",
     minWidth: "130px",
@@ -202,7 +192,6 @@ const tableColumns = [
     options: formaPagamentoOptions,
   },
   {
-    // LANÇADO (NOVA Posição 10 - FIM)
     key: "statusLancamento",
     label: "LANÇADO",
     minWidth: "120px",
@@ -213,13 +202,13 @@ const tableColumns = [
           val
         )}`}
       >
-                {val ? "LANÇADO" : "NÃO LANÇADO"}     {" "}
+        {val ? "LANÇADO" : "NÃO LANÇADO"}
       </span>
     ),
   },
 ];
 
-// Campos expandidos (AGORA CONTÉM ITENS REMOVIDOS DO CABEÇALHO)
+// --- CAMPOS EXPANDIDOS (ÍNDICE ETAPA REMOVIDO) ---
 const expandedFields = [
   {
     key: "quemPaga",
@@ -255,7 +244,6 @@ const expandedFields = [
     type: "text",
     format: (id) => `ID: ${id}`,
   },
-  { key: "indiceEtapa", label: "ÍNDICE ETAPA", type: "text" },
   {
     key: "dataCompetencia",
     label: "Data Competência",
@@ -287,7 +275,7 @@ const expandedFields = [
         }}
         className="text-blue-600 hover:text-blue-800 underline"
       >
-                {val ? "Ver Documento (Drive)" : "Nenhum Anexo"}     {" "}
+        {val ? "Ver Documento (Drive)" : "Nenhum Anexo"}
       </a>
     ),
   },
@@ -301,8 +289,68 @@ const Dashboard = () => {
   const [editFormData, setEditFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [selectedRequests, setSelectedRequests] = useState([]);
-  const [expandedRows, setExpandedRows] = useState([]); // ... (Funções de Lógica - MANTIDAS)
+  const [expandedRows, setExpandedRows] = useState([]);
 
+  // --- ESTADO DOS FILTROS ---
+  const [filters, setFilters] = useState({
+    statusLancamento: "",
+    formaDePagamento: "",
+    data: "",
+    obra: "",
+    titular: "",
+  });
+
+  // --- LÓGICA DE FILTRAGEM ---
+  const filteredRequests = requests.filter((req) => {
+    // 1. Filtro: Status Lançado (Sim/Não)
+    if (filters.statusLancamento !== "") {
+      const filterBool = filters.statusLancamento === "true"; // Converte string do select para boolean
+      if (req.statusLancamento !== filterBool) return false;
+    }
+
+    // 2. Filtro: Forma de Pagamento
+    if (
+      filters.formaDePagamento &&
+      req.formaDePagamento !== filters.formaDePagamento
+    ) {
+      return false;
+    }
+
+    // 3. Filtro: Data (Comparação exata de string YYYY-MM-DD)
+    if (filters.data && req.dataLancamento !== filters.data) {
+      return false;
+    }
+
+    // 4. Filtro: Obra (Comparação numérica)
+    if (filters.obra && req.obra !== Number(filters.obra)) {
+      return false;
+    }
+
+    // 5. Filtro: Titular (Comparação numérica)
+    if (filters.titular && req.titular !== Number(filters.titular)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      statusLancamento: "",
+      formaDePagamento: "",
+      data: "",
+      obra: "",
+      titular: "",
+    });
+    toast.success("Filtros limpos");
+  };
+
+  // --- MANIPULADORES DE EVENTOS (Mantidos e limpos) ---
   const toggleRowExpansion = (id) => {
     setExpandedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
@@ -319,14 +367,16 @@ const Dashboard = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRequests(requests.map((req) => req.id));
+      // Seleciona apenas os visíveis filtrados
+      setSelectedRequests(filteredRequests.map((req) => req.id));
     } else {
       setSelectedRequests([]);
     }
   };
 
   const isAllSelected =
-    selectedRequests.length === requests.length && requests.length > 0;
+    filteredRequests.length > 0 &&
+    selectedRequests.length === filteredRequests.length;
 
   const handleEdit = (request) => {
     if (editingId) {
@@ -336,7 +386,6 @@ const Dashboard = () => {
     setExpandedRows((prev) =>
       prev.includes(request.id) ? prev : [...prev, request.id]
     );
-
     setSelectedRequests((prevSelected) =>
       prevSelected.filter((id) => id !== request.id)
     );
@@ -355,11 +404,9 @@ const Dashboard = () => {
     if (name === "valor") {
       newValue = value.replace(/\D/g, "");
     }
-
     if (type === "checkbox") {
       newValue = checked;
-    } // Converte valores para número se for ID (obra, quemPaga, titular)
-
+    }
     if (name === "quemPaga" || name === "obra" || name === "titular") {
       newValue = Number(value);
     }
@@ -425,7 +472,6 @@ const Dashboard = () => {
 
     setIsSaving(true);
     setTimeout(() => {
-      // Simulação: Marcar registros como gerados no CSV (statusGeradoCSV: true)
       setRequests((prevRequests) =>
         prevRequests.map((req) => {
           if (selectedRequests.includes(req.id)) {
@@ -440,24 +486,23 @@ const Dashboard = () => {
         `${selectedRequests.length} registro(s) marcado(s) como 'Gerado' e CSV simulado com sucesso!`
       );
     }, 1500);
-  }; // --- Função Central de Renderização de Campo (AJUSTADA) ---
+  };
 
+  // --- Renderização de Campo Genérico ---
   const renderField = (key, data, isEditing, colConfig = {}, request) => {
-    // Busca a configuração da coluna na lista de colunas principais ou expandidas
     const fieldConfig =
       tableColumns.find((c) => c.key === key) ||
       expandedFields.find((c) => c.key === key) ||
       colConfig;
     const value = data[key];
-    const editable = fieldConfig.editable !== false; // Padrão é editável // Renderiza INPUT/SELECT se for modo edição E o campo for editável
+    const editable = fieldConfig.editable !== false;
 
     if (isEditing && editable) {
       if (fieldConfig.type === "select") {
-        // Verifica se é um select que usa a estrutura {id, nome} (como quemPaga, obra ou titular)
         const isIdSelect =
           fieldConfig.key === "quemPaga" ||
           fieldConfig.key === "obra" ||
-          fieldConfig.key === "titular"; // Define a lista de opções com base na chave (obra, quemPaga, titular, ou lista simples)
+          fieldConfig.key === "titular";
 
         let selectOptions = fieldConfig.options;
         if (fieldConfig.key === "titular") {
@@ -474,37 +519,29 @@ const Dashboard = () => {
             onChange={handleEditChange}
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
           >
-                       {" "}
-            {/* Adicionar opção de placeholder para campos opcionais */}       
-                {isIdSelect && !value && <option value="">Selecione...</option>}
-                       {" "}
+            {isIdSelect && !value && <option value="">Selecione...</option>}
             {isIdSelect
               ? selectOptions.map((opt) => (
                   <option key={opt.id} value={opt.id}>
-                                        {opt.nome}                    {" "}
-                    {/* Adiciona o ID para quemPaga e titular no modo edição de detalhes*/}
-                                       {" "}
+                    {opt.nome}{" "}
                     {fieldConfig.key === "quemPaga" ||
                     fieldConfig.key === "titular"
                       ? `(ID: ${opt.id})`
                       : ""}
-                                     {" "}
                   </option>
                 ))
               : selectOptions.map((opt) => (
                   <option key={opt} value={opt}>
-                                        {opt}                 {" "}
+                    {opt}
                   </option>
                 ))}
-                     {" "}
           </select>
         );
-      } // Renderização para BOOLEAN (Checkbox)
+      }
 
       if (fieldConfig.type === "boolean") {
         return (
           <div className="flex items-center space-x-2">
-                       {" "}
             <input
               type="checkbox"
               name={key}
@@ -512,9 +549,7 @@ const Dashboard = () => {
               onChange={handleEditChange}
               className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
-                       {" "}
             <span className="text-sm text-gray-700">
-                           {" "}
               {key === "statusLancamento"
                 ? value
                   ? "LANÇADO"
@@ -522,9 +557,7 @@ const Dashboard = () => {
                 : value
                 ? "Marcado (true)"
                 : "Desmarcado (false)"}
-                         {" "}
             </span>
-                     {" "}
           </div>
         );
       }
@@ -552,7 +585,7 @@ const Dashboard = () => {
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
           />
         );
-      } // Se não for editável (e estamos no modo edição), exibe o valor em um campo desabilitado
+      }
 
       if (!editable) {
         return (
@@ -564,7 +597,7 @@ const Dashboard = () => {
             className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm bg-gray-100 cursor-not-allowed"
           />
         );
-      } // Default: Text/Date/Number input
+      }
 
       return (
         <input
@@ -575,7 +608,7 @@ const Dashboard = () => {
           className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
         />
       );
-    } // Renderiza Texto (Modo Visualização)
+    }
 
     if (key === "statusLancamento") {
       return (
@@ -584,85 +617,186 @@ const Dashboard = () => {
             value
           )}`}
         >
-                    {value ? "LANÇADO" : "NÃO LANÇADO"}       {" "}
+          {value ? "LANÇADO" : "NÃO LANÇADO"}
         </span>
       );
     }
     if (key === "valor") {
       return (
         <span className="text-sm font-bold text-green-700">
-                    {formatCurrencyDisplay(value)}       {" "}
+          {formatCurrencyDisplay(value)}
         </span>
       );
-    } // Aplica o formato definido nas colunas/campos (para ID's, datas, etc.)
+    }
 
     if (fieldConfig.format) {
       return (
         <span className="text-sm text-gray-700">
-                    {fieldConfig.format(value, request)}       {" "}
+          {fieldConfig.format(value, request)}
         </span>
       );
     }
     return <span className="text-sm text-gray-700">{value}</span>;
-  }; // --- Renderização do Componente ---
+  };
 
+  // --- JSX DO COMPONENTE ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
-            <Toaster position="top-right" />     {" "}
-      {/* Botão Flutuante para CSV */}     {" "}
+      <Toaster position="top-right" />
+
+      {/* Botão Flutuante para CSV */}
       {selectedRequests.length > 0 && (
         <div className="fixed bottom-8 right-8 z-50">
-                   {" "}
           <button
             onClick={handleGenerateCSV}
             className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-2xl hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
             disabled={editingId !== null || isSaving}
           >
-                       {" "}
             {isSaving ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <FileText className="w-5 h-5" />
             )}
-                        Gerar CSV e Marcar ({selectedRequests.length})          {" "}
+            Gerar CSV e Marcar ({selectedRequests.length})
           </button>
-                 {" "}
         </div>
       )}
-           {" "}
+
       <div className="max-w-[1800px] mx-auto">
-               {" "}
         <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
-                   {" "}
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
-                        Tabela de Gerenciamento de Pagamentos          {" "}
+            Tabela de Gerenciamento de Pagamentos
           </h1>
-                   {" "}
           <p className="text-gray-600 mt-1">
-                        Visualização horizontal e edição em linha. Clique na
-            seta para             expandir os detalhes editáveis.          {" "}
+            Visualização horizontal e edição em linha.
           </p>
-                 {" "}
         </div>
-                {/* Tabela */}       {" "}
+
+        {/* --- SEÇÃO DE FILTROS --- */}
+        <div className="bg-white rounded-2xl shadow-md p-5 mb-6 border border-gray-100">
+          <div className="flex items-center gap-2 mb-4 text-gray-700 font-semibold border-b pb-2">
+            <Filter className="w-5 h-5 text-indigo-600" />
+            <span>Filtros de Pesquisa</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+            {/* Filtro: Lançado */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Status Lançado
+              </label>
+              <select
+                name="statusLancamento"
+                value={filters.statusLancamento}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+              >
+                <option value="">Todos</option>
+                <option value="true">Sim (Lançado)</option>
+                <option value="false">Não (Pendente)</option>
+              </select>
+            </div>
+
+            {/* Filtro: Forma Pagamento */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Forma Pagto
+              </label>
+              <select
+                name="formaDePagamento"
+                value={filters.formaDePagamento}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+              >
+                <option value="">Todas</option>
+                {formaPagamentoOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro: Data */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Data Lançamento
+              </label>
+              <input
+                type="date"
+                name="data"
+                value={filters.data}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+              />
+            </div>
+
+            {/* Filtro: Obra */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Obra
+              </label>
+              <select
+                name="obra"
+                value={filters.obra}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+              >
+                <option value="">Todas as Obras</option>
+                {obraOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro: Titular */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Titular
+              </label>
+              <select
+                name="titular"
+                value={filters.titular}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+              >
+                <option value="">Todos Titulares</option>
+                {Object.keys(mockTitulares).map((id) => (
+                  <option key={id} value={id}>
+                    {mockTitulares[id]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Botão Limpar */}
+            <button
+              onClick={clearFilters}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 hover:text-gray-800 transition-colors text-sm font-medium h-[42px]"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        {/* Tabela */}
         <div className="bg-white rounded-2xl shadow-lg overflow-x-auto">
-                   {" "}
-          {requests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
-                            Nenhuma solicitação encontrada.            {" "}
+              {requests.length === 0
+                ? "Nenhuma solicitação encontrada no sistema."
+                : "Nenhum resultado para os filtros aplicados."}
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
-                           {" "}
               <thead className="bg-gray-50 sticky top-0 z-20">
-                               {" "}
                 <tr>
-                                    {/* Coluna Ações Fixa (left-0) */}         
-                         {" "}
+                  {/* Coluna Ações Fixa */}
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[180px]">
-                                       {" "}
                     <div className="flex items-center gap-3">
-                                           {" "}
                       <input
                         type="checkbox"
                         checked={isAllSelected}
@@ -670,29 +804,23 @@ const Dashboard = () => {
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded"
                         disabled={editingId !== null}
                       />
-                                            Açõess                  {" "}
+                      Ações
                     </div>
-                                     {" "}
                   </th>
-                                    {/* Cabeçalhos Principais */}               
-                   {" "}
+                  {/* Cabeçalhos Principais */}
                   {tableColumns.map((col) => (
                     <th
                       key={col.key}
                       className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       style={{ minWidth: col.minWidth || "100px" }}
                     >
-                                            {col.label}                   {" "}
+                      {col.label}
                     </th>
                   ))}
-                                 {" "}
                 </tr>
-                             {" "}
               </thead>
-                           {" "}
               <tbody className="divide-y divide-gray-200">
-                               {" "}
-                {requests.map((request) => {
+                {filteredRequests.map((request) => {
                   const isEditing = editingId === request.id;
                   const isExpanded = expandedRows.includes(request.id);
                   const isSelected = selectedRequests.includes(request.id);
@@ -705,20 +833,16 @@ const Dashboard = () => {
 
                   return (
                     <React.Fragment key={request.id}>
-                                            {/* --- LINHA PRINCIPAL --- */}     
-                                     {" "}
+                      {/* --- LINHA PRINCIPAL --- */}
                       <tr
                         id={`row-${request.id}`}
                         className={`border-b hover:bg-gray-50 transition-colors ${rowClasses}`}
                       >
-                                                {/* Coluna Ações (Fixo) */}     
-                                         {" "}
+                        {/* Coluna Ações (Fixo) */}
                         <td
                           className={`px-3 py-3 whitespace-nowrap sticky left-0 z-10 ${rowClasses}`}
                         >
-                                                   {" "}
                           <div className="flex items-center gap-3">
-                                                       {" "}
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -726,11 +850,10 @@ const Dashboard = () => {
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               disabled={editingId !== null}
                             />
-                                                        {/* Botões de Ação */} 
-                                                     {" "}
+
+                            {/* Botões de Ação */}
                             {isEditing ? (
                               <>
-                                                               {" "}
                                 <button
                                   onClick={handleSave}
                                   disabled={isSaving}
@@ -741,55 +864,41 @@ const Dashboard = () => {
                                   }`}
                                   title="Salvar"
                                 >
-                                                                   {" "}
                                   {isSaving ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                   ) : (
                                     <Save className="w-4 h-4" />
                                   )}
-                                                                 {" "}
                                 </button>
-                                                               {" "}
                                 <button
                                   onClick={handleCancelEdit}
                                   disabled={isSaving}
                                   className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600"
                                   title="Cancelar"
                                 >
-                                                                   {" "}
-                                  <X className="w-4 h-4" />                     
-                                           {" "}
+                                  <X className="w-4 h-4" />
                                 </button>
-                                                             {" "}
                               </>
                             ) : (
                               <>
-                                                               {" "}
                                 <button
                                   onClick={() => handleEdit(request)}
                                   disabled={editingId !== null}
                                   className="p-2 rounded-full text-blue-600 hover:bg-blue-100 disabled:opacity-50"
                                   title="Editar"
                                 >
-                                                                   {" "}
-                                  <Edit className="w-4 h-4" />                 
-                                               {" "}
+                                  <Edit className="w-4 h-4" />
                                 </button>
-                                                               {" "}
                                 <button
                                   onClick={() => handleRemove(request.id)}
                                   disabled={editingId !== null}
                                   className="p-2 rounded-full text-red-600 hover:bg-red-100 disabled:opacity-50"
                                   title="Remover"
                                 >
-                                                                   {" "}
-                                  <Trash2 className="w-4 h-4" />               
-                                                 {" "}
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
-                                                             {" "}
                               </>
                             )}
-                                                       {" "}
                             <button
                               onClick={() => toggleRowExpansion(request.id)}
                               className="p-1 rounded-full text-gray-600 hover:bg-gray-200"
@@ -797,27 +906,21 @@ const Dashboard = () => {
                                 isExpanded ? "Ocultar Detalhes" : "Ver Detalhes"
                               }
                             >
-                                                           {" "}
                               <ChevronDown
                                 className={`w-4 h-4 transform transition-transform ${
                                   isExpanded ? "rotate-180" : "rotate-0"
                                 }`}
                               />
-                                                         {" "}
                             </button>
-                                                     {" "}
                           </div>
-                                                 {" "}
                         </td>
-                                               {" "}
-                        {/* Células de Dados Principais */}                     
-                         {" "}
+
+                        {/* Células de Dados Principais */}
                         {tableColumns.map((col) => (
                           <td
                             key={col.key}
                             className="px-3 py-3 whitespace-nowrap text-sm"
                           >
-                                                       {" "}
                             {renderField(
                               col.key,
                               currentRowData,
@@ -825,39 +928,27 @@ const Dashboard = () => {
                               col,
                               request
                             )}
-                                                     {" "}
                           </td>
                         ))}
-                                             {" "}
                       </tr>
-                                           {" "}
-                      {/* --- LINHA EXPANDIDA (DETALHES) --- */}               
-                           {" "}
+
+                      {/* --- LINHA EXPANDIDA (DETALHES) --- */}
                       {isExpanded && (
                         <tr
                           className={`bg-gray-100 border-b ${
                             isEditing ? "border-yellow-400" : "border-gray-200"
                           }`}
                         >
-                                                   {" "}
                           <td colSpan={tableColumns.length + 1} className="p-4">
-                                                       {" "}
                             <h4 className="text-sm font-bold text-gray-700 mb-3">
-                                                            Detalhes Adicionais:
-                                                         {" "}
+                              Detalhes Adicionais:
                             </h4>
-                                                       {" "}
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
-                                                           {" "}
                               {expandedFields.map((field) => (
                                 <div key={field.key} className="flex flex-col">
-                                                                   {" "}
                                   <span className="font-semibold uppercase text-gray-500 mb-1">
-                                                                       {" "}
-                                    {field.label}:                              
-                                       {" "}
+                                    {field.label}:
                                   </span>
-                                                                   {" "}
                                   {renderField(
                                     field.key,
                                     currentRowData,
@@ -865,43 +956,28 @@ const Dashboard = () => {
                                     field,
                                     request
                                   )}
-                                                                 {" "}
                                 </div>
                               ))}
-                                                         {" "}
                             </div>
-                                                       {" "}
                             {isEditing && (
                               <div className="mt-4 p-2 bg-yellow-100 rounded text-xs text-yellow-800">
-                                                               {" "}
                                 <span className="font-semibold">
-                                                                    Modo Edição
-                                  Ativo:                                {" "}
+                                  Modo Edição Ativo:
                                 </span>{" "}
-                                                                Edite os campos
-                                destacados em azul.                            
-                                 {" "}
+                                Edite os campos destacados em azul.
                               </div>
                             )}
-                                                     {" "}
                           </td>
-                                                 {" "}
                         </tr>
                       )}
-                                         {" "}
                     </React.Fragment>
                   );
                 })}
-                             {" "}
               </tbody>
-                         {" "}
             </table>
           )}
-                 {" "}
         </div>
-             {" "}
       </div>
-         {" "}
     </div>
   );
 };
