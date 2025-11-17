@@ -8,11 +8,11 @@ import {
   Loader2,
   ChevronDown,
   FileText,
-  Filter, // Novo ícone importado
-  RotateCcw // Ícone para limpar filtros
+  Filter,
+  RotateCcw
 } from "lucide-react";
 
-// --- Funções de Máscara (MANTIDAS) ---
+// --- Funções de Máscara ---
 const formatCurrencyDisplay = (rawDigits) => {
   const digits = String(rawDigits).replace(/\D/g, "").substring(0, 15);
   if (!digits) return "";
@@ -38,7 +38,7 @@ const formatCpfCnpj = (value) => {
   }
 };
 
-// --- Dados Mock e Opções (MANTIDOS) ---
+// --- Dados Mock e Opções ---
 
 const mockUsuarios = {
   1: "João Silva",
@@ -85,7 +85,6 @@ const initialRequestsMock = [
     quemPaga: 10,
     obra: 43,
     conta: 1,
-    // indiceEtapa REMOVIDO DAQUI (embora se existir no objeto não quebre, removemos da visualização)
     formaDePagamento: "PIX",
     statusGeradoCSV: false,
     cpfCnpjTitularConta: "123.456.789-00",
@@ -126,7 +125,7 @@ const getStatusClasses = (isLancado) => {
     : "bg-red-100 text-red-800"; // NÃO LANÇADO
 };
 
-// --- Configuração das Colunas (MANTIDA) ---
+// --- Configuração das Colunas ---
 const tableColumns = [
   {
     key: "id",
@@ -245,7 +244,6 @@ const expandedFields = [
     type: "text",
     format: (id) => `ID: ${id}`,
   },
-  // { key: "indiceEtapa", ... } -> REMOVIDO
   {
     key: "dataCompetencia",
     label: "Data Competência",
@@ -304,29 +302,28 @@ const Dashboard = () => {
 
   // --- LÓGICA DE FILTRAGEM ---
   const filteredRequests = requests.filter((req) => {
-    // Filtro: Status Lançado (Sim/Não)
+    // 1. Filtro: Status Lançado (Sim/Não)
     if (filters.statusLancamento !== "") {
-      // Converte o valor do select ("true"/"false") para boolean e compara
-      const filterBool = filters.statusLancamento === "true";
+      const filterBool = filters.statusLancamento === "true"; // Converte string do select para boolean
       if (req.statusLancamento !== filterBool) return false;
     }
 
-    // Filtro: Forma de Pagamento
+    // 2. Filtro: Forma de Pagamento
     if (filters.formaDePagamento && req.formaDePagamento !== filters.formaDePagamento) {
       return false;
     }
 
-    // Filtro: Data (Pela Data de Lançamento)
+    // 3. Filtro: Data (Comparação exata de string YYYY-MM-DD)
     if (filters.data && req.dataLancamento !== filters.data) {
       return false;
     }
 
-    // Filtro: Obra (Comparação por ID)
+    // 4. Filtro: Obra (Comparação numérica)
     if (filters.obra && req.obra !== Number(filters.obra)) {
       return false;
     }
 
-    // Filtro: Titular (Comparação por ID)
+    // 5. Filtro: Titular (Comparação numérica)
     if (filters.titular && req.titular !== Number(filters.titular)) {
       return false;
     }
@@ -350,6 +347,7 @@ const Dashboard = () => {
     toast.success("Filtros limpos");
   };
 
+  // --- MANIPULADORES DE EVENTOS (Mantidos e limpos) ---
   const toggleRowExpansion = (id) => {
     setExpandedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
@@ -365,8 +363,8 @@ const Dashboard = () => {
   };
 
   const handleSelectAll = (e) => {
-    // Seleciona apenas os visíveis (filtrados)
     if (e.target.checked) {
+      // Seleciona apenas os visíveis filtrados
       setSelectedRequests(filteredRequests.map((req) => req.id));
     } else {
       setSelectedRequests([]);
@@ -385,7 +383,6 @@ const Dashboard = () => {
     setExpandedRows((prev) =>
       prev.includes(request.id) ? prev : [...prev, request.id]
     );
-
     setSelectedRequests((prevSelected) =>
       prevSelected.filter((id) => id !== request.id)
     );
@@ -404,11 +401,9 @@ const Dashboard = () => {
     if (name === "valor") {
       newValue = value.replace(/\D/g, "");
     }
-
     if (type === "checkbox") {
       newValue = checked;
     }
-
     if (name === "quemPaga" || name === "obra" || name === "titular") {
       newValue = Number(value);
     }
@@ -490,6 +485,7 @@ const Dashboard = () => {
     }, 1500);
   };
 
+  // --- Renderização de Campo Genérico ---
   const renderField = (key, data, isEditing, colConfig = {}, request) => {
     const fieldConfig =
       tableColumns.find((c) => c.key === key) ||
@@ -635,7 +631,7 @@ const Dashboard = () => {
     return <span className="text-sm text-gray-700">{value}</span>;
   };
 
-  // --- Renderização do Componente ---
+  // --- JSX DO COMPONENTE ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
       <Toaster position="top-right" />
@@ -668,7 +664,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* --- NOVA SEÇÃO DE FILTROS --- */}
+        {/* --- SEÇÃO DE FILTROS --- */}
         <div className="bg-white rounded-2xl shadow-md p-5 mb-6 border border-gray-100">
           <div className="flex items-center gap-2 mb-4 text-gray-700 font-semibold border-b pb-2">
             <Filter className="w-5 h-5 text-indigo-600" />
@@ -683,7 +679,7 @@ const Dashboard = () => {
                   name="statusLancamento" 
                   value={filters.statusLancamento} 
                   onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
                 >
                   <option value="">Todos</option>
                   <option value="true">Sim (Lançado)</option>
@@ -698,7 +694,7 @@ const Dashboard = () => {
                   name="formaDePagamento" 
                   value={filters.formaDePagamento} 
                   onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
                 >
                   <option value="">Todas</option>
                   {formaPagamentoOptions.map(opt => (
@@ -715,7 +711,7 @@ const Dashboard = () => {
                   name="data" 
                   value={filters.data} 
                   onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
                 />
             </div>
 
@@ -726,7 +722,7 @@ const Dashboard = () => {
                   name="obra" 
                   value={filters.obra} 
                   onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
                 >
                   <option value="">Todas as Obras</option>
                   {obraOptions.map(opt => (
@@ -742,7 +738,7 @@ const Dashboard = () => {
                   name="titular" 
                   value={filters.titular} 
                   onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
                 >
                   <option value="">Todos Titulares</option>
                   {Object.keys(mockTitulares).map(id => (
