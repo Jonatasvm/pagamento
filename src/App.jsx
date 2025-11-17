@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Login";
-import Dashboard from "./Dashboard";
+import Dashboard from "./pages/Dashboards/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import Solicitacao from "./Solicitacao";
 import Header from "./Header";
 import { Toaster } from "react-hot-toast";
-import DashboardUsers from "./DashboardUsers";
+import DashboardUsers from "./pages/Dashboards/DashboardUsers/DashboardUsers";
 
 export default function App() {
   return (

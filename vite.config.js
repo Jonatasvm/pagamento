@@ -9,9 +9,9 @@ export default defineConfig({
     port: 5173, // pode ajustar se quiser
     strictPort: true,
     cors: true,
-    hmr: {
-      protocol: "wss", // usa WebSocket seguro para HMR via ngrok
-      host: "5f49f21df0ed.ngrok-free.app", // seu domínio ngrok
-    },
+    // hmr: {
+    //   protocol: "wss", // usa WebSocket seguro para HMR via ngrok
+    //   host: "5f49f21df0ed.ngrok-free.app", // seu domínio ngrok
+    // },
   },
 });
