@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Login";
-import Dashboard from "./pages/Dashboards/Dashboard";
+import Dashboard from "./pages/Dashboards/DashBoardMain/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import Solicitacao from "./Solicitacao";
 import Header from "./Header";

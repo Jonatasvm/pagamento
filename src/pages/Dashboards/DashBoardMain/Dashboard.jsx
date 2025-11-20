@@ -10,7 +10,9 @@ import {
   FileText,
   Filter,
   RotateCcw,
+  User,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // --- Funções de Máscara ---
 const formatCurrencyDisplay = (rawDigits) => {
@@ -283,7 +285,7 @@ const expandedFields = [
 ];
 
 // --- Componente Principal ---
-const Dashboard = () => {
+export const Dashboard = () => {
   const [requests, setRequests] = useState(initialRequestsMock);
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -667,9 +669,13 @@ const Dashboard = () => {
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
             Tabela de Gerenciamento de Pagamentos
           </h1>
-          <p className="text-gray-600 mt-1">
-            Visualização horizontal e edição em linha.
-          </p>
+          <Link
+            to="/dashboard/users"
+            className="flex gap-x-2 bg-green-500 w-fit text-white p-3 mt-10 rounded-xl shadow-lg shadow-gray-400 cursor-pointer"
+          >
+            <User />
+            <p> Gerenciamento de Usuários </p>
+          </Link>
         </div>
 
         {/* --- SEÇÃO DE FILTROS --- */}

@@ -6,7 +6,7 @@ export default function Login() {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
 
-  const API_URL = "http://127.0.0.1:80";
+  const API_URL = "http://127.0.0.1:5631";
 
   async function handleLogin(e) {
     e.preventDefault();
