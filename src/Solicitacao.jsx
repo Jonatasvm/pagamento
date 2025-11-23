@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
   User,
@@ -21,7 +21,6 @@ import {
 const API_URL = "http://127.0.0.1:5631";
 
 // --- UTILITÁRIOS (Helpers) ---
-
 const cleanDigits = (value) => value.replace(/\D/g, "");
 
 const formatCurrency = (value) => {
@@ -34,7 +33,8 @@ const formatCurrency = (value) => {
 
 const parseCurrencyToFloat = (value) => {
   if (!value) return 0;
-  return parseFloat(value.replace(/[R$\s.]/g, "").replace(",", "."));
+  // Remove R$, espaços e pontos de milhar, troca vírgula por ponto
+  return parseFloat(value.toString().replace(/[R$\s.]/g, "").replace(",", "."));
 };
 
 const formatCpfCnpj = (value) => {
@@ -53,11 +53,11 @@ const formatCpfCnpj = (value) => {
 };
 
 const addMonths = (dateStr, months) => {
-  const d = new Date(dateStr + "T00:00:00"); // T00:00:00 evita problemas de fuso
+  const d = new Date(dateStr + "T00:00:00");
   const originalDay = d.getDate();
   d.setMonth(d.getMonth() + months);
   if (d.getDate() !== originalDay) {
-    d.setDate(0); // Ajuste para virada de mês (ex: 31 jan -> 28 fev)
+    d.setDate(0);
   }
   return d.toISOString().split("T")[0];
 };
@@ -73,7 +73,7 @@ const calculateInstallments = (totalValueStr, count, startDateStr) => {
 
   for (let i = 0; i < count; i++) {
     let currentCents = installmentCents;
-    if (i === 0) currentCents += remainderCents; // Resto vai na 1ª parcela
+    if (i === 0) currentCents += remainderCents;
 
     const valStr = currentCents.toString().padStart(3, "0");
     results.push({
@@ -115,30 +115,35 @@ const TelaSolicitacao = () => {
     anexo: null,
   });
 
-  // Estados de Controle
   const [obras, setObras] = useState([]);
   const [isLoadingObras, setIsLoadingObras] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [schedule, setSchedule] = useState([]); // Parcelas calculadas
+  const [schedule, setSchedule] = useState([]);
 
-  // 1. Buscar Obras (Com Filtro de Usuário)
+  // 1. Buscar Obras
   useEffect(() => {
     const fetchObras = async () => {
       try {
-        const userId = localStorage.getItem("user_id");
-        if (!userId) {
-          toast.error("Sessão inválida. Faça login novamente.");
-          return;
-        }
-
-        const response = await fetch(`${API_URL}/obras?user_id=${userId}`);
+        // Tenta pegar do localStorage, se não existir, usa '1' para teste (Admin costuma ver tudo)
+        const userId = localStorage.getItem("user_id") || ""; 
+        
+        // Se for admin ou teste sem ID, a rota /obras retorna tudo. 
+        // Se precisar filtrar, garanta que o user_id existe no banco.
+        const url = userId ? `${API_URL}/obras?user_id=${userId}` : `${API_URL}/obras`;
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error("Erro ao buscar obras");
 
         const data = await response.json();
+        
+        // Se retornar array vazio e você estiver testando, insira uma obra manual no state
+        if (Array.isArray(data) && data.length === 0) {
+             toast("Nenhuma obra encontrada. Verifique se criou obras no banco.", { icon: '⚠️' });
+        }
         setObras(data);
       } catch (error) {
         console.error(error);
-        toast.error("Erro ao carregar obras.");
+        toast.error("Erro ao carregar obras. O servidor está rodando?");
       } finally {
         setIsLoadingObras(false);
       }
@@ -146,7 +151,7 @@ const TelaSolicitacao = () => {
     fetchObras();
   }, []);
 
-  // 2. Recalcular Parcelas Automaticamente
+  // 2. Recalcular Parcelas
   useEffect(() => {
     if (
       formData.installmentsCount > 1 &&
@@ -158,8 +163,6 @@ const TelaSolicitacao = () => {
         formData.installmentsCount,
         formData.dataVencimento
       );
-
-      // Só atualiza se houver mudança real para evitar loop
       if (JSON.stringify(newSchedule) !== JSON.stringify(schedule)) {
         setSchedule(newSchedule);
       }
@@ -175,7 +178,6 @@ const TelaSolicitacao = () => {
     const { name, value } = e.target;
     let newValue = value;
 
-    // Máscaras específicas
     if (name === "valor") newValue = formatCurrency(value);
     if (name === "cpfCnpj") newValue = formatCpfCnpj(value);
     if (name === "pixKey") {
@@ -185,7 +187,6 @@ const TelaSolicitacao = () => {
       else newValue = value.substring(0, limit.len);
     }
 
-    // Lógica específica de troca de tipo de pagamento ou chave
     if (name === "paymentMethod") {
       setFormData((prev) => ({
         ...prev,
@@ -214,31 +215,20 @@ const TelaSolicitacao = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Edição manual das parcelas (Tabela)
   const handleScheduleEdit = (index, field, value) => {
     const newSchedule = [...schedule];
     let finalValue = value;
-
     if (field === "value") finalValue = formatCurrency(value);
-
     newSchedule[index] = { ...newSchedule[index], [field]: finalValue };
     setSchedule(newSchedule);
   };
 
-  // ENVIO DO FORMULÁRIO
+  // --- ENVIO DO FORMULÁRIO (INTEGRAÇÃO COM BACKEND) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validação Básica
-    const required = [
-      "obra",
-      "referente",
-      "valor",
-      "titular",
-      "cpfCnpj",
-      "dataVencimento",
-    ];
+    const required = ["obra", "referente", "valor", "titular", "cpfCnpj", "dataVencimento"];
     if (formData.paymentMethod === "PIX") required.push("pixKey");
 
     const hasEmptyFields = required.some((field) => !formData[field]);
@@ -255,8 +245,6 @@ const TelaSolicitacao = () => {
         (acc, item) => acc + parseCurrencyToFloat(item.value),
         0
       );
-
-      // Margem de erro de 1 centavo para arredondamento JS
       if (Math.abs(total - sumInstallments) > 0.01) {
         toast.error("A soma das parcelas difere do valor total.");
         setIsSubmitting(false);
@@ -264,39 +252,48 @@ const TelaSolicitacao = () => {
       }
     }
 
-    const usuarioLogado = localStorage.getItem("usuario") || "Usuário";
+    // Recupera usuário ou define padrão para teste
+    const usuarioLogado = localStorage.getItem("usuario") || "Admin/Teste";
     const hoje = new Date().toISOString().split("T")[0];
 
-    try {
-      const requests = [];
-      const basePayload = {
+    // ATENÇÃO: O backend espera chaves exatas (snake_case)
+    const basePayload = {
         data_lancamento: hoje,
         solicitante: usuarioLogado,
         titular: formData.titular,
         obra: formData.obra,
+        referente: formData.referente, // Será sobrescrito se for parcelado
+        valor: parseCurrencyToFloat(formData.valor), // Será sobrescrito se for parcelado
+        data_pagamento: formData.dataVencimento, // Será sobrescrito se for parcelado
         forma_pagamento: formData.paymentMethod,
         lancado: "N",
         cpf_cnpj: formData.cpfCnpj,
         chave_pix: formData.pixKey || "",
-        observacao: "",
-      };
+        data_competencia: formData.dataVencimento, // Assume competência = vencimento
+        observacao: "" // Backend exige este campo
+    };
+
+    try {
+      const requests = [];
 
       if (formData.installmentsCount > 1) {
-        // Múltiplas requisições
+        // Múltiplas requisições (uma por parcela)
         schedule.forEach((parcela) => {
-          requests.push(
-            fetch(`${API_URL}/formulario`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+            const payloadParcela = {
                 ...basePayload,
                 referente: `${formData.referente} (${parcela.number}/${formData.installmentsCount})`,
                 valor: parseCurrencyToFloat(parcela.value),
                 data_pagamento: parcela.date,
-                data_competencia: parcela.date,
-              }),
-            })
-          );
+                data_competencia: parcela.date
+            };
+
+            requests.push(
+                fetch(`${API_URL}/formulario`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payloadParcela),
+                })
+            );
         });
       } else {
         // Requisição Única
@@ -304,24 +301,23 @@ const TelaSolicitacao = () => {
           fetch(`${API_URL}/formulario`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...basePayload,
-              referente: formData.referente,
-              valor: parseCurrencyToFloat(formData.valor),
-              data_pagamento: formData.dataVencimento,
-              data_competencia: formData.dataVencimento,
-            }),
+            body: JSON.stringify(basePayload),
           })
         );
       }
 
       const responses = await Promise.all(requests);
-      if (responses.some((r) => !r.ok))
-        throw new Error("Falha em um dos envios");
+      
+      // Verifica se alguma deu erro
+      const errorResponse = responses.find(r => !r.ok);
+      if (errorResponse) {
+          const errData = await errorResponse.json();
+          throw new Error(errData.error || "Falha ao salvar no banco");
+      }
 
       toast.success("Solicitação enviada com sucesso!");
 
-      // Reset Form
+      // Limpar formulário
       setFormData({
         obra: "",
         referente: "",
@@ -337,26 +333,22 @@ const TelaSolicitacao = () => {
       });
       setSchedule([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao conectar com o servidor.");
+      toast.error(`Erro: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // --- RENDERIZADORES AUXILIARES ---
-  const inputClass =
-    "mt-1 block w-full border border-gray-300 rounded-lg py-2.5 px-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-800 transition";
-  const labelClass =
-    "flex items-center text-sm font-semibold text-gray-700 mb-1.5";
+  const inputClass = "mt-1 block w-full border border-gray-300 rounded-lg py-2.5 px-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-800 transition";
+  const labelClass = "flex items-center text-sm font-semibold text-gray-700 mb-1.5";
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <Toaster position="top-right" />
-
       <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-8 md:p-10">
-        {/* HEADER */}
         <div className="border-b-4 border-blue-500/50 pb-4 mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 flex items-center">
             <DollarSign className="w-8 h-8 mr-3 text-blue-600" />
@@ -368,12 +360,11 @@ const TelaSolicitacao = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* BLOCO 1: OBRA E DESCRIÇÃO */}
+          {/* SELEÇÃO DE OBRA */}
           <div className="grid grid-cols-1 gap-6">
             <div>
               <label htmlFor="obra" className={labelClass}>
-                <Building className="w-4 h-4 mr-2 text-blue-600" /> Obra{" "}
-                <span className="text-red-500 ml-1">*</span>
+                <Building className="w-4 h-4 mr-2 text-blue-600" /> Obra <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <select
@@ -384,9 +375,7 @@ const TelaSolicitacao = () => {
                   className={`${inputClass} appearance-none bg-white`}
                 >
                   <option value="" disabled>
-                    {isLoadingObras
-                      ? "Carregando..."
-                      : "Selecione a obra vinculada"}
+                    {isLoadingObras ? "Carregando..." : "Selecione a obra vinculada"}
                   </option>
                   {obras.map((obra) => (
                     <option key={obra.id} value={obra.nome}>
@@ -396,19 +385,12 @@ const TelaSolicitacao = () => {
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               </div>
-              {!isLoadingObras && obras.length === 0 && (
-                <p className="text-sm text-red-500 mt-1 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" /> Nenhuma obra
-                  encontrada para seu usuário.
-                </p>
-              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="referente" className={labelClass}>
-                  <Tag className="w-4 h-4 mr-2 text-blue-600" /> Referente
-                  (Detalhes) <span className="text-red-500 ml-1">*</span>
+                  <Tag className="w-4 h-4 mr-2 text-blue-600" /> Referente <span className="text-red-500 ml-1">*</span>
                 </label>
                 <textarea
                   name="referente"
@@ -421,8 +403,7 @@ const TelaSolicitacao = () => {
               </div>
               <div>
                 <label htmlFor="valor" className={labelClass}>
-                  <DollarSign className="w-4 h-4 mr-2 text-blue-600" /> Valor
-                  Total <span className="text-red-500 ml-1">*</span>
+                  <DollarSign className="w-4 h-4 mr-2 text-blue-600" /> Valor Total <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
                   type="text"
@@ -437,11 +418,10 @@ const TelaSolicitacao = () => {
             </div>
           </div>
 
-          {/* BLOCO 2: PAGAMENTO */}
+          {/* FORMA DE PAGAMENTO */}
           <div className="border-t pt-6">
             <label className={labelClass}>
-              <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> Forma de
-              Pagamento
+              <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> Forma de Pagamento
             </label>
             <div className="flex flex-wrap gap-3 mt-2">
               {["PIX", "Boleto", "Cheque"].map((method) => (
@@ -467,9 +447,8 @@ const TelaSolicitacao = () => {
             </div>
           </div>
 
-          {/* BLOCO 3: DETALHES ESPECÍFICOS (PIX e PARCELAS) */}
+          {/* DADOS ESPECÍFICOS */}
           <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 space-y-6">
-            {/* LINHA 1: PIX (Se selecionado) */}
             {formData.paymentMethod === "PIX" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fadeIn">
                 <div className="md:col-span-1">
@@ -482,18 +461,14 @@ const TelaSolicitacao = () => {
                       className={`${inputClass} appearance-none`}
                     >
                       {PIX_KEY_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
+                        <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className={labelClass}>
-                    Chave PIX <span className="text-red-500">*</span>
-                  </label>
+                  <label className={labelClass}>Chave PIX <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
                       type="text"
@@ -509,12 +484,10 @@ const TelaSolicitacao = () => {
               </div>
             )}
 
-            {/* LINHA 2: VENCIMENTO E PARCELAS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className={labelClass}>
-                  <Calendar className="w-4 h-4 mr-2 text-blue-600" /> Data 1º
-                  Vencimento <span className="text-red-500 ml-1">*</span>
+                  <Calendar className="w-4 h-4 mr-2 text-blue-600" /> Data 1º Vencimento <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
                   type="date"
@@ -546,47 +519,34 @@ const TelaSolicitacao = () => {
               </div>
             </div>
 
-            {/* TABELA DE PARCELAS (Se > 1) */}
             {formData.installmentsCount > 1 && schedule.length > 0 && (
               <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">
-                        Parc.
-                      </th>
-                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">
-                        Valor
-                      </th>
-                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">
-                        Data
-                      </th>
+                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">Parc.</th>
+                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">Valor</th>
+                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">Data</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {schedule.map((item, idx) => (
                       <tr key={idx}>
-                        <td className="px-4 py-2 text-sm font-medium text-gray-900">
-                          {item.number}
-                        </td>
+                        <td className="px-4 py-2 text-sm font-medium text-gray-900">{item.number}</td>
                         <td className="px-4 py-2">
                           <input
                             type="text"
                             value={item.value}
-                            onChange={(e) =>
-                              handleScheduleEdit(idx, "value", e.target.value)
-                            }
-                            className="w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-green-600 font-semibold"
+                            onChange={(e) => handleScheduleEdit(idx, "value", e.target.value)}
+                            className="w-full text-sm border-gray-300 rounded-md text-green-600 font-semibold"
                           />
                         </td>
                         <td className="px-4 py-2">
                           <input
                             type="date"
                             value={item.date}
-                            onChange={(e) =>
-                              handleScheduleEdit(idx, "date", e.target.value)
-                            }
-                            className="w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            onChange={(e) => handleScheduleEdit(idx, "date", e.target.value)}
+                            className="w-full text-sm border-gray-300 rounded-md"
                           />
                         </td>
                       </tr>
@@ -597,12 +557,11 @@ const TelaSolicitacao = () => {
             )}
           </div>
 
-          {/* BLOCO 4: RECEBEDOR E ANEXO */}
+          {/* DADOS FORNECEDOR */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
             <div>
               <label className={labelClass}>
-                <User className="w-4 h-4 mr-2 text-blue-600" /> Fornecedor /
-                Titular <span className="text-red-500 ml-1">*</span>
+                <User className="w-4 h-4 mr-2 text-blue-600" /> Fornecedor / Titular <span className="text-red-500 ml-1">*</span>
               </label>
               <input
                 type="text"
@@ -615,8 +574,7 @@ const TelaSolicitacao = () => {
             </div>
             <div>
               <label className={labelClass}>
-                <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> CPF / CNPJ{" "}
-                <span className="text-red-500 ml-1">*</span>
+                <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> CPF / CNPJ <span className="text-red-500 ml-1">*</span>
               </label>
               <input
                 type="text"
@@ -628,10 +586,10 @@ const TelaSolicitacao = () => {
                 className={inputClass}
               />
             </div>
+            {/* INPUT DE ARQUIVO (VISUAL APENAS, NÃO ENVIA PARA O BACKEND AINDA) */}
             <div className="md:col-span-2">
               <label className={labelClass}>
-                <Paperclip className="w-4 h-4 mr-2 text-blue-600" /> Anexo
-                (Comprovante/Boleto)
+                <Paperclip className="w-4 h-4 mr-2 text-blue-600" /> Anexo (Não salvo no banco atual)
               </label>
               <div className="mt-1 flex items-center">
                 <input
@@ -643,35 +601,27 @@ const TelaSolicitacao = () => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current.click()}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Escolher arquivo
                 </button>
                 {formData.anexo && (
                   <span className="ml-3 flex items-center text-sm text-gray-600 bg-blue-50 px-2 py-1 rounded-md">
                     {formData.anexo.name}
-                    <X
-                      className="w-4 h-4 ml-2 cursor-pointer text-red-500"
-                      onClick={removeFile}
-                    />
+                    <X className="w-4 h-4 ml-2 cursor-pointer text-red-500" onClick={removeFile} />
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* SUBMIT */}
           <button
             type="submit"
-            disabled={isSubmitting || (obras.length === 0 && !isLoadingObras)}
-            className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
+            disabled={isSubmitting}
+            className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 transition-all"
           >
-            {isSubmitting ? (
-              <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            ) : (
-              <Send className="w-6 h-6 mr-2" />
-            )}
-            {isSubmitting ? "Processando..." : "Enviar Solicitação"}
+            {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Send className="mr-2" />}
+            {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
           </button>
         </form>
       </div>

@@ -62,14 +62,14 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     format: (val) => `#${val}`,
     editable: false,
   },
-  {
-    key: "dataLancamento",
-    label: "Data de Lançamento",
-    minWidth: "150px",
-    type: "date",
-    editable: false,
-    format: (val) => (val ? new Date(val).toLocaleDateString("pt-BR") : "—"),
-  },
+ {
+  key: "dataLancamento",
+  label: "Data de Lançamento",
+  minWidth: "150px",
+  type: "date",
+  editable: false,
+
+},
   {
     key: "solicitante",
     label: "Solicitante",
@@ -101,7 +101,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     label: "Data Pagamento",
     minWidth: "150px",
     type: "date",
-    format: (val) => (val ? new Date(val).toLocaleDateString("pt-BR") : "—"),
+
   },
   {
     key: "formaDePagamento",

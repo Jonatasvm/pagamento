@@ -25,25 +25,34 @@ api.interceptors.response.use(
 );
 
 // --- ADAPTADORES (Mantidos iguais) ---
+// formularioService.js
+// formularioService.js
 const adapterBackendToFrontend = (data) => {
+  const toDateString = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0]; // 2025-11-22
+  };
+
   return {
     id: data.id,
-    dataLancamento: data.data_lancamento,
-    solicitante: data.solicitante,
-    titular: data.titular,
-    referente: data.referente,
-    valor: data.valor
-      ? String(Number(data.valor).toFixed(2)).replace(".", "")
-      : "",
-    obra: data.obra,
-    dataPagamento: data.data_pagamento,
-    formaDePagamento: data.forma_pagamento,
+    dataLancamento: toDateString(data.data_lancamento),
+    dataPagamento: toDateString(data.data_pagamento),
+    dataCompetencia: toDateString(data.data_competencia),
+
+    solicitante: data.solicitante || null,
+    titular: data.titular || null,
+    referente: data.referente || "",
+    valor: data.valor ? String(Number(data.valor).toFixed(2)).replace(".", "") : "",
+    obra: data.obra || null,
+    formaDePagamento: data.forma_pagamento || "",
     statusLancamento: Boolean(data.lancado),
-    cpfCnpjTitularConta: data.cpf_cnpj,
-    chavePix: data.chave_pix,
-    dataCompetencia: data.data_competencia,
-    observacao: data.observacao,
-    carimboDataHora: data.carimbo,
+
+    cpfCnpjTitularConta: data.cpf_cnpj || "",
+    chavePix: data.chave_pix || "",
+    observacao: data.observacao || "",
+    carimboDataHora: data.carimbo || "",
     conta: data.conta || null,
     quemPaga: data.quem_paga || null,
     linkAnexo: data.link_anexo || "",
@@ -51,21 +60,38 @@ const adapterBackendToFrontend = (data) => {
   };
 };
 
+// formularioService.js
 const adapterFrontendToBackend = (data) => {
+  const formatDate = (dateStr) => {
+    if (!dateStr || dateStr === "") {
+      // MUDANÇA CRUCIAL: se o campo for obrigatório no banco, manda uma data padrão ou mantém a atual
+      // Como data_lancamento costuma ser obrigatória, vamos mandar a data de hoje se estiver vazio
+      const today = new Date().toISOString().split("T")[0];
+      return dateStr === "" ? today : dateStr;
+    }
+    return dateStr; // já vem como yyyy-MM-dd do input date
+  };
+
   return {
-    data_lancamento: data.dataLancamento,
-    solicitante: data.solicitante,
-    titular: data.titular,
-    referente: data.referente,
+    data_lancamento: formatDate(data.dataLancamento),
+    data_pagamento: data.dataPagamento || null, // esse pode ser null
+    data_competencia: data.dataCompetencia || null, // esse também pode
+
+    solicitante: data.solicitante || null,
+    titular: data.titular || null,
+    referente: data.referente || null,
     valor: data.valor ? parseFloat(data.valor) / 100 : 0,
-    obra: data.obra,
-    data_pagamento: data.dataPagamento,
-    forma_pagamento: data.formaDePagamento,
+    obra: data.obra ? Number(data.obra) : null,
+    forma_pagamento: data.formaDePagamento || null,
     lancado: data.statusLancamento ? 1 : 0,
-    cpf_cnpj: data.cpfCnpjTitularConta,
-    chave_pix: data.chavePix,
-    data_competencia: data.dataCompetencia,
-    observacao: data.observacao,
+
+    cpf_cnpj: data.cpfCnpjTitularConta || null,
+    chave_pix: data.chavePix || null,
+    observacao: data.observacao || null,
+    categoria: data.categoria || "Outros",
+    quem_paga: data.quemPaga ? Number(data.quemPaga) : null,
+    conta: data.conta ? Number(data.conta) : null,
+    link_anexo: data.linkAnexo || null,
   };
 };
 
