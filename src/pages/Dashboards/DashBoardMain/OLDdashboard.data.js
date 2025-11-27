@@ -210,7 +210,15 @@ export const Dashboard = () => {
       }
 
       try {
-        const response = await fetch(`${API_URL}/obras/${editFormData.obra}`);
+        // Extrai apenas o ID numérico da obra
+        const obraId = Number(editFormData.obra);
+        
+        if (isNaN(obraId)) {
+          console.warn("ID da obra inválido:", editFormData.obra);
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/obras/${obraId}`);
         if (!response.ok) throw new Error("Erro ao buscar obra");
 
         const obra = await response.json();

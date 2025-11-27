@@ -26,6 +26,16 @@ const PaymentTable = ({
   handleRemove,
   toggleRowExpansion,
   handleEditChange,
+
+  // Props para autocomplete de titular
+  titularSuggestions = [],
+  isLoadingSuggestions = false,
+  showTitularSuggestions = false,
+  selectedSuggestionIndex = -1,
+  isTitularLocked = false,
+  handleSelectTitular = () => {},
+  handleKeyDown = () => {},
+  autocompleteDropdownRef = null,
 }) => {
   // --- Lógica de Renderização de Campos ---
   const renderField = (key, data, isEditing, colConfig = {}, request) => {
@@ -46,7 +56,6 @@ const PaymentTable = ({
         const selectOptions = fieldConfig.options || [];
 
         // Verifica se é um select de IDs (Objeto {id, nome}) ou String simples
-        // Verifica pelo nome da chave ou pelo tipo do primeiro item das opções
         const isIdSelect =
           ["quemPaga", "obra", "titular"].includes(fieldConfig.key) ||
           (selectOptions.length > 0 && typeof selectOptions[0] === "object");
@@ -102,15 +111,27 @@ const PaymentTable = ({
         );
       }
 
+      if (fieldConfig.type === "date") {
+        return (
+          <input
+            type="date"
+            name={key}
+            value={value || ""}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          />
+        );
+      }
+
       if (fieldConfig.type === "currency") {
         return (
           <input
             type="text"
             name={key}
-            value={formatCurrencyDisplay(value)}
+            value={value || ""}
             onChange={handleEditChange}
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm font-semibold text-green-700 focus:ring-2 focus:ring-blue-500"
-            inputMode="numeric"
+            placeholder="R$ 0,00"
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
           />
         );
       }
@@ -121,16 +142,84 @@ const PaymentTable = ({
             name={key}
             value={value || ""}
             onChange={handleEditChange}
-            rows="2"
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+            rows="3"
           />
         );
       }
 
-      // Input Padrão (Text, Date, etc)
+      // --- CAMPO ESPECIAL: TITULAR COM AUTOCOMPLETE ---
+      if (key === "titular" && editingId) {
+        return (
+          <div
+            ref={autocompleteDropdownRef}
+            className="relative w-full"
+          >
+            <input
+              type="text"
+              name={key}
+              value={value || ""}
+              onChange={handleEditChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                if (value && typeof value === "string" && value.trim() && titularSuggestions.length > 0) {
+                  // Não abre automaticamente se estiver bloqueado
+                  if (!isTitularLocked) {
+                    // setShowTitularSuggestions(true); // Controlado via props
+                  }
+                }
+              }}
+              placeholder="Digite o nome do fornecedor..."
+              className={`w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 ${
+                isTitularLocked ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
+              disabled={isTitularLocked}
+              autoComplete="off"
+            />
+
+            {/* Dropdown de Sugestões */}
+            {showTitularSuggestions && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {isLoadingSuggestions ? (
+                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                    Carregando...
+                  </div>
+                ) : titularSuggestions.length > 0 ? (
+                  <ul className="divide-y divide-gray-200">
+                    {titularSuggestions.map((suggestion, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleSelectTitular(suggestion)}
+                        className={`px-4 py-3 cursor-pointer transition ${
+                          index === selectedSuggestionIndex
+                            ? "bg-blue-100 text-blue-900"
+                            : "hover:bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        <div className="font-medium text-sm">
+                          {suggestion.titular}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {suggestion.cpf_cnpj}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                    Nenhum fornecedor encontrado.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // --- INPUT DE TEXTO PADRÃO ---
       return (
         <input
-          type={fieldConfig.type || "text"}
+          type="text"
           name={key}
           value={value || ""}
           onChange={handleEditChange}
@@ -139,64 +228,30 @@ const PaymentTable = ({
       );
     }
 
-    // --- Modos de Visualização (Leitura) ---
+    // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO ---
+    if (fieldConfig.format) {
+      return fieldConfig.format(value);
+    }
 
-    if (fieldConfig.isLink) {
+    if (fieldConfig.isLink && value) {
       return (
         <a
-          href={value || "#"}
+          href={value}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => {
-            if (!value) {
-              e.preventDefault();
-              toast.info("Nenhum arquivo anexado.");
-            }
-          }}
-          className={`text-sm ${
-            value
-              ? "text-blue-600 hover:text-blue-800 underline cursor-pointer"
-              : "text-gray-400 cursor-default no-underline"
-          }`}
+          className="text-blue-600 underline"
         >
-          {value ? "Ver Documento" : "—"}
+          {value}
         </a>
       );
     }
 
-    if (key === "statusLancamento") {
-      return (
-        <span
-          className={`px-3 py-1 text-xs font-semibold rounded-full min-w-[80px] text-center inline-block ${getStatusClasses(
-            value
-          )}`}
-        >
-          {value ? "LANÇADO" : "PENDENTE"}
-        </span>
-      );
-    }
-
-    if (key === "valor") {
-      return (
-        <span className="text-sm font-bold text-green-700">
-          {formatCurrencyDisplay(value)}
-        </span>
-      );
-    }
-
-    if (fieldConfig.format) {
-      return (
-        <span className="text-sm text-gray-700">
-          {fieldConfig.format(value, request)}
-        </span>
-      );
-    }
-
-    return <span className="text-sm text-gray-700">{value}</span>;
+    return value || "—";
   };
 
+  // --- RENDERIZAÇÃO PRINCIPAL ---
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-x-auto">
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
       {filteredRequests.length === 0 ? (
         <div className="p-12 text-center text-gray-500">
           Nenhum registro encontrado.
