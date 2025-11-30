@@ -27,3 +27,7 @@ jobs:
           # Comandos pós-deploy (ex: reinicie o serviço)
           # Exemplo: sudo systemctl restart pagamento_service
           echo "Deploy do pagamento concluído!"
+	  pm2 restart all
+	  echo "PM2 reiniciado"
+
+
