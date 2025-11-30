@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "frontend-pagamento",
+      "script": "npm",
+      "args": "run dev -- --host",
+      "cwd": "/home/gerenciaGR/pagamento"
+    }
+  ]
+}

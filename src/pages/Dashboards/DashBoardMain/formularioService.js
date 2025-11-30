@@ -2,7 +2,7 @@ import axios from "axios";
 
 // --- CONFIGURAÇÃO DA API ---
 const api = axios.create({
-  baseURL: "http://127.0.0.1:5631",
+  baseURL: "http://91.98.132.210:5631",
 });
 
 api.interceptors.request.use(

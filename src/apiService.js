@@ -1,7 +1,7 @@
 // src/apiService.js
 import toast from "react-hot-toast";
 
-const API_BASE_URL = "http://127.0.0.1:80"; // URL do seu backend Flask
+const API_BASE_URL = "http://91.98.132.210:5631"; // URL do seu backend Flask
 
 /**
  * Pega o token salvo no navegador
