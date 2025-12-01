@@ -88,34 +88,31 @@ export const Dashboard = () => {
   // Dashboard.jsx (Bloco de filteredRequests corrigido)
 
 // ...
-  const filteredRequests = requests.filter((req) => {
-    // FILTRO DE STATUS (mantido)
+ const filteredRequests = requests.filter((req) => {
+    // FILTRO DE STATUS
     if (filters.statusLancamento !== "") {
       const filterBool = filters.statusLancamento === "true";
       if (req.statusLancamento !== filterBool) return false;
     }
     
-    // FILTRO DE FORMA DE PAGAMENTO (CORREÇÃO FINAL: Limpa espaços e normaliza a case)
+    // FILTRO DE FORMA DE PAGAMENTO (Limpeza de espaços e normalização de case)
     if (filters.formaDePagamento) {
-      // 1. Normaliza o valor do filtro (ex: "CHEQUE")
       const filterValue = filters.formaDePagamento.trim().toUpperCase();
 
-      // 2. Normaliza o valor do registro do banco (remove espaços + maiúsculas)
       const requestValue = req.formaDePagamento
         ? String(req.formaDePagamento).trim().toUpperCase()
         : "";
 
-      // 3. Compara os valores limpos e padronizados
       if (requestValue !== filterValue) return false;
     }
     
-    // FILTRO DE DATA (Corrigido para usar 'dataPagamento' conforme interações anteriores)
+    // FILTRO DE DATA (AGORA CORRIGIDO PARA dataPagamento)
     if (filters.data && req.dataPagamento !== filters.data) return false; 
     
-    // FILTRO DE OBRA (mantido)
+    // FILTRO DE OBRA
     if (filters.obra && req.obra !== Number(filters.obra)) return false;
     
-    // FILTRO DE TITULAR (mantido)
+    // FILTRO DE TITULAR
     if (filters.titular && req.titular !== Number(filters.titular))
       return false;
       
