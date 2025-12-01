@@ -139,7 +139,7 @@ if (fieldConfig.type === "currency") {
           <input
             type="text"
             name={key}
-            // Aplica a formatação apenas visualmente
+            // Aplica a formatação apenas visualmente 
             value={formatValueToInput(value)} 
             onChange={handleEditChange}
             placeholder="0,00"
