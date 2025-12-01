@@ -85,22 +85,43 @@ export const Dashboard = () => {
   );
 
   // --- Lógica de Filtragem (Frontend) ---
+  // Dashboard.jsx (Bloco de filteredRequests corrigido)
+
+// ...
   const filteredRequests = requests.filter((req) => {
+    // FILTRO DE STATUS (mantido)
     if (filters.statusLancamento !== "") {
       const filterBool = filters.statusLancamento === "true";
       if (req.statusLancamento !== filterBool) return false;
     }
-    if (
-      filters.formaDePagamento &&
-      req.formaDePagamento !== filters.formaDePagamento
-    )
-      return false;
-    if (filters.data && req.dataLancamento !== filters.data) return false;
+    
+    // FILTRO DE FORMA DE PAGAMENTO (CORREÇÃO FINAL: Limpa espaços e normaliza a case)
+    if (filters.formaDePagamento) {
+      // 1. Normaliza o valor do filtro (ex: "CHEQUE")
+      const filterValue = filters.formaDePagamento.trim().toUpperCase();
+
+      // 2. Normaliza o valor do registro do banco (remove espaços + maiúsculas)
+      const requestValue = req.formaDePagamento
+        ? String(req.formaDePagamento).trim().toUpperCase()
+        : "";
+
+      // 3. Compara os valores limpos e padronizados
+      if (requestValue !== filterValue) return false;
+    }
+    
+    // FILTRO DE DATA (Corrigido para usar 'dataPagamento' conforme interações anteriores)
+    if (filters.data && req.dataPagamento !== filters.data) return false; 
+    
+    // FILTRO DE OBRA (mantido)
     if (filters.obra && req.obra !== Number(filters.obra)) return false;
+    
+    // FILTRO DE TITULAR (mantido)
     if (filters.titular && req.titular !== Number(filters.titular))
       return false;
+      
     return true;
   });
+// ...
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
