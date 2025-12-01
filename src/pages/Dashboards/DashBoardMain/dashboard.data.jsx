@@ -3,9 +3,7 @@ import React from "react";
 // --- DADOS DE CONFIGURAÇÃO ---
 export const formaPagamentoOptions = [
   "PIX",
-  "TED/DOC",
   "BOLETO",
-  "CARTAO DE CRÉDITO",
   "DINHEIRO",
 ];
 
