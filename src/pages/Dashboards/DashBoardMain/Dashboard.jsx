@@ -167,7 +167,7 @@ export const Dashboard = () => {
     }, 100);
   };
 
-  // --- Buscar Titulares para Autocomplete ---
+  // --- Buscar Titulares para Autocomplete  ---
   useEffect(() => {
     const fetchTitulares = async () => {
       if (!editFormData.titular || typeof editFormData.titular !== "string" || !editFormData.titular.trim()) {
