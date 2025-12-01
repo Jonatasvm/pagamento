@@ -66,8 +66,7 @@ const adapterFrontendToBackend = (data) => {
     valor: data.valor ? parseFloat(data.valor) / 100 : 0,
     obra: Number(data.obra), // Garante que obra seja enviada como número
     data_pagamento: data.dataPagamento,
-    forma_pagamento: data.formaDePagamento,
-    lancado: data.statusLancamento ? 1 : 0,
+forma_pagamento: data.formaDePagamento.toUpperCase(), // <--- FORÇA MAIÚSCULAS
     cpf_cnpj: data.cpfCnpjTitularConta,
     chave_pix: data.chavePix,
     data_competencia: data.dataCompetencia,
