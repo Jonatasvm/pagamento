@@ -123,14 +123,26 @@ const PaymentTable = ({
         );
       }
 
-      if (fieldConfig.type === "currency") {
+if (fieldConfig.type === "currency") {
+        // Função para formatar o valor bruto (ex: 4000) para visual (ex: 40,00)
+        const formatValueToInput = (rawValue) => {
+            if (!rawValue) return "";
+            const numericString = String(rawValue).replace(/\D/g, "");
+            // Divide por 100 e formata para PT-BR
+            return (Number(numericString) / 100).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+        };
+
         return (
           <input
             type="text"
             name={key}
-            value={value || ""}
+            // Aplica a formatação apenas visualmente
+            value={formatValueToInput(value)} 
             onChange={handleEditChange}
-            placeholder="R$ 0,00"
+            placeholder="0,00"
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
           />
         );
