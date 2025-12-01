@@ -4,7 +4,7 @@ import React from "react";
 export const formaPagamentoOptions = [
   "PIX",
   "BOLETO",
-  "DINHEIRO",
+  "CHEQUE",
 ];
 
 // Função auxiliar para buscar o nome
