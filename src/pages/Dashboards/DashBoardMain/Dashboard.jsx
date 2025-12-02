@@ -88,7 +88,7 @@ export const Dashboard = () => {
   // Dashboard.jsx (Bloco de filteredRequests corrigido)
 
 // ...
-const filteredRequests = requests.filter((req) => {
+ const filteredRequests = requests.filter((req) => {
     // FILTRO DE STATUS
     if (filters.statusLancamento !== "") {
       const filterBool = filters.statusLancamento === "true";
@@ -98,29 +98,23 @@ const filteredRequests = requests.filter((req) => {
     // FILTRO DE FORMA DE PAGAMENTO (Limpeza de espaços e normalização de case)
     if (filters.formaDePagamento) {
       const filterValue = filters.formaDePagamento.trim().toUpperCase();
+
       const requestValue = req.formaDePagamento
         ? String(req.formaDePagamento).trim().toUpperCase()
         : "";
+
       if (requestValue !== filterValue) return false;
     }
     
-    // FILTRO DE DATA (Filtrando por dataPagamento)
+    // FILTRO DE DATA (AGORA CORRIGIDO PARA dataPagamento)
     if (filters.data && req.dataPagamento !== filters.data) return false; 
     
-    // FILTRO DE OBRA (Usa ID numérico, ignora filtro se for 0 ou vazio)
-    const obraFilterId = Number(filters.obra);
-    if (obraFilterId > 0 && req.obra !== obraFilterId) {
+    // FILTRO DE OBRA
+    if (filters.obra && req.obra !== Number(filters.obra)) return false;
+    
+    // FILTRO DE TITULAR
+    if (filters.titular && req.titular !== Number(filters.titular))
       return false;
-    }
-
-    // FILTRO DE TITULAR (Usa string/nome e ignora espaços/case para o Autocomplete)
-    if (filters.titular) {
-      const filterValue = filters.titular.trim().toUpperCase();
-      const requestValue = req.titular
-        ? String(req.titular).trim().toUpperCase()
-        : "";
-      if (requestValue !== filterValue) return false;
-    }
       
     return true;
   });
