@@ -143,7 +143,7 @@ const filteredRequests = requests.filter((req) => {
         if (req.statusLancamento !== filterBool) return false;
     }
     
-    // FILTRO DE FORMA DE PAGAMENTO (Limpa espaços e normaliza case)
+    // FILTRO DE FORMA DE PAGAMENTO
     if (filters.formaDePagamento) {
         const filterValue = filters.formaDePagamento.trim().toUpperCase();
         const requestValue = req.formaDePagamento
@@ -152,21 +152,27 @@ const filteredRequests = requests.filter((req) => {
         if (requestValue !== filterValue) return false;
     }
     
-    // FILTRO DE DATA (Filtrando por dataPagamento)
+    // FILTRO DE DATA
     if (filters.data && req.dataPagamento !== filters.data) return false; 
     
     // ========================================================
-    // ✅ CORREÇÃO APLICADA: FILTRO DE OBRA (AGORA USANDO STRING/NOME)
+    // ✅ CORREÇÃO ROBUSTA: FILTRO DE OBRA (Compara IDs como Strings)
     if (filters.obra) {
-        const filterValue = filters.obra.trim().toUpperCase();
-        const requestValue = req.obra
-            ? String(req.obra).trim().toUpperCase()
-            : "";
-        if (requestValue !== filterValue) return false;
+        // 1. Obtém o ID do filtro como string (ex: "5")
+        const filterIdString = String(filters.obra); 
+        
+        // 2. Obtém o ID da requisição como string (ex: "5" ou "")
+        // Se req.obra for null/undefined/0, ele será uma string vazia ("").
+        const requestObraIdString = req.obra ? String(req.obra) : ""; 
+        
+        // Se o ID da requisição não for zero/vazio E for diferente do ID do filtro, filtra.
+        if (requestObraIdString !== filterIdString) {
+            return false;
+        }
     }
     // ========================================================
 
-    // FILTRO DE TITULAR (Usa string/nome - Continua igual)
+    // FILTRO DE TITULAR (Usa string/nome - Continua igual e funcionando)
     if (filters.titular) {
         const filterValue = filters.titular.trim().toUpperCase();
         const requestValue = req.titular
