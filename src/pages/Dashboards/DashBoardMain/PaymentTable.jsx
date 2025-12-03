@@ -5,8 +5,7 @@ import { formatCurrencyDisplay, getStatusClasses } from "./dashboard.data";
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
-  handleEditChange,
-  listaObras = [],
+  listaObras = [], // AGORA COMEÇA AQUI
   columns = [],
   expandedFieldsConfig = [],
 
@@ -27,7 +26,7 @@ const PaymentTable = ({
   handleCancelEdit,
   handleRemove,
   toggleRowExpansion,
-  handleEditChange,
+  handleEditChange, // Deixamos apenas esta ocorrência
 
   // Props para autocomplete de titular
   titularSuggestions = [],
