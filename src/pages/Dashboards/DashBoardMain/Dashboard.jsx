@@ -156,21 +156,17 @@ const filteredRequests = requests.filter((req) => {
     if (filters.data && req.dataPagamento !== filters.data) return false; 
     
     // ========================================================
-    // FILTRO DE OBRA (CORREÇÃO DE ROBUSTEZ)
-    // 1. Converte o valor do filtro (string, ex: "1") para número (1)
-    const obraFilterId = Number(filters.obra); 
-    
-    // 2. Converte o valor do lançamento (pode ser string ou null/undefined) para número (0 se for null)
-    // Isso garante que a comparação seja sempre entre números.
-    const requestObraId = req.obra ? Number(req.obra) : 0; 
-    
-    // 3. Aplica a filtragem: Se o filtro está ativo (ID > 0) E os IDs não batem, retorna false.
-    if (obraFilterId > 0 && requestObraId !== obraFilterId) {
-        return false;
+    // ✅ CORREÇÃO APLICADA: FILTRO DE OBRA (AGORA USANDO STRING/NOME)
+    if (filters.obra) {
+        const filterValue = filters.obra.trim().toUpperCase();
+        const requestValue = req.obra
+            ? String(req.obra).trim().toUpperCase()
+            : "";
+        if (requestValue !== filterValue) return false;
     }
     // ========================================================
 
-    // FILTRO DE TITULAR (Usa string/nome)
+    // FILTRO DE TITULAR (Usa string/nome - Continua igual)
     if (filters.titular) {
         const filterValue = filters.titular.trim().toUpperCase();
         const requestValue = req.titular
