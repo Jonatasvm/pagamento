@@ -45,6 +45,20 @@ export const Dashboard = () => {
   
   //ajuste 
   // --- Funções de Busca de Dados Auxiliares ---
+const fetchRequests = async () => {
+  setIsLoadingData(true);
+  try {
+    // listarFormularios é importado do formularioService.js
+    const data = await listarFormularios();
+    setRequests(data);
+  } catch (error) {
+    console.error("Erro ao carregar requisições:", error);
+    toast.error("Erro ao carregar a lista de lançamentos.");
+  } finally {
+    setIsLoadingData(false);
+  }
+};
+
   const fetchListaObras = async () => {
     try {
       // Rota de Obras (já existe no backend, retorna {id: N, nome: "Obra"})
