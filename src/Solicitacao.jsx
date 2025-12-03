@@ -496,7 +496,7 @@ const TelaSolicitacao = () => {
                       : "Selecione a obra vinculada"}
                   </option>
                   {obras.map((obra) => (
-                    <option key={obra.id} value={obra.nome}>
+                    <option key={obra.id} value={obra.id}>
                       {obra.nome}
                     </option>
                   ))}
