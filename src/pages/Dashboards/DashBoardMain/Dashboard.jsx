@@ -228,7 +228,7 @@ const filteredRequests = requests.filter((req) => {
     filteredRequests.length > 0 &&
     selectedRequests.length === filteredRequests.length;
 
-  const handleEdit = (request) => {
+const handleEdit = (request) => {
     if (editingId) {
       toast.error("Finalize a edição atual antes de iniciar outra.");
       return;
@@ -240,7 +240,16 @@ const filteredRequests = requests.filter((req) => {
       prevSelected.filter((id) => id !== request.id)
     );
     setEditingId(request.id);
-    setEditFormData({ ...request });
+    
+    // =========================================================
+    // ✅ CORREÇÃO AQUI: Garante que 'obra' seja string ("") ou o ID como string.
+    setEditFormData({ 
+        ...request,
+        // Converte o ID numérico da obra para String para bater com o <option value>
+        obra: request.obra ? String(request.obra) : "", 
+    });
+    // =========================================================
+    
     setIsTitularLocked(false);
 
     setTimeout(() => {
@@ -248,7 +257,7 @@ const filteredRequests = requests.filter((req) => {
         .getElementById(`row-${request.id}`)
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
-  };
+};
 
   // --- Buscar Titulares para Autocomplete  ---
   useEffect(() => {
@@ -640,6 +649,7 @@ const filteredRequests = requests.filter((req) => {
             handleRemove={handleRemove}
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
+            listaObras={listaObras}
             // Props para autocomplete de titular
             titularSuggestions={titularSuggestions}
             isLoadingSuggestions={isLoadingSuggestions}

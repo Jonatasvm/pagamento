@@ -5,6 +5,8 @@ import { formatCurrencyDisplay, getStatusClasses } from "./dashboard.data";
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
+  handleEditChange,
+  listaObras = [],
   columns = [],
   expandedFieldsConfig = [],
 
