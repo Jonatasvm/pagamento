@@ -42,6 +42,40 @@ export const Dashboard = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [isTitularLocked, setIsTitularLocked] = useState(false);
   const autocompleteDropdownRef = useRef(null);
+  
+  //ajuste 
+  // --- Funções de Busca de Dados Auxiliares ---
+  const fetchListaObras = async () => {
+    try {
+      // Rota de Obras (já existe no backend, retorna {id: N, nome: "Obra"})
+      const response = await fetch(`${API_URL}/obras`); 
+      if (!response.ok) throw new Error("Erro ao buscar lista de obras");
+      const data = await response.json();
+      setListaObras(data); 
+    } catch (error) {
+      console.error("Erro ao carregar obras:", error);
+    }
+  };
+
+  const fetchListaTitulares = async () => {
+    try {
+      // Rota NOVA que retorna { id: NOME, nome: NOME }
+      const response = await fetch(`${API_URL}/titulares/list`); 
+      if (!response.ok) throw new Error("Erro ao buscar lista de titulares");
+      const data = await response.json();
+      setListaTitulares(data);
+    } catch (error) {
+      console.error("Erro ao carregar titulares:", error);
+    }
+  };
+
+  // --- Chamada inicial para carregar dados auxiliares ---
+  useEffect(() => {
+    fetchRequests(); 
+    fetchListaObras(); // <--- Chama a lista de Obras
+    fetchListaTitulares(); // <--- Chama a lista de Titulares
+  }, []);
+
 
   // --- Filtros ---
   const [filters, setFilters] = useState({
@@ -98,23 +132,29 @@ export const Dashboard = () => {
     // FILTRO DE FORMA DE PAGAMENTO (Limpeza de espaços e normalização de case)
     if (filters.formaDePagamento) {
       const filterValue = filters.formaDePagamento.trim().toUpperCase();
-
       const requestValue = req.formaDePagamento
         ? String(req.formaDePagamento).trim().toUpperCase()
         : "";
-
       if (requestValue !== filterValue) return false;
     }
     
-    // FILTRO DE DATA (AGORA CORRIGIDO PARA dataPagamento)
+    // FILTRO DE DATA (Filtrando por dataPagamento)
     if (filters.data && req.dataPagamento !== filters.data) return false; 
     
-    // FILTRO DE OBRA
-    if (filters.obra && req.obra !== Number(filters.obra)) return false;
-    
-    // FILTRO DE TITULAR
-    if (filters.titular && req.titular !== Number(filters.titular))
+    // FILTRO DE OBRA (Usa ID numérico. Compara o ID numérico do filtro com o ID numérico do lançamento)
+    const obraFilterId = Number(filters.obra);
+    if (obraFilterId > 0 && req.obra !== obraFilterId) {
       return false;
+    }
+
+    // FILTRO DE TITULAR (Usa string/nome. Compara o NOME do filtro com o NOME do lançamento)
+    if (filters.titular) {
+      const filterValue = filters.titular.trim().toUpperCase();
+      const requestValue = req.titular
+        ? String(req.titular).trim().toUpperCase()
+        : "";
+      if (requestValue !== filterValue) return false;
+    }
       
     return true;
   });
@@ -438,6 +478,9 @@ export const Dashboard = () => {
           </Link>
         </div>
 
+        
+        
+        
         {/* Container de Filtros */}
         <div className="bg-white rounded-2xl shadow-md p-5 mb-6 border border-gray-100">
           <div className="flex items-center gap-2 mb-4 text-gray-700 font-semibold border-b pb-2">
@@ -496,13 +539,13 @@ export const Dashboard = () => {
               ></input>
             </div>
 
-            {/* Obra */}
+                    {/* Obra (Filtra por ID numérico) */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Obra
               </label>
               <select
-                name="obra"
+                name="obra" // Corresponde a filters.obra
                 value={filters.obra}
                 onChange={handleFilterChange}
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
@@ -516,25 +559,26 @@ export const Dashboard = () => {
               </select>
             </div>
 
-            {/* Titular */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase">
-                Titular
-              </label>
-              <select
-                name="titular"
-                value={filters.titular}
-                onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="">Todos</option>
-                {listaTitulares.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+                      {/* Titular (Filtra por String/Nome) */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Titular
+                </label>
+                <select
+                  name="titular" // Corresponde a filters.titular
+                  value={filters.titular}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">Todos</option>
+                  {/* Aqui, t.id é o NOME do titular (string), que será usado no filtro */}
+                  {listaTitulares.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
             {/* Botão Limpar */}
             <button
