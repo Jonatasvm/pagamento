@@ -136,42 +136,51 @@ const fetchRequests = async () => {
   // Dashboard.jsx (Bloco de filteredRequests corrigido)
 
 // ...
- const filteredRequests = requests.filter((req) => {
+const filteredRequests = requests.filter((req) => {
     // FILTRO DE STATUS
     if (filters.statusLancamento !== "") {
-      const filterBool = filters.statusLancamento === "true";
-      if (req.statusLancamento !== filterBool) return false;
+        const filterBool = filters.statusLancamento === "true";
+        if (req.statusLancamento !== filterBool) return false;
     }
     
-    // FILTRO DE FORMA DE PAGAMENTO (Limpeza de espaços e normalização de case)
+    // FILTRO DE FORMA DE PAGAMENTO (Limpa espaços e normaliza case)
     if (filters.formaDePagamento) {
-      const filterValue = filters.formaDePagamento.trim().toUpperCase();
-      const requestValue = req.formaDePagamento
-        ? String(req.formaDePagamento).trim().toUpperCase()
-        : "";
-      if (requestValue !== filterValue) return false;
+        const filterValue = filters.formaDePagamento.trim().toUpperCase();
+        const requestValue = req.formaDePagamento
+            ? String(req.formaDePagamento).trim().toUpperCase()
+            : "";
+        if (requestValue !== filterValue) return false;
     }
     
     // FILTRO DE DATA (Filtrando por dataPagamento)
     if (filters.data && req.dataPagamento !== filters.data) return false; 
     
-    // FILTRO DE OBRA (Usa ID numérico. Compara o ID numérico do filtro com o ID numérico do lançamento)
-    const obraFilterId = Number(filters.obra);
-    if (obraFilterId > 0 && req.obra !== obraFilterId) {
-      return false;
+    // ========================================================
+    // FILTRO DE OBRA (CORREÇÃO DE ROBUSTEZ)
+    // 1. Converte o valor do filtro (string, ex: "1") para número (1)
+    const obraFilterId = Number(filters.obra); 
+    
+    // 2. Converte o valor do lançamento (pode ser string ou null/undefined) para número (0 se for null)
+    // Isso garante que a comparação seja sempre entre números.
+    const requestObraId = req.obra ? Number(req.obra) : 0; 
+    
+    // 3. Aplica a filtragem: Se o filtro está ativo (ID > 0) E os IDs não batem, retorna false.
+    if (obraFilterId > 0 && requestObraId !== obraFilterId) {
+        return false;
     }
+    // ========================================================
 
-    // FILTRO DE TITULAR (Usa string/nome. Compara o NOME do filtro com o NOME do lançamento)
+    // FILTRO DE TITULAR (Usa string/nome)
     if (filters.titular) {
-      const filterValue = filters.titular.trim().toUpperCase();
-      const requestValue = req.titular
-        ? String(req.titular).trim().toUpperCase()
-        : "";
-      if (requestValue !== filterValue) return false;
+        const filterValue = filters.titular.trim().toUpperCase();
+        const requestValue = req.titular
+            ? String(req.titular).trim().toUpperCase()
+            : "";
+        if (requestValue !== filterValue) return false;
     }
       
     return true;
-  });
+});
 // ...
 
   const handleFilterChange = (e) => {
