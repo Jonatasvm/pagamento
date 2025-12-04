@@ -3,18 +3,33 @@ import React from "react";
 // --- DADOS DE CONFIGURAÇÃO ---
 export const formaPagamentoOptions = [
   "PIX",
-  "BOLETO",
   "CHEQUE",
+  "BOLETO",
 ];
 
-// Função auxiliar para buscar o nome
-const getNameById = (list, id) => {
+// --- FUNÇÕES UTILITÁRIAS ---
+
+// ✅ CORREÇÃO: Adicionado 'export' para corrigir a tela branca
+export const getNameById = (list, id) => {
   if (!list || id == null || id === "") return '—';
-  // Garante que a busca é feita com um número
-  const itemId = Number(id); 
+  
+  const itemId = Number(id);
   const item = list.find((i) => i.id === itemId);
   return item ? item.nome : `ID: ${id}`;
 };
+
+export function formatCurrencyDisplay(value) {
+    if (!value) return "R$ 0,00";
+    const numericValue = String(value).replace(/\D/g, "");
+    const reais = (Number(numericValue) / 100).toFixed(2).replace(".", ",");
+    return `R$ ${reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
+}
+
+export function getStatusClasses(isLancado) {
+    return isLancado
+        ? "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+        : "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
+}
 
 // --- CONFIGURAÇÃO DE COLUNAS DA TABELA (Colunas Visíveis) ---
 export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
@@ -29,7 +44,6 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     ),
     minWidth: "120px",
   },
-  
   {
     key: "dataPagamento",
     label: "Data Pagto",
@@ -57,14 +71,11 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     minWidth: "300px",
   },
   {
-  key: "obra",
+    key: "obra",
     label: "Obra",
-    // 💡 IMPORTANTE: Mude para 'text' para exibição na tabela principal
-    type: "text", 
-    options: listaObras, // Deixe as options aqui para referência, se necessário
-    minWidth: "120px",
-    // 💡 FORMAT é a tradução do ID para o NOME, MANTENHA!
-    format: (id) => getNameById(listaObras, id),
+    type: "text", // Exibe como texto (Nome) na tabela
+    minWidth: "150px",
+    format: (value) => getNameById(listaObras, value), // Traduz ID -> Nome
   },
   {
     key: "quemPaga",
@@ -136,17 +147,3 @@ export const getExpandedFields = (listaUsuarios) => [
     editable: false,
   },
 ];
-
-// --- FUNÇÕES UTILITÁRIAS ---
-export function formatCurrencyDisplay(value) {
-    if (!value) return "R$ 0,00";
-    const numericValue = String(value).replace(/\D/g, "");
-    const reais = (Number(numericValue) / 100).toFixed(2).replace(".", ",");
-    return `R$ ${reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
-}
-
-export function getStatusClasses(isLancado) {
-    return isLancado
-        ? "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-        : "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
-}
