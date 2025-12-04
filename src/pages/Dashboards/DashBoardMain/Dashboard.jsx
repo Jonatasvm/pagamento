@@ -631,7 +631,7 @@ const handleEdit = (request) => {
             <span className="ml-3 text-gray-600">Carregando dados...</span>
           </div>
         ) : (
-          <PaymentTables
+            <PaymentTable 
             columns={columns}
             expandedFieldsConfig={expandedFieldsConfig}
             filteredRequests={filteredRequests}
@@ -649,9 +649,12 @@ const handleEdit = (request) => {
             handleRemove={handleRemove}
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
+            
+            // --- LISTAS DE DADOS (Correção anterior) ---
             listaObras={listaObras}
             listaTitulares={listaTitulares}
             listaUsuarios={listaUsuarios}
+            
             // Props para autocomplete de titular
             titularSuggestions={titularSuggestions}
             isLoadingSuggestions={isLoadingSuggestions}
