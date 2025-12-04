@@ -9,8 +9,10 @@ export const formaPagamentoOptions = [
 
 // Função auxiliar para buscar o nome
 const getNameById = (list, id) => {
-  if (!list || !id) return '—';
-  const item = list.find((i) => i.id === id);
+  if (!list || id == null || id === "") return '—';
+  // Garante que a busca é feita com um número
+  const itemId = Number(id); 
+  const item = list.find((i) => i.id === itemId);
   return item ? item.nome : `ID: ${id}`;
 };
 
@@ -27,6 +29,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     ),
     minWidth: "120px",
   },
+  
   {
     key: "dataPagamento",
     label: "Data Pagto",
@@ -54,11 +57,13 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     minWidth: "300px",
   },
   {
-    key: "obra",
+  key: "obra",
     label: "Obra",
-    type: "select",
-    options: listaObras,
+    // 💡 IMPORTANTE: Mude para 'text' para exibição na tabela principal
+    type: "text", 
+    options: listaObras, // Deixe as options aqui para referência, se necessário
     minWidth: "120px",
+    // 💡 FORMAT é a tradução do ID para o NOME, MANTENHA!
     format: (id) => getNameById(listaObras, id),
   },
   {
