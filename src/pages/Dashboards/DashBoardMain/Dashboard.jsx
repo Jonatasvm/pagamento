@@ -631,7 +631,7 @@ const handleEdit = (request) => {
             <span className="ml-3 text-gray-600">Carregando dados...</span>
           </div>
         ) : (
-          <PaymentTable
+          <PaymentTables
             columns={columns}
             expandedFieldsConfig={expandedFieldsConfig}
             filteredRequests={filteredRequests}
@@ -650,6 +650,8 @@ const handleEdit = (request) => {
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
             listaObras={listaObras}
+            listaTitulares={listaTitulares}
+            listaUsuarios={listaUsuarios}
             // Props para autocomplete de titular
             titularSuggestions={titularSuggestions}
             isLoadingSuggestions={isLoadingSuggestions}
