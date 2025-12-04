@@ -1,12 +1,14 @@
 import React from "react";
 import { Edit, Save, Trash2, X, Loader2, ChevronDown } from "lucide-react";
+// ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
 import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data"; 
+// import toast from "react-hot-toast"; // Removido se não estiver sendo usado
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
   listaObras = [], // Recebe a lista de obras
-  listaTitulares = [], // Recebe a lista de titulares (opcional, se usar)
-  listaUsuarios = [], // Recebe a lista de usuários (opcional, se usar)
+  listaTitulares = [], 
+  listaUsuarios = [], 
   columns = [],
   expandedFieldsConfig = [],
 
@@ -27,7 +29,7 @@ const PaymentTable = ({
   handleCancelEdit,
   handleRemove,
   toggleRowExpansion,
-  handleEditChange, // Única declaração
+  handleEditChange, 
 
   // Props para autocomplete de titular
   titularSuggestions = [],
@@ -42,19 +44,16 @@ const PaymentTable = ({
   
   // --- Lógica de Renderização de Campos ---
   const renderField = (key, data, isEditing, colConfig = {}, request) => {
-    // Busca a configuração do campo nas props recebidas (columns ou expandedFieldsConfig)
     const fieldConfig =
       columns.find((c) => c.key === key) ||
       expandedFieldsConfig.find((c) => c.key === key) ||
       colConfig;
 
     const value = data[key];
-    // Se editable não for definido, assume true, a menos que seja explicitamente false
     const editable = fieldConfig.editable !== false;
 
     // -------------------------------------------------------------------------
-    // 💡 TRATAMENTO PARA CAMPOS BASEADOS EM ID (Obra, Titular, Solicitante)
-    //    QUANDO NÃO ESTIVER EM MODO DE EDIÇÃO (VISUALIZAÇÃO EXPANDIDA)
+    // 💡 TRATAMENTO PARA CAMPOS BASEADOS EM ID (VISUALIZAÇÃO EXPANDIDA)
     // -------------------------------------------------------------------------
     if (!isEditing && ["obra", "titular", "solicitante"].includes(key)) {
       let list;
@@ -63,7 +62,6 @@ const PaymentTable = ({
       else if (key === "solicitante") list = listaUsuarios;
 
       // Usa a função auxiliar para traduzir o ID para o Nome
-      // Se não tiver lista ou id, retorna o valor original ou traço
       const name = list ? getNameById(list, value) : (value || "—"); 
       return <span className="text-gray-900">{name}</span>;
     }
@@ -73,31 +71,40 @@ const PaymentTable = ({
       
       // --- SELECT ---
       if (fieldConfig.type === "select") {
-        // Se for o campo obra, usamos a listaObras passada via props
-        const isObra = key === "obra";
-        const selectOptions = isObra ? listaObras : (fieldConfig.options || []);
+        // ✅ AJUSTE: Garante que a lista de opções correta seja usada
+        const isObraOrTitular = key === "obra" || key === "titular";
+        let selectOptions = fieldConfig.options || [];
 
-        // Verifica se é um select de IDs (Objeto {id, nome}) ou String simples
-        const isIdSelect =
-          ["quemPaga", "obra", "titular"].includes(fieldConfig.key) ||
-          (selectOptions.length > 0 && typeof selectOptions[0] === "object");
+        if (key === "obra") {
+            selectOptions = listaObras;
+        } else if (key === "titular") {
+            selectOptions = listaTitulares;
+        } else if (key === "solicitante") {
+            selectOptions = listaUsuarios;
+        }
+        
+        // Verifica se é um select de IDs (Objeto {id, nome})
+        const isIdSelect = 
+            isObraOrTitular || 
+            ["quemPaga", "solicitante"].includes(key) ||
+            (selectOptions.length > 0 && typeof selectOptions[0] === "object");
+
 
         return (
           <select
             name={key}
-            // value aqui deve ser a string ID. Se houver problema, garanta que seja String(value)
-            // Se value for null/undefined, usa "" para mostrar "Selecione..."
+            // O valor deve ser o ID, garantido como string para o <select>
             value={value != null ? String(value) : ""}
             onChange={handleEditChange}
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione...</option>
             {selectOptions.map((opt) => {
-              // Se for objeto {id, nome} (Caso da Obra)
-              if (isIdSelect && typeof opt === "object") {
-                // ✅ CORREÇÃO APLICADA: Tenta usar opt.nome, se falhar, usa opt.name, se falhar, usa o ID.
-                const displayName = opt.nome || opt.name || String(opt.id);
-
+              // Se for objeto {id, nome} (Caso da Obra, Titular, Solicitante)
+              if (isIdSelect && typeof opt === "object" && opt.id != null) {
+                // ✅ CORREÇÃO CRÍTICA: Tenta 'nome' ou 'name' ou ID, garante que haja texto visível
+                const displayName = opt.nome || opt.name || `ID: ${opt.id}`;
+                
                 return (
                   <option key={opt.id} value={String(opt.id)}> 
                     {displayName} 
@@ -115,6 +122,10 @@ const PaymentTable = ({
         );
       }
 
+      // --- OUTROS TIPOS DE CAMPO (Sem alterações) ---
+      // ... (Restante do código para BOOLEAN, DATE, CURRENCY, TEXTAREA, TITULAR)
+      // O restante do código de renderField continua igual...
+      
       // --- BOOLEAN (CHECKBOX) ---
       if (fieldConfig.type === "boolean") {
         return (
@@ -154,11 +165,9 @@ const PaymentTable = ({
 
       // --- CURRENCY ---
       if (fieldConfig.type === "currency") {
-        // Função para formatar o valor bruto (ex: 4000) para visual (ex: 40,00)
         const formatValueToInput = (rawValue) => {
             if (!rawValue) return "";
             const numericString = String(rawValue).replace(/\D/g, "");
-            // Divide por 100 e formata para PT-BR
             return (Number(numericString) / 100).toLocaleString("pt-BR", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -169,7 +178,6 @@ const PaymentTable = ({
           <input
             type="text"
             name={key}
-            // Aplica a formatação apenas visualmente 
             value={formatValueToInput(value)} 
             onChange={handleEditChange}
             placeholder="0,00"
