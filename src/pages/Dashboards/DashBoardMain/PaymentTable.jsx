@@ -1,6 +1,6 @@
 import React from "react";
 import { Edit, Save, Trash2, X, Loader2, ChevronDown } from "lucide-react";
-import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data"; // Importe getNameById
+import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data"; 
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
@@ -63,7 +63,7 @@ const PaymentTable = ({
       else if (key === "solicitante") list = listaUsuarios;
 
       // Usa a função auxiliar para traduzir o ID para o Nome
-      // Se não tiver lista ou id, retorna o valor original ou traco
+      // Se não tiver lista ou id, retorna o valor original ou traço
       const name = list ? getNameById(list, value) : (value || "—"); 
       return <span className="text-gray-900">{name}</span>;
     }
@@ -95,10 +95,12 @@ const PaymentTable = ({
             {selectOptions.map((opt) => {
               // Se for objeto {id, nome} (Caso da Obra)
               if (isIdSelect && typeof opt === "object") {
+                // ✅ CORREÇÃO APLICADA: Tenta usar opt.nome, se falhar, usa opt.name, se falhar, usa o ID.
+                const displayName = opt.nome || opt.name || String(opt.id);
+
                 return (
                   <option key={opt.id} value={String(opt.id)}> 
-                    {/* ✅ CORREÇÃO: Mostra APENAS o nome, sem o ID */}
-                    {opt.nome} 
+                    {displayName} 
                   </option>
                 );
               }
