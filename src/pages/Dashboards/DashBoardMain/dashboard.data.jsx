@@ -9,12 +9,19 @@ export const formaPagamentoOptions = [
 
 // --- FUNÇÕES UTILITÁRIAS ---
 
+// ✅ CORREÇÃO AQUI: Alteramos a lógica de fallback para ser menos intrusiva
 export const getNameById = (list, id) => {
   if (!list || id == null || id === "") return '—';
   
   const itemId = Number(id);
+  
+  // Se o valor não é um ID numérico válido (ex: "julim"), retorna o valor bruto.
+  if (isNaN(itemId)) return String(id); 
+
   const item = list.find((i) => i.id === itemId);
-  return item ? item.nome : `ID: ${id}`;
+  
+  // Se encontrou, retorna o nome. Se não encontrou, retorna um traço (—), sem o "ID: ".
+  return item ? item.nome : '—'; 
 };
 
 export function formatCurrencyDisplay(value) {
@@ -61,8 +68,8 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     label: "Titular / Favorecido",
     type: "text",
     minWidth: "200px",
-    // ❌ REMOVIDO: format: (id) => getNameById... 
-    // MOTIVO: O valor já é o nome (texto), não precisa converter.
+    // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
+    format: (value) => String(value), 
   },
   {
     key: "referente",
@@ -76,7 +83,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     type: "select",
     options: listaObras,
     minWidth: "150px",
-    format: (value) => getNameById(listaObras, value), // Este MANTÉM, pois obra é ID
+    format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {
     key: "quemPaga",
@@ -92,8 +99,8 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     options: listaUsuarios,
     minWidth: "150px",
     editable: false,
-    // ❌ REMOVIDO: format: (id) => getNameById...
-    // MOTIVO: Se estava aparecendo "ID: Joao", é porque o dado já é o nome "Joao".
+    // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
+    format: (value) => String(value),
   },
 ];
 
