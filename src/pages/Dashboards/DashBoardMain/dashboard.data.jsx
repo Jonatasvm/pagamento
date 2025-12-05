@@ -9,7 +9,7 @@ export const formaPagamentoOptions = [
 
 // --- FUNÇÕES UTILITÁRIAS ---
 
-// ✅ CORREÇÃO: Adicionado 'export' para corrigir a tela branca
+// ✅ CORREÇÃO: Função exportada para converter ID em Nome
 export const getNameById = (list, id) => {
   if (!list || id == null || id === "") return '—';
   
@@ -60,7 +60,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
   {
     key: "titular",
     label: "Titular / Favorecido",
-    type: "text",
+    type: "text", // Mantém 'text' para que o PaymentTable use o Autocomplete customizado
     minWidth: "200px",
     format: (id) => getNameById(listaTitulares, id), 
   },
@@ -73,9 +73,12 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
   {
     key: "obra",
     label: "Obra",
-    type: "text", // Exibe como texto (Nome) na tabela
+    // ⬇️⬇️ CORREÇÃO PRINCIPAL AQUI ⬇️⬇️
+    type: "select",       // Define como SELECT para aparecer o dropdown na edição
+    options: listaObras,  // Passa a lista de opções para o dropdown
+    // ⬆️⬆️ FIM DA CORREÇÃO ⬆️⬆️
     minWidth: "150px",
-    format: (value) => getNameById(listaObras, value), // Traduz ID -> Nome
+    format: (value) => getNameById(listaObras, value), // Traduz ID -> Nome na visualização
   },
   {
     key: "quemPaga",
