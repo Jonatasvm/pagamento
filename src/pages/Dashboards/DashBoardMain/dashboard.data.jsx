@@ -9,7 +9,6 @@ export const formaPagamentoOptions = [
 
 // --- FUNÇÕES UTILITÁRIAS ---
 
-// ✅ CORREÇÃO: Função exportada para converter ID em Nome
 export const getNameById = (list, id) => {
   if (!list || id == null || id === "") return '—';
   
@@ -60,9 +59,10 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
   {
     key: "titular",
     label: "Titular / Favorecido",
-    type: "text", // Mantém 'text' para que o PaymentTable use o Autocomplete customizado
+    type: "text",
     minWidth: "200px",
-    format: (id) => getNameById(listaTitulares, id), 
+    // ❌ REMOVIDO: format: (id) => getNameById... 
+    // MOTIVO: O valor já é o nome (texto), não precisa converter.
   },
   {
     key: "referente",
@@ -73,12 +73,10 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
   {
     key: "obra",
     label: "Obra",
-    // ⬇️⬇️ CORREÇÃO PRINCIPAL AQUI ⬇️⬇️
-    type: "select",       // Define como SELECT para aparecer o dropdown na edição
-    options: listaObras,  // Passa a lista de opções para o dropdown
-    // ⬆️⬆️ FIM DA CORREÇÃO ⬆️⬆️
+    type: "select",
+    options: listaObras,
     minWidth: "150px",
-    format: (value) => getNameById(listaObras, value), // Traduz ID -> Nome na visualização
+    format: (value) => getNameById(listaObras, value), // Este MANTÉM, pois obra é ID
   },
   {
     key: "quemPaga",
@@ -94,7 +92,8 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     options: listaUsuarios,
     minWidth: "150px",
     editable: false,
-    format: (id) => getNameById(listaUsuarios, id),
+    // ❌ REMOVIDO: format: (id) => getNameById...
+    // MOTIVO: Se estava aparecendo "ID: Joao", é porque o dado já é o nome "Joao".
   },
 ];
 
