@@ -92,32 +92,26 @@ const PaymentTable = ({
 
         return (
           <select
-            name={key}
-            // O valor deve ser o ID, garantido como string para o <select>
-            value={value != null ? String(value) : ""}
-            onChange={handleEditChange}
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Selecione...</option>
-            {selectOptions.map((opt) => {
-              // Se for objeto {id, nome} (Caso da Obra, Titular, Solicitante)
-              if (isIdSelect && typeof opt === "object" && opt.id != null) {
-                // ✅ CORREÇÃO CRÍTICA: Tenta 'nome' ou 'name' ou ID, garante que haja texto visível
-                const displayName = opt.nome || opt.name || `ID: ${opt.id}`;
-                
-                return (
-                  <option key={opt.id} value={String(opt.id)}> 
-                    {displayName} 
-                  </option>
-                );
-              }
-              // Se for string simples (Caso Forma Pagto)
-              return (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              );
-            })}
+            name={key}
+            // 🥇 SOLUÇÃO: Converte o ID de edição para string para garantir o match no <select>
+            value={value != null ? String(value) : ""}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Selecione...</option>
+            {selectOptions.map((opt) => {
+              // Se for objeto {id, nome} (Caso da Obra, Titular, Solicitante)
+              if (isIdSelect && typeof opt === "object" && opt.id != null) {
+                const displayName = opt.nome || opt.name || `ID: ${opt.id}`;
+                
+                return (
+                  // 🥈 SOLUÇÃO: Converte o ID da opção para string para garantir o match
+                  <option key={opt.id} value={String(opt.id)}> 
+                    {displayName} {/* Isso é o que o usuário vê (o nome) */}
+                  </option>
+                );
+              }
+			)}
           </select>
         );
       }
