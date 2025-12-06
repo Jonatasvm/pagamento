@@ -91,7 +91,7 @@ export const deletarFormulario = async (id) => {
 
 export const criarFormulario = async (data) => {
   const payload = adapterFrontendToBackend(data);
-  payload.lancado = 0;
+  payload.lancado = '0';
   const response = await api.post("/formulario", payload);
   return response.data;
 };
