@@ -44,7 +44,7 @@ const adapterBackendToFrontend = (data) => {
     obra: data.obra,
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
-    statusLancamento: Boolean(data.lancado),
+    statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
     dataCompetencia: formatDateToInput(data.data_competencia),
