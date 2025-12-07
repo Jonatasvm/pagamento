@@ -690,7 +690,8 @@ export const Dashboard = () => {
             handleRemove={handleRemove}
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
-            handleToggleLancamento={handleToggleLancamento} {/* ✅ NOVO: Passando o handler de status */}
+            handleToggleLancamento={handleToggleLancamento} 
+            //{/* ✅ NOVO: Passando o handler de status */}
 
             // Props de Autocomplete
             titularSuggestions={titularSuggestions}
