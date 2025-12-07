@@ -1,30 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { ObrasManager } from "./ObrasManager"; // Ajuste o caminho se necessário
-import { UserManager } from "./UsersManager"; // Ajuste o caminho se necessário
+// IMPORTANTE: Certifique-se que o ObrasManager é exportado como 'export const ObrasManager'
+// Se estiver usando 'export default', tire as chaves { } do import abaixo.
+import { ObrasManager } from "./ObrasManager"; 
+import { UserManager } from "./UsersManager"; 
 
-const API_IP = "http://91.98.132.210:5631";
-
-// Função auxiliar para obter o Token e os Headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json' // Para POST e PUT
-  };
-};
+const API_IP = "http://127.0.0.1:5631";
 
 export default function DashboardUsers() {
   const [obrasList, setObrasList] = useState([]);
   const [loadingObras, setLoadingObras] = useState(false);
 
-  // --- 1. GET: Buscar Obras (CORRIGIDO) ---
+  // --- 1. GET: Buscar Obras ---
   const fetchObras = async () => {
     setLoadingObras(true);
     try {
-      const response = await fetch(`${API_IP}/obras`, {
-        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
-      });
+      const response = await fetch(`${API_IP}/obras`);
       if (!response.ok) throw new Error("Falha ao conectar com servidor");
       const data = await response.json();
       setObrasList(data);
@@ -40,74 +31,72 @@ export default function DashboardUsers() {
     fetchObras();
   }, []);
 
-  // --- 2. POST: Adicionar Obra (CORRIGIDO) ---
+  // --- 2. POST: Adicionar Obra ---
+  // Esta é a função que o ObrasManager está reclamando que não existe.
   const handleAddObra = async (nomeObra, quemPaga) => {
+    console.log("Tentando adicionar obra:", nomeObra, quemPaga); // Debug
     setLoadingObras(true);
     try {
+      const payload = {
+        nome: nomeObra,
+        quem_paga: quemPaga,
+      };
+
       const response = await fetch(`${API_IP}/obras`, {
         method: "POST",
-        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
-        body: JSON.stringify({
-          nome: nomeObra,
-          quem_paga: quemPaga
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      if (response.status === 409) {
-        toast.error("Obra já existe.");
-        return;
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Erro ao salvar no banco");
       }
-      if (!response.ok) throw new Error("Erro ao adicionar");
 
-      const novaObra = await response.json();
-      toast.success("Obra adicionada!");
-      setObrasList((prev) => [...prev, novaObra]);
+      toast.success("Obra criada com sucesso!");
+      await fetchObras(); 
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao adicionar obra.");
+      toast.error(error.message || "Não foi possível adicionar a obra.");
     } finally {
       setLoadingObras(false);
     }
   };
 
-  // --- 3. PUT: Editar Obra (CORRIGIDO) ---
-  const handleEditObra = async (id, nomeObra, quemPaga) => {
+  // --- 3. PUT: Atualizar Obra ---
+  const handleUpdateObra = async (id, novoNome, novoQuemPaga) => {
     try {
+      const payload = {
+        nome: novoNome,
+        quem_paga: novoQuemPaga,
+      };
+
       const response = await fetch(`${API_IP}/obras/${id}`, {
         method: "PUT",
-        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
-        body: JSON.stringify({
-          nome: nomeObra,
-          quem_paga: quemPaga
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Erro ao editar");
+      if (!response.ok) throw new Error("Erro ao atualizar");
 
-      const obraAtualizada = await response.json();
-      toast.success("Obra editada!");
-      // Atualização local para ser mais rápido
-      setObrasList((prev) =>
-        prev.map((o) => (o.id === id ? obraAtualizada : o))
-      );
+      toast.success("Obra atualizada!");
+      await fetchObras();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao editar obra.");
     }
   };
 
-  // --- 4. DELETE: Remover Obra (CORRIGIDO) ---
+  // --- 4. DELETE: Remover Obra ---
   const handleDeleteObra = async (id) => {
     try {
       const response = await fetch(`${API_IP}/obras/${id}`, {
         method: "DELETE",
-        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
       });
 
       if (!response.ok) throw new Error("Erro ao deletar");
 
       toast.success("Obra removida!");
-      // Atualização local para ser mais rápido
       setObrasList((prev) => prev.filter((o) => o.id !== id));
     } catch (error) {
       console.error(error);
@@ -115,7 +104,6 @@ export default function DashboardUsers() {
     }
   };
 
-  // Preparar lista de nomes para o UserManager (Dropdown)
   const obrasNamesForDropdown = obrasList.map((o) => o.nome);
 
   return (
@@ -123,17 +111,20 @@ export default function DashboardUsers() {
       <Toaster position="top-right" />
 
       <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-12">
-        {/* Componente de Obras: Recebe dados e passa funções de controle */}
+        
+        {/* AQUI ESTAVA O PROBLEMA POTENCIAL */}
+        {/* Estamos passando explicitamente a função handleAddObra para a prop onAddObra */}
         <ObrasManager
           obras={obrasList}
-          loading={loadingObras}
-          handleAdd={handleAddObra}
-          handleEdit={handleEditObra}
-          handleDelete={handleDeleteObra}
+          isLoading={loadingObras}
+          onAddObra={handleAddObra}       // <--- Verifique se esta linha existe e está colorida no seu editor
+          onUpdateObra={handleUpdateObra}
+          onRequestDeleteObra={handleDeleteObra}
         />
 
-        {/* Componente de Usuários: Assumimos que ele está sendo renderizado abaixo */}
-        <UserManager obrasNames={obrasNamesForDropdown} />
+        <hr className="border-gray-200" />
+
+        <UserManager API_IP={API_IP} availableObras={obrasNamesForDropdown} />
       </div>
     </div>
   );
