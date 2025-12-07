@@ -16,6 +16,7 @@ import {
   listarFormularios,
   atualizarFormulario,
   deletarFormulario,
+  atualizarStatusLancamento, // ✅ NOVO IMPORT: Para o toggle de status
 } from "./formularioService";
 
 const API_URL = "http://91.98.132.210:5631";
@@ -101,12 +102,10 @@ export const Dashboard = () => {
   }, []);
 
   // =========================================================================
-  // 2. GERAÇÃO DINÂMICA DE COLUNAS (A correção principal)
+  // 2. GERAÇÃO DINÂMICA DE COLUNAS
   // =========================================================================
   
   // O useMemo garante que as colunas sejam recriadas quando listaObras for carregada via API.
-  // Isso faz com que a função 'format' dentro de getTableColumns tenha acesso aos dados reais
-  // para traduzir ID -> Nome.
   const columns = useMemo(
     () => getTableColumns(listaUsuarios, listaObras, listaTitulares),
     [listaUsuarios, listaObras, listaTitulares]
@@ -178,7 +177,7 @@ export const Dashboard = () => {
   };
 
   // =========================================================================
-  // 4. HANDLERS DE TABELA E EDIÇÃO
+  // 4. HANDLERS DE TABELA, EDIÇÃO E REMOÇÃO
   // =========================================================================
 
   const toggleRowExpansion = (id) => {
@@ -253,6 +252,7 @@ export const Dashboard = () => {
         newValue = value;
         setIsTitularLocked(false);
       } else {
+        // Obra e quemPaga são numéricos no backend
         newValue = Number(value);
       }
     }
@@ -318,6 +318,38 @@ export const Dashboard = () => {
   };
 
   // =========================================================================
+  // ✅ NOVO HANDLER: Toggle Status de Lançamento
+  // =========================================================================
+  const handleToggleLancamento = async (id, isCurrentlyLancado) => {
+    if (editingId) {
+      toast.error("Finalize a edição atual antes de mudar o status.");
+      return;
+    }
+    
+    const novoStatus = !isCurrentlyLancado;
+    const actionText = novoStatus ? "Lançado" : "Pendente";
+    
+    const toastId = toast.loading(`Atualizando status para ${actionText}...`);
+    try {
+      // 1. Chama o serviço API para atualizar no banco de dados
+      await atualizarStatusLancamento(id, novoStatus);
+      
+      // 2. Atualiza o estado local para uma resposta rápida da UI
+      setRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === id ? { ...req, statusLancamento: novoStatus } : req
+        )
+      );
+      
+      toast.success(`Status alterado para ${actionText} com sucesso.`, { id: toastId });
+    } catch (error) {
+      console.error("Erro ao alternar status:", error);
+      toast.error("Erro ao salvar o novo status.", { id: toastId });
+    }
+  };
+
+
+  // =========================================================================
   // 5. LÓGICA DE AUTOCOMPLETE E DEPENDÊNCIAS
   // =========================================================================
 
@@ -364,8 +396,6 @@ export const Dashboard = () => {
     const fetchQuemPaga = async () => {
       // Se não tiver obra selecionada, não busca
       if (!editFormData.obra) {
-        // Opção: limpar ou manter o valor anterior? Aqui mantemos null se vazio
-        // setEditFormData((prev) => ({ ...prev, quemPaga: null })); 
         return;
       }
 
@@ -374,14 +404,17 @@ export const Dashboard = () => {
         if (!response.ok) throw new Error("Erro ao buscar obra");
 
         const obra = await response.json();
+        // Garante que o campo quemPaga é atualizado
         setEditFormData((prev) => ({ ...prev, quemPaga: obra.quem_paga }));
       } catch (error) {
         console.error("Erro ao buscar quem_paga:", error);
       }
     };
 
-    fetchQuemPaga();
-  }, [editFormData.obra]);
+    if (editingId !== null) {
+      fetchQuemPaga();
+    }
+  }, [editFormData.obra, editingId]);
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
@@ -445,11 +478,15 @@ export const Dashboard = () => {
     }
     setIsSaving(true);
     let errorCount = 0;
+    // IMPORTANTE: O backend precisa ser adaptado para aceitar "statusGeradoCSV" se este
+    // campo for persistido. Por ora, vamos apenas simular a atualização.
     for (const id of selectedRequests) {
       const request = requests.find((r) => r.id === id);
       if (request) {
         try {
-          await atualizarFormulario(id, { ...request, statusGeradoCSV: true });
+          // Nota: Você pode precisar adicionar 'status_gerado_csv' ao seu PUT no Python.
+          // Por enquanto, atualizamos com o campo que o backend aceita.
+          await atualizarFormulario(id, { ...request, observacao: `CSV Gerado em ${new Date().toISOString().split('T')[0]}. ${request.observacao}` });
         } catch (err) {
           console.error(`Erro ao atualizar ID ${id}`, err);
           errorCount++;
@@ -653,6 +690,7 @@ export const Dashboard = () => {
             handleRemove={handleRemove}
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
+            handleToggleLancamento={handleToggleLancamento} {/* ✅ NOVO: Passando o handler de status */}
 
             // Props de Autocomplete
             titularSuggestions={titularSuggestions}
