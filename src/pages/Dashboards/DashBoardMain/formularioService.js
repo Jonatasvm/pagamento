@@ -44,7 +44,8 @@ const adapterBackendToFrontend = (data) => {
     obra: data.obra,
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
-    statusLancamento: Boolean(data.lancado),
+    // Converte '1', 'S', 'Y' para true, e o resto para false.
+    statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
     dataCompetencia: formatDateToInput(data.data_competencia),
@@ -66,7 +67,11 @@ const adapterFrontendToBackend = (data) => {
     valor: data.valor ? parseFloat(data.valor) / 100 : 0,
     obra: Number(data.obra), // Garante que obra seja enviada como número
     data_pagamento: data.dataPagamento,
-forma_pagamento: data.formaDePagamento.toUpperCase(), // <--- FORÇA MAIÚSCULAS
+    forma_pagamento: data.formaDePagamento.toUpperCase(), // <--- FORÇA MAIÚSCULAS
+    
+    // ✅ CORREÇÃO CRÍTICA: Mapeia statusLancamento (boolean) para lancado ('Y'/'N')
+    lancado: data.statusLancamento ? 'Y' : 'N', 
+    
     cpf_cnpj: data.cpfCnpjTitularConta,
     chave_pix: data.chavePix,
     data_competencia: data.dataCompetencia,
@@ -90,7 +95,30 @@ export const deletarFormulario = async (id) => {
 };
 
 export const criarFormulario = async (data) => {
+  // A função adapterFrontendToBackend agora inclui 'lancado'
   const payload = adapterFrontendToBackend(data);
+  
+  // Mantendo as correções anteriores para criação,
+  // mas o 'lancado' da linha abaixo agora sobrescreve o valor do payload, 
+  // garantindo que novos formulários sejam sempre 'Y' (como era sua intenção original)
+  payload.titular = '0'; 
+  payload.lancado = 'Y'; 
+  
   const response = await api.post("/formulario", payload);
+  return response.data;
+};
+
+// ======================================================================
+// ✅ SERVIÇO: ATUALIZAR STATUS DE LANÇAMENTO (para o Toggle no Dashboard)
+// ======================================================================
+export const atualizarStatusLancamento = async (id, isLancado) => {
+  // Este serviço é usado apenas pelo toggle e continua funcionando corretamente
+  const statusBackend = isLancado ? 'Y' : 'N'; 
+  
+  const payload = {
+    lancado: statusBackend,
+  };
+
+  const response = await api.put(`/formulario/${id}`, payload);
   return response.data;
 };

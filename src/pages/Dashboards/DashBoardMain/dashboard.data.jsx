@@ -3,16 +3,39 @@ import React from "react";
 // --- DADOS DE CONFIGURAÇÃO ---
 export const formaPagamentoOptions = [
   "PIX",
-  "BOLETO",
   "CHEQUE",
+  "BOLETO",
 ];
 
-// Função auxiliar para buscar o nome
-const getNameById = (list, id) => {
-  if (!list || !id) return '—';
-  const item = list.find((i) => i.id === id);
-  return item ? item.nome : `ID: ${id}`;
+// --- FUNÇÕES UTILITÁRIAS ---
+
+// ✅ CORREÇÃO AQUI: Alteramos a lógica de fallback para ser menos intrusiva
+export const getNameById = (list, id) => {
+  if (!list || id == null || id === "") return '—';
+  
+  const itemId = Number(id);
+  
+  // Se o valor não é um ID numérico válido (ex: "julim"), retorna o valor bruto.
+  if (isNaN(itemId)) return String(id); 
+
+  const item = list.find((i) => i.id === itemId);
+  
+  // Se encontrou, retorna o nome. Se não encontrou, retorna um traço (—), sem o "ID: ".
+  return item ? item.nome : '—'; 
 };
+
+export function formatCurrencyDisplay(value) {
+    if (!value) return "R$ 0,00";
+    const numericValue = String(value).replace(/\D/g, "");
+    const reais = (Number(numericValue) / 100).toFixed(2).replace(".", ",");
+    return `R$ ${reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
+}
+
+export function getStatusClasses(isLancado) {
+    return isLancado
+        ? "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+        : "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
+}
 
 // --- CONFIGURAÇÃO DE COLUNAS DA TABELA (Colunas Visíveis) ---
 export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
@@ -45,7 +68,8 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     label: "Titular / Favorecido",
     type: "text",
     minWidth: "200px",
-    format: (id) => getNameById(listaTitulares, id), 
+    // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
+    format: (value) => String(value), 
   },
   {
     key: "referente",
@@ -58,8 +82,8 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     label: "Obra",
     type: "select",
     options: listaObras,
-    minWidth: "120px",
-    format: (id) => getNameById(listaObras, id),
+    minWidth: "150px",
+    format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {
     key: "quemPaga",
@@ -75,7 +99,8 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     options: listaUsuarios,
     minWidth: "150px",
     editable: false,
-    format: (id) => getNameById(listaUsuarios, id),
+    // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
+    format: (value) => String(value),
   },
 ];
 
@@ -131,17 +156,3 @@ export const getExpandedFields = (listaUsuarios) => [
     editable: false,
   },
 ];
-
-// --- FUNÇÕES UTILITÁRIAS ---
-export function formatCurrencyDisplay(value) {
-    if (!value) return "R$ 0,00";
-    const numericValue = String(value).replace(/\D/g, "");
-    const reais = (Number(numericValue) / 100).toFixed(2).replace(".", ",");
-    return `R$ ${reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
-}
-
-export function getStatusClasses(isLancado) {
-    return isLancado
-        ? "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-        : "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
-}

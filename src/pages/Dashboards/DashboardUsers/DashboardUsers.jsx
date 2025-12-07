@@ -3,17 +3,28 @@ import { Toaster, toast } from "react-hot-toast";
 import { ObrasManager } from "./ObrasManager"; // Ajuste o caminho se necessário
 import { UserManager } from "./UsersManager"; // Ajuste o caminho se necessário
 
-const API_IP = "http://127.0.0.1:5631";
+const API_IP = "http://91.98.132.210:5631";
+
+// Função auxiliar para obter o Token e os Headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json' // Para POST e PUT
+  };
+};
 
 export default function DashboardUsers() {
   const [obrasList, setObrasList] = useState([]);
   const [loadingObras, setLoadingObras] = useState(false);
 
-  // --- 1. GET: Buscar Obras ---
+  // --- 1. GET: Buscar Obras (CORRIGIDO) ---
   const fetchObras = async () => {
     setLoadingObras(true);
     try {
-      const response = await fetch(`${API_IP}/obras`);
+      const response = await fetch(`${API_IP}/obras`, {
+        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
+      });
       if (!response.ok) throw new Error("Falha ao conectar com servidor");
       const data = await response.json();
       setObrasList(data);
@@ -29,67 +40,68 @@ export default function DashboardUsers() {
     fetchObras();
   }, []);
 
-  // --- 2. POST: Adicionar Obra ---
-  // ATUALIZADO: Agora recebe nome e quemPaga
+  // --- 2. POST: Adicionar Obra (CORRIGIDO) ---
   const handleAddObra = async (nomeObra, quemPaga) => {
     setLoadingObras(true);
     try {
-      const payload = {
-        nome: nomeObra,
-        quem_paga: quemPaga, // Enviando para o backend (snake_case)
-      };
-
       const response = await fetch(`${API_IP}/obras`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
+        body: JSON.stringify({
+          nome: nomeObra,
+          quem_paga: quemPaga
+        }),
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Erro ao salvar no banco");
+      if (response.status === 409) {
+        toast.error("Obra já existe.");
+        return;
       }
+      if (!response.ok) throw new Error("Erro ao adicionar");
 
-      toast.success("Obra criada com sucesso!");
-      await fetchObras(); // Recarrega a lista atualizada do servidor
+      const novaObra = await response.json();
+      toast.success("Obra adicionada!");
+      setObrasList((prev) => [...prev, novaObra]);
     } catch (error) {
       console.error(error);
-      toast.error(error.message || "Não foi possível adicionar a obra.");
+      toast.error("Erro ao adicionar obra.");
     } finally {
       setLoadingObras(false);
     }
   };
 
-  // --- 3. PUT: Atualizar Obra ---
-  // ATUALIZADO: Agora recebe id, nome e quemPaga
-  const handleUpdateObra = async (id, novoNome, novoQuemPaga) => {
+  // --- 3. PUT: Editar Obra (CORRIGIDO) ---
+  const handleEditObra = async (id, nomeObra, quemPaga) => {
     try {
-      const payload = {
-        nome: novoNome,
-        quem_paga: novoQuemPaga,
-      };
-
       const response = await fetch(`${API_IP}/obras/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
+        body: JSON.stringify({
+          nome: nomeObra,
+          quem_paga: quemPaga
+        }),
       });
 
-      if (!response.ok) throw new Error("Erro ao atualizar");
+      if (!response.ok) throw new Error("Erro ao editar");
 
-      toast.success("Obra atualizada!");
-      await fetchObras();
+      const obraAtualizada = await response.json();
+      toast.success("Obra editada!");
+      // Atualização local para ser mais rápido
+      setObrasList((prev) =>
+        prev.map((o) => (o.id === id ? obraAtualizada : o))
+      );
     } catch (error) {
       console.error(error);
       toast.error("Erro ao editar obra.");
     }
   };
 
-  // --- 4. DELETE: Remover Obra ---
+  // --- 4. DELETE: Remover Obra (CORRIGIDO) ---
   const handleDeleteObra = async (id) => {
     try {
       const response = await fetch(`${API_IP}/obras/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(), // <--- ADICIONADO AUTORIZAÇÃO
       });
 
       if (!response.ok) throw new Error("Erro ao deletar");
@@ -114,16 +126,14 @@ export default function DashboardUsers() {
         {/* Componente de Obras: Recebe dados e passa funções de controle */}
         <ObrasManager
           obras={obrasList}
-          isLoading={loadingObras}
-          onAddObra={handleAddObra}
-          onUpdateObra={handleUpdateObra}
-          onRequestDeleteObra={handleDeleteObra}
+          loading={loadingObras}
+          handleAdd={handleAddObra}
+          handleEdit={handleEditObra}
+          handleDelete={handleDeleteObra}
         />
 
-        <hr className="border-gray-200" />
-
-        {/* Componente de Usuários */}
-        <UserManager API_IP={API_IP} availableObras={obrasNamesForDropdown} />
+        {/* Componente de Usuários: Assumimos que ele está sendo renderizado abaixo */}
+        <UserManager obrasNames={obrasNamesForDropdown} />
       </div>
     </div>
   );

@@ -1,10 +1,14 @@
 import React from "react";
 import { Edit, Save, Trash2, X, Loader2, ChevronDown } from "lucide-react";
-import toast from "react-hot-toast";
-import { formatCurrencyDisplay, getStatusClasses } from "./dashboard.data";
+// ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
+import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data"; 
+// import toast from "react-hot-toast"; // Removido se não estiver sendo usado
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
+  listaObras = [], // Recebe a lista de obras
+  listaTitulares = [], 
+  listaUsuarios = [], 
   columns = [],
   expandedFieldsConfig = [],
 
@@ -25,7 +29,7 @@ const PaymentTable = ({
   handleCancelEdit,
   handleRemove,
   toggleRowExpansion,
-  handleEditChange,
+  handleEditChange, 
 
   // Props para autocomplete de titular
   titularSuggestions = [],
@@ -37,57 +41,77 @@ const PaymentTable = ({
   handleKeyDown = () => {},
   autocompleteDropdownRef = null,
 }) => {
+  
   // --- Lógica de Renderização de Campos ---
   const renderField = (key, data, isEditing, colConfig = {}, request) => {
-    // Busca a configuração do campo nas props recebidas (columns ou expandedFieldsConfig)
     const fieldConfig =
       columns.find((c) => c.key === key) ||
       expandedFieldsConfig.find((c) => c.key === key) ||
       colConfig;
 
     const value = data[key];
-    // Se editable não for definido, assume true, a menos que seja explicitamente false
     const editable = fieldConfig.editable !== false;
 
+    // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
-      // --- Inputs de Edição ---
-
+      
+      // --- SELECT ---
       if (fieldConfig.type === "select") {
-        const selectOptions = fieldConfig.options || [];
+        // ✅ AJUSTE: Garante que a lista de opções correta seja usada
+        const isObraOrTitular = key === "obra" || key === "titular";
+        let selectOptions = fieldConfig.options || [];
 
-        // Verifica se é um select de IDs (Objeto {id, nome}) ou String simples
-        const isIdSelect =
-          ["quemPaga", "obra", "titular"].includes(fieldConfig.key) ||
-          (selectOptions.length > 0 && typeof selectOptions[0] === "object");
+        if (key === "obra") {
+            selectOptions = listaObras;
+        } else if (key === "titular") {
+            selectOptions = listaTitulares;
+        } else if (key === "solicitante") {
+            selectOptions = listaUsuarios;
+        }
+        
+        // Verifica se é um select de IDs (Objeto {id, nome})
+        const isIdSelect = 
+            isObraOrTitular || 
+            ["quemPaga", "solicitante"].includes(key) ||
+            (selectOptions.length > 0 && typeof selectOptions[0] === "object");
+
 
         return (
           <select
             name={key}
-            value={value || ""}
+            // 🥇 SOLUÇÃO: Converte o ID de edição para string para garantir o match no <select>
+            value={value != null ? String(value) : ""}
             onChange={handleEditChange}
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione...</option>
             {selectOptions.map((opt) => {
-              // Se for objeto {id, nome}
-              if (isIdSelect && typeof opt === "object") {
+              // Se for objeto {id, nome} (Caso da Obra, Titular, Solicitante)
+              if (isIdSelect && typeof opt === "object" && opt.id != null) {
+                const displayName = opt.nome || opt.name || `ID: ${opt.id}`;
+                
                 return (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.nome} {opt.id ? `(ID: ${opt.id})` : ""}
+                  // 🥈 SOLUÇÃO: Converte o ID da opção para string para garantir o match
+                  <option key={opt.id} value={String(opt.id)}> 
+                    {displayName} {/* Isso é o que o usuário vê (o nome) */}
                   </option>
                 );
               }
-              // Se for string simples
-              return (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              );
+              // Se for um array de strings (Opções de Formas de Pagamento, por exemplo)
+              if (typeof opt === "string") {
+                return (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                );
+              }
+              return null; // Ignora outros formatos
             })}
           </select>
         );
       }
 
+      // --- BOOLEAN (CHECKBOX) ---
       if (fieldConfig.type === "boolean") {
         return (
           <div className="flex items-center space-x-2">
@@ -111,6 +135,7 @@ const PaymentTable = ({
         );
       }
 
+      // --- DATE ---
       if (fieldConfig.type === "date") {
         return (
           <input
@@ -123,12 +148,11 @@ const PaymentTable = ({
         );
       }
 
-if (fieldConfig.type === "currency") {
-        // Função para formatar o valor bruto (ex: 4000) para visual (ex: 40,00)
+      // --- CURRENCY ---
+      if (fieldConfig.type === "currency") {
         const formatValueToInput = (rawValue) => {
             if (!rawValue) return "";
             const numericString = String(rawValue).replace(/\D/g, "");
-            // Divide por 100 e formata para PT-BR
             return (Number(numericString) / 100).toLocaleString("pt-BR", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -139,7 +163,6 @@ if (fieldConfig.type === "currency") {
           <input
             type="text"
             name={key}
-            // Aplica a formatação apenas visualmente 
             value={formatValueToInput(value)} 
             onChange={handleEditChange}
             placeholder="0,00"
@@ -148,6 +171,7 @@ if (fieldConfig.type === "currency") {
         );
       }
 
+      // --- TEXTAREA ---
       if (fieldConfig.type === "textarea") {
         return (
           <textarea
@@ -175,10 +199,7 @@ if (fieldConfig.type === "currency") {
               onKeyDown={handleKeyDown}
               onFocus={() => {
                 if (value && typeof value === "string" && value.trim() && titularSuggestions.length > 0) {
-                  // Não abre automaticamente se estiver bloqueado
-                  if (!isTitularLocked) {
-                    // setShowTitularSuggestions(true); // Controlado via props
-                  }
+                  // Lógica de abertura do dropdown (se necessário)
                 }
               }}
               placeholder="Digite o nome do fornecedor..."
@@ -240,10 +261,25 @@ if (fieldConfig.type === "currency") {
       );
     }
 
-    // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO ---
+    // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
+    
+    // ✅ CORREÇÃO 1: Prioriza o format definido na coluna (como o de 'obra' em dashboard.data.jsx)
     if (fieldConfig.format) {
       return fieldConfig.format(value);
     }
+    
+    // ✅ CORREÇÃO 2: A tradução de ID fica como fallback, se não houver um formatador específico
+    if (["obra", "titular", "solicitante"].includes(key)) {
+        let list;
+        if (key === "obra") list = listaObras;
+        else if (key === "titular") list = listaTitulares; 
+        else if (key === "solicitante") list = listaUsuarios;
+
+        // Usa a função auxiliar para traduzir o ID para o Nome
+        const name = list ? getNameById(list, value) : (value || "—"); 
+        return <span className="text-gray-900">{name}</span>;
+    }
+
 
     if (fieldConfig.isLink && value) {
       return (

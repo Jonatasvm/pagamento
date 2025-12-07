@@ -16,6 +16,7 @@ import {
   listarFormularios,
   atualizarFormulario,
   deletarFormulario,
+  atualizarStatusLancamento, // ✅ NOVO IMPORT: Para o toggle de status
 } from "./formularioService";
 
 const API_URL = "http://91.98.132.210:5631";
@@ -24,11 +25,12 @@ export const Dashboard = () => {
   const [requests, setRequests] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // --- Estados para Dados Auxiliares (Selects e Nomes) ---
-  const [listaUsuarios, setListaUsuarios] = useState([]);
+  // --- Estados para Dados Auxiliares ---
+  const [listaUsuarios, setListaUsuarios] = useState([]); // Se houver rota para usuários, deve ser preenchida
   const [listaObras, setListaObras] = useState([]);
   const [listaTitulares, setListaTitulares] = useState([]);
 
+  // --- Estados de Edição e Seleção ---
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -52,28 +54,58 @@ export const Dashboard = () => {
     titular: "",
   });
 
-  // --- CARREGAR DADOS DA API ---
-  const loadData = async () => {
+  // =========================================================================
+  // 1. CARREGAMENTO DE DADOS (Consolidado)
+  // =========================================================================
+  
+  const fetchRequests = async () => {
     setIsLoadingData(true);
     try {
-      const [dadosFormularios] = await Promise.all([
-        listarFormularios(),
-      ]);
-
-      setRequests(dadosFormularios);
+      const data = await listarFormularios();
+      setRequests(data);
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar dados.");
+      console.error("Erro ao carregar requisições:", error);
+      toast.error("Erro ao carregar a lista de lançamentos.");
     } finally {
       setIsLoadingData(false);
     }
   };
 
+  const fetchListaObras = async () => {
+    try {
+      const response = await fetch(`${API_URL}/obras`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de obras");
+      const data = await response.json();
+      setListaObras(data);
+    } catch (error) {
+      console.error("Erro ao carregar obras:", error);
+    }
+  };
+
+  const fetchListaTitulares = async () => {
+    try {
+      const response = await fetch(`${API_URL}/titulares/list`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de titulares");
+      const data = await response.json();
+      setListaTitulares(data);
+    } catch (error) {
+      console.error("Erro ao carregar titulares:", error);
+    }
+  };
+
+  // Carrega tudo ao montar o componente
   useEffect(() => {
-    loadData();
+    fetchRequests();
+    fetchListaObras();
+    fetchListaTitulares();
+    // Se tiver fetchListaUsuarios(), chame aqui
   }, []);
 
-  // --- Geração Dinâmica das Colunas ---
+  // =========================================================================
+  // 2. GERAÇÃO DINÂMICA DE COLUNAS
+  // =========================================================================
+  
+  // O useMemo garante que as colunas sejam recriadas quando listaObras for carregada via API.
   const columns = useMemo(
     () => getTableColumns(listaUsuarios, listaObras, listaTitulares),
     [listaUsuarios, listaObras, listaTitulares]
@@ -84,44 +116,49 @@ export const Dashboard = () => {
     [listaUsuarios]
   );
 
-  // --- Lógica de Filtragem (Frontend) ---
-  // Dashboard.jsx (Bloco de filteredRequests corrigido)
-
-// ...
+  // =========================================================================
+  // 3. LÓGICA DE FILTRAGEM
+  // =========================================================================
+  
   const filteredRequests = requests.filter((req) => {
-    // FILTRO DE STATUS (mantido)
+    // FILTRO DE STATUS
     if (filters.statusLancamento !== "") {
       const filterBool = filters.statusLancamento === "true";
       if (req.statusLancamento !== filterBool) return false;
     }
-    
-    // FILTRO DE FORMA DE PAGAMENTO (CORREÇÃO FINAL: Limpa espaços e normaliza a case)
-    if (filters.formaDePagamento) {
-      // 1. Normaliza o valor do filtro (ex: "CHEQUE")
-      const filterValue = filters.formaDePagamento.trim().toUpperCase();
 
-      // 2. Normaliza o valor do registro do banco (remove espaços + maiúsculas)
+    // FILTRO DE FORMA DE PAGAMENTO
+    if (filters.formaDePagamento) {
+      const filterValue = filters.formaDePagamento.trim().toUpperCase();
       const requestValue = req.formaDePagamento
         ? String(req.formaDePagamento).trim().toUpperCase()
         : "";
-
-      // 3. Compara os valores limpos e padronizados
       if (requestValue !== filterValue) return false;
     }
-    
-    // FILTRO DE DATA (Corrigido para usar 'dataPagamento' conforme interações anteriores)
-    if (filters.data && req.dataPagamento !== filters.data) return false; 
-    
-    // FILTRO DE OBRA (mantido)
-    if (filters.obra && req.obra !== Number(filters.obra)) return false;
-    
-    // FILTRO DE TITULAR (mantido)
-    if (filters.titular && req.titular !== Number(filters.titular))
-      return false;
-      
+
+    // FILTRO DE DATA
+    if (filters.data && req.dataPagamento !== filters.data) return false;
+
+    // FILTRO DE OBRA (Comparação Robusta de IDs)
+    if (filters.obra) {
+      const filterIdString = String(filters.obra);
+      const requestObraIdString = req.obra ? String(req.obra) : "";
+      if (requestObraIdString !== filterIdString) {
+        return false;
+      }
+    }
+
+    // FILTRO DE TITULAR
+    if (filters.titular) {
+      const filterValue = filters.titular.trim().toUpperCase();
+      const requestValue = req.titular
+        ? String(req.titular).trim().toUpperCase()
+        : "";
+      if (requestValue !== filterValue) return false;
+    }
+
     return true;
   });
-// ...
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -139,7 +176,10 @@ export const Dashboard = () => {
     toast.success("Filtros limpos");
   };
 
-  // --- Handlers de Tabela ---
+  // =========================================================================
+  // 4. HANDLERS DE TABELA, EDIÇÃO E REMOÇÃO
+  // =========================================================================
+
   const toggleRowExpansion = (id) => {
     setExpandedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
@@ -171,93 +211,35 @@ export const Dashboard = () => {
       toast.error("Finalize a edição atual antes de iniciar outra.");
       return;
     }
+    
+    // Abre a linha para edição
     setExpandedRows((prev) =>
       prev.includes(request.id) ? prev : [...prev, request.id]
     );
+    
+    // Desmarca seleção da linha em edição para evitar conflitos
     setSelectedRequests((prevSelected) =>
       prevSelected.filter((id) => id !== request.id)
     );
+    
     setEditingId(request.id);
-    setEditFormData({ ...request });
+
+    // ✅ CORREÇÃO: Prepara o formulário. 
+    // Converte 'obra' para string para garantir que o <select> encontre o valor correto.
+    setEditFormData({
+      ...request,
+      obra: request.obra ? String(request.obra) : "",
+    });
+
     setIsTitularLocked(false);
 
+    // Scroll suave até a linha
     setTimeout(() => {
       document
         .getElementById(`row-${request.id}`)
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };
-
-  // --- Buscar Titulares para Autocomplete  ---
-  useEffect(() => {
-    const fetchTitulares = async () => {
-      if (!editFormData.titular || typeof editFormData.titular !== "string" || !editFormData.titular.trim()) {
-        setTitularSuggestions([]);
-        setShowTitularSuggestions(false);
-        return;
-      }
-
-      setIsLoadingSuggestions(true);
-      try {
-        const response = await fetch(
-          `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(
-            editFormData.titular
-          )}`
-        );
-        if (!response.ok) throw new Error("Erro ao buscar titulares");
-
-        const data = await response.json();
-        setTitularSuggestions(data);
-        setShowTitularSuggestions(true);
-        setSelectedSuggestionIndex(-1);
-      } catch (error) {
-        console.error("Erro ao buscar titulares:", error);
-        setTitularSuggestions([]);
-      } finally {
-        setIsLoadingSuggestions(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(fetchTitulares, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [editFormData.titular]);
-
-  // --- Buscar quem_paga quando obra mudar ---
-  useEffect(() => {
-    const fetchQuemPaga = async () => {
-      if (!editFormData.obra) {
-        setEditFormData((prev) => ({ ...prev, quemPaga: null }));
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/obras/${editFormData.obra}`);
-        if (!response.ok) throw new Error("Erro ao buscar obra");
-
-        const obra = await response.json();
-        setEditFormData((prev) => ({ ...prev, quemPaga: obra.quem_paga }));
-      } catch (error) {
-        console.error("Erro ao buscar quem_paga:", error);
-      }
-    };
-
-    fetchQuemPaga();
-  }, [editFormData.obra]);
-
-  // --- Fechar sugestões ao clicar fora ---
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        autocompleteDropdownRef.current &&
-        !autocompleteDropdownRef.current.contains(event.target)
-      ) {
-        setShowTitularSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -266,58 +248,16 @@ export const Dashboard = () => {
     if (name === "valor") newValue = value.replace(/\D/g, "");
     if (type === "checkbox") newValue = checked;
     if (["quemPaga", "obra", "titular"].includes(name)) {
-      // Se for titular e estiver vindo de um input de texto, não converte para número
       if (name === "titular" && typeof value === "string") {
         newValue = value;
-        setIsTitularLocked(false); // Desbloqueia ao digitar
+        setIsTitularLocked(false);
       } else {
+        // Obra e quemPaga são numéricos no backend
         newValue = Number(value);
       }
     }
 
     setEditFormData((prevData) => ({ ...prevData, [name]: newValue }));
-  };
-
-  // Handler para selecionar um titular da lista de sugestões
-  const handleSelectTitular = (suggestion) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      titular: suggestion.titular,
-      cpfCnpjTitularConta: suggestion.cpf_cnpj,
-    }));
-    setIsTitularLocked(true);
-    setShowTitularSuggestions(false);
-    setTitularSuggestions([]);
-  };
-
-  // Handler para navegação com teclado nas sugestões
-  const handleKeyDown = (e) => {
-    if (!showTitularSuggestions || titularSuggestions.length === 0) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedSuggestionIndex((prev) =>
-          prev < titularSuggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedSuggestionIndex >= 0) {
-          handleSelectTitular(titularSuggestions[selectedSuggestionIndex]);
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        setShowTitularSuggestions(false);
-        break;
-      default:
-        break;
-    }
   };
 
   const handleSave = async () => {
@@ -341,7 +281,9 @@ export const Dashboard = () => {
       setEditingId(null);
       setEditFormData({});
       setIsTitularLocked(false);
-      await loadData();
+      
+      // Recarrega os dados para atualizar a tabela
+      await fetchRequests();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar alterações.");
@@ -375,6 +317,160 @@ export const Dashboard = () => {
     }
   };
 
+  // =========================================================================
+  // ✅ NOVO HANDLER: Toggle Status de Lançamento
+  // =========================================================================
+  const handleToggleLancamento = async (id, isCurrentlyLancado) => {
+    if (editingId) {
+      toast.error("Finalize a edição atual antes de mudar o status.");
+      return;
+    }
+    
+    const novoStatus = !isCurrentlyLancado;
+    const actionText = novoStatus ? "Lançado" : "Pendente";
+    
+    const toastId = toast.loading(`Atualizando status para ${actionText}...`);
+    try {
+      // 1. Chama o serviço API para atualizar no banco de dados
+      await atualizarStatusLancamento(id, novoStatus);
+      
+      // 2. Atualiza o estado local para uma resposta rápida da UI
+      setRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === id ? { ...req, statusLancamento: novoStatus } : req
+        )
+      );
+      
+      toast.success(`Status alterado para ${actionText} com sucesso.`, { id: toastId });
+    } catch (error) {
+      console.error("Erro ao alternar status:", error);
+      toast.error("Erro ao salvar o novo status.", { id: toastId });
+    }
+  };
+
+
+  // =========================================================================
+  // 5. LÓGICA DE AUTOCOMPLETE E DEPENDÊNCIAS
+  // =========================================================================
+
+  // Buscar Titulares (Autocomplete)
+  useEffect(() => {
+    const fetchTitularesSuggestions = async () => {
+      if (
+        !editFormData.titular ||
+        typeof editFormData.titular !== "string" ||
+        !editFormData.titular.trim()
+      ) {
+        setTitularSuggestions([]);
+        setShowTitularSuggestions(false);
+        return;
+      }
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(
+          `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(
+            editFormData.titular
+          )}`
+        );
+        if (!response.ok) throw new Error("Erro ao buscar titulares");
+
+        const data = await response.json();
+        setTitularSuggestions(data);
+        setShowTitularSuggestions(true);
+        setSelectedSuggestionIndex(-1);
+      } catch (error) {
+        console.error("Erro ao buscar titulares:", error);
+        setTitularSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchTitularesSuggestions, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [editFormData.titular]);
+
+  // Buscar quem_paga quando obra mudar
+  useEffect(() => {
+    const fetchQuemPaga = async () => {
+      // Se não tiver obra selecionada, não busca
+      if (!editFormData.obra) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/obras/${editFormData.obra}`);
+        if (!response.ok) throw new Error("Erro ao buscar obra");
+
+        const obra = await response.json();
+        // Garante que o campo quemPaga é atualizado
+        setEditFormData((prev) => ({ ...prev, quemPaga: obra.quem_paga }));
+      } catch (error) {
+        console.error("Erro ao buscar quem_paga:", error);
+      }
+    };
+
+    if (editingId !== null) {
+      fetchQuemPaga();
+    }
+  }, [editFormData.obra, editingId]);
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        autocompleteDropdownRef.current &&
+        !autocompleteDropdownRef.current.contains(event.target)
+      ) {
+        setShowTitularSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectTitular = (suggestion) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      titular: suggestion.titular,
+      cpfCnpjTitularConta: suggestion.cpf_cnpj,
+    }));
+    setIsTitularLocked(true);
+    setShowTitularSuggestions(false);
+    setTitularSuggestions([]);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showTitularSuggestions || titularSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < titularSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0) {
+          handleSelectTitular(titularSuggestions[selectedSuggestionIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setShowTitularSuggestions(false);
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleGenerateCSV = async () => {
     if (selectedRequests.length === 0) {
       toast.error("Selecione pelo menos um registro para gerar o CSV.");
@@ -382,18 +478,22 @@ export const Dashboard = () => {
     }
     setIsSaving(true);
     let errorCount = 0;
+    // IMPORTANTE: O backend precisa ser adaptado para aceitar "statusGeradoCSV" se este
+    // campo for persistido. Por ora, vamos apenas simular a atualização.
     for (const id of selectedRequests) {
       const request = requests.find((r) => r.id === id);
       if (request) {
         try {
-          await atualizarFormulario(id, { ...request, statusGeradoCSV: true });
+          // Nota: Você pode precisar adicionar 'status_gerado_csv' ao seu PUT no Python.
+          // Por enquanto, atualizamos com o campo que o backend aceita.
+          await atualizarFormulario(id, { ...request, observacao: `CSV Gerado em ${new Date().toISOString().split('T')[0]}. ${request.observacao}` });
         } catch (err) {
           console.error(`Erro ao atualizar ID ${id}`, err);
           errorCount++;
         }
       }
     }
-    await loadData();
+    await fetchRequests();
     setSelectedRequests([]);
     setIsSaving(false);
 
@@ -405,6 +505,10 @@ export const Dashboard = () => {
       toast.warning(`Concluído com ${errorCount} erro(s).`);
     }
   };
+
+  // =========================================================================
+  // 6. RENDERIZAÇÃO
+  // =========================================================================
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
@@ -448,6 +552,7 @@ export const Dashboard = () => {
             <span>Filtros de Pesquisa</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+            
             {/* Status */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
@@ -499,7 +604,7 @@ export const Dashboard = () => {
               ></input>
             </div>
 
-            {/* Obra */}
+            {/* Obra (Filtra por ID numérico) */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Obra
@@ -519,7 +624,7 @@ export const Dashboard = () => {
               </select>
             </div>
 
-            {/* Titular */}
+            {/* Titular (Filtra por String/Nome) */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Titular
@@ -531,6 +636,7 @@ export const Dashboard = () => {
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
                 <option value="">Todos</option>
+                {/* Aqui, t.id é o NOME do titular (string) */}
                 {listaTitulares.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.nome}
@@ -549,7 +655,7 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Loading State ou Tabela */}
+        {/* Tabela de Pagamentos */}
         {isLoadingData ? (
           <div className="flex justify-center items-center p-12">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -557,8 +663,16 @@ export const Dashboard = () => {
           </div>
         ) : (
           <PaymentTable
+            // Props de Configuração
             columns={columns}
             expandedFieldsConfig={expandedFieldsConfig}
+            
+            // Listas Auxiliares (Passadas explicitamente)
+            listaObras={listaObras}
+            listaTitulares={listaTitulares}
+            listaUsuarios={listaUsuarios}
+            
+            // Props de Dados
             filteredRequests={filteredRequests}
             isAllSelected={isAllSelected}
             selectedRequests={selectedRequests}
@@ -566,6 +680,8 @@ export const Dashboard = () => {
             editFormData={editFormData}
             isSaving={isSaving}
             expandedRows={expandedRows}
+            
+            // Handlers
             handleSelectAll={handleSelectAll}
             handleSelectOne={handleSelectOne}
             handleEdit={handleEdit}
@@ -574,7 +690,10 @@ export const Dashboard = () => {
             handleRemove={handleRemove}
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
-            // Props para autocomplete de titular
+            handleToggleLancamento={handleToggleLancamento} 
+            //{/* ✅ NOVO: Passando o handler de status */}
+
+            // Props de Autocomplete
             titularSuggestions={titularSuggestions}
             isLoadingSuggestions={isLoadingSuggestions}
             showTitularSuggestions={showTitularSuggestions}
