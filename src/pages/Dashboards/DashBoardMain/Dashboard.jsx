@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { Loader2, FileText, Filter, RotateCcw, User, Search } from "lucide-react";
+import { Loader2, FileText, Filter, RotateCcw, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Imports Locais
@@ -17,7 +17,6 @@ import {
   atualizarFormulario,
   deletarFormulario,
   atualizarStatusLancamento, // ✅ NOVO IMPORT: Para o toggle de status
-  exportarELancarFormularios, // Import para a exportação
 } from "./formularioService";
 
 const API_URL = "http://91.98.132.210:5631";
@@ -38,32 +37,6 @@ export const Dashboard = () => {
   const [selectedRequests, setSelectedRequests] = useState([]);
   const [expandedRows, setExpandedRows] = useState([]);
 
-  // --- Estados para FILTROS AVANÇADOS (NOVO BLOCO) ---
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filterTerm, setFilterTerm] = useState("");
-  const [filterState, setFilterState] = useState({
-    obra: '',
-    titular: '',
-    solicitante: '',
-    status: '', // 'Y' (Lançado), 'N' (Não Lançado) ou '' (Todos)
-    dataPagamentoInicio: '',
-    dataPagamentoFim: '',
-  });
-  
-  // Função para resetar filtros
-  const handleResetFilters = () => {
-    setFilterTerm(""); // Reseta a busca de texto
-    setFilterState({
-      obra: '',
-      titular: '',
-      solicitante: '',
-      status: '',
-      dataPagamentoInicio: '',
-      dataPagamentoFim: '',
-    });
-    toast.success("Filtros redefinidos!");
-  };
-
   // --- Estados para Autocomplete de Titular ---
   const [titularSuggestions, setTitularSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -72,68 +45,145 @@ export const Dashboard = () => {
   const [isTitularLocked, setIsTitularLocked] = useState(false);
   const autocompleteDropdownRef = useRef(null);
 
-  // Função centralizada para buscar e processar todos os dados
-  const fetchData = async () => {
+  // --- Filtros ---
+  const [filters, setFilters] = useState({
+    statusLancamento: "",
+    formaDePagamento: "",
+    data: "",
+    obra: "",
+    titular: "",
+  });
+
+  // =========================================================================
+  // 1. CARREGAMENTO DE DADOS (Consolidado)
+  // =========================================================================
+  
+  const fetchRequests = async () => {
     setIsLoadingData(true);
     try {
-      // 1. Fetch dos Formulários (Requests)
-      const requestsData = await listarFormularios();
-      setRequests(requestsData);
-
-      // 2. Fetch dos Dados Auxiliares
-      // Para usuários
-      const usersResponse = await fetch(`${API_URL}/usuarios/list`);
-      if (usersResponse.ok) {
-        const users = await usersResponse.json();
-        // A API retorna objetos no formato { id: 1, nome: "Usuário" }
-        setListaUsuarios(users); 
-      } else {
-        console.error("Erro ao buscar usuários");
-      }
-
-      // Para obras
-      const obrasResponse = await fetch(`${API_URL}/obras`);
-      if (obrasResponse.ok) {
-        const obras = await obrasResponse.json();
-        // A API retorna objetos no formato { id: 1, nome: "Obra X", quem_paga: "Nome" }
-        setListaObras(obras);
-      } else {
-        console.error("Erro ao buscar obras");
-      }
-      
-      // Para titulares (Lista Completa para o filtro, embora o autocomplete use a search)
-      const titularesResponse = await fetch(`${API_URL}/formulario/titulares/list`);
-      if (titularesResponse.ok) {
-        const titulares = await titularesResponse.json();
-        // A API retorna objetos no formato { id: "Nome", nome: "Nome" }
-        setListaTitulares(titulares);
-      } else {
-        console.error("Erro ao buscar titulares");
-      }
-
-
+      const data = await listarFormularios();
+      setRequests(data);
     } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-      toast.error("Erro ao carregar dados. Verifique a conexão com a API.");
+      console.error("Erro ao carregar requisições:", error);
+      toast.error("Erro ao carregar a lista de lançamentos.");
     } finally {
       setIsLoadingData(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-  
-  // --- Lógica de Seleção ---
-  const isAllSelected = selectedRequests.length > 0 && selectedRequests.length === filteredRequests.length;
-
-  const handleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedRequests([]);
-    } else {
-      // Seleciona todos os IDs dos requests FILTRADOS
-      setSelectedRequests(filteredRequests.map((req) => req.id));
+  const fetchListaObras = async () => {
+    try {
+      const response = await fetch(`${API_URL}/obras`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de obras");
+      const data = await response.json();
+      setListaObras(data);
+    } catch (error) {
+      console.error("Erro ao carregar obras:", error);
     }
+  };
+
+  const fetchListaTitulares = async () => {
+    try {
+      const response = await fetch(`${API_URL}/titulares/list`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de titulares");
+      const data = await response.json();
+      setListaTitulares(data);
+    } catch (error) {
+      console.error("Erro ao carregar titulares:", error);
+    }
+  };
+
+  // Carrega tudo ao montar o componente
+  useEffect(() => {
+    fetchRequests();
+    fetchListaObras();
+    fetchListaTitulares();
+    // Se tiver fetchListaUsuarios(), chame aqui
+  }, []);
+
+  // =========================================================================
+  // 2. GERAÇÃO DINÂMICA DE COLUNAS
+  // =========================================================================
+  
+  // O useMemo garante que as colunas sejam recriadas quando listaObras for carregada via API.
+  const columns = useMemo(
+    () => getTableColumns(listaUsuarios, listaObras, listaTitulares),
+    [listaUsuarios, listaObras, listaTitulares]
+  );
+
+  const expandedFieldsConfig = useMemo(
+    () => getExpandedFields(listaUsuarios),
+    [listaUsuarios]
+  );
+
+  // =========================================================================
+  // 3. LÓGICA DE FILTRAGEM
+  // =========================================================================
+  
+  const filteredRequests = requests.filter((req) => {
+    // FILTRO DE STATUS
+    if (filters.statusLancamento !== "") {
+      const filterBool = filters.statusLancamento === "true";
+      if (req.statusLancamento !== filterBool) return false;
+    }
+
+    // FILTRO DE FORMA DE PAGAMENTO
+    if (filters.formaDePagamento) {
+      const filterValue = filters.formaDePagamento.trim().toUpperCase();
+      const requestValue = req.formaDePagamento
+        ? String(req.formaDePagamento).trim().toUpperCase()
+        : "";
+      if (requestValue !== filterValue) return false;
+    }
+
+    // FILTRO DE DATA
+    if (filters.data && req.dataPagamento !== filters.data) return false;
+
+    // FILTRO DE OBRA (Comparação Robusta de IDs)
+    if (filters.obra) {
+      const filterIdString = String(filters.obra);
+      const requestObraIdString = req.obra ? String(req.obra) : "";
+      if (requestObraIdString !== filterIdString) {
+        return false;
+      }
+    }
+
+    // FILTRO DE TITULAR
+    if (filters.titular) {
+      const filterValue = filters.titular.trim().toUpperCase();
+      const requestValue = req.titular
+        ? String(req.titular).trim().toUpperCase()
+        : "";
+      if (requestValue !== filterValue) return false;
+    }
+
+    return true;
+  });
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      statusLancamento: "",
+      formaDePagamento: "",
+      data: "",
+      obra: "",
+      titular: "",
+    });
+    toast.success("Filtros limpos");
+  };
+
+  // =========================================================================
+  // 4. HANDLERS DE TABELA, EDIÇÃO E REMOÇÃO
+  // =========================================================================
+
+  const toggleRowExpansion = (id) => {
+    setExpandedRows((prev) =>
+      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
+    );
   };
 
   const handleSelectOne = (id) => {
@@ -144,573 +194,476 @@ export const Dashboard = () => {
     );
   };
 
-  // --- Lógica de Edição ---
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedRequests(filteredRequests.map((req) => req.id));
+    } else {
+      setSelectedRequests([]);
+    }
+  };
+
+  const isAllSelected =
+    filteredRequests.length > 0 &&
+    selectedRequests.length === filteredRequests.length;
 
   const handleEdit = (request) => {
-    // 1. Bloquear se já estiver editando outro item
     if (editingId) {
-      toast.error("Salve ou cancele a edição atual antes de prosseguir.");
+      toast.error("Finalize a edição atual antes de iniciar outra.");
       return;
     }
+    
+    // Abre a linha para edição
+    setExpandedRows((prev) =>
+      prev.includes(request.id) ? prev : [...prev, request.id]
+    );
+    
+    // Desmarca seleção da linha em edição para evitar conflitos
+    setSelectedRequests((prevSelected) =>
+      prevSelected.filter((id) => id !== request.id)
+    );
+    
     setEditingId(request.id);
-    // 2. Cria uma cópia dos dados para edição
-    setEditFormData({ ...request });
-    // 3. Trava o titular se ele já tiver um CPF/CNPJ
-    const hasCpfCnpj = !!request.cpfCnpjTitularConta;
-    setIsTitularLocked(hasCpfCnpj);
+
+    // ✅ CORREÇÃO: Prepara o formulário. 
+    // Converte 'obra' para string para garantir que o <select> encontre o valor correto.
+    setEditFormData({
+      ...request,
+      obra: request.obra ? String(request.obra) : "",
+    });
+
+    setIsTitularLocked(false);
+
+    // Scroll suave até a linha
+    setTimeout(() => {
+      document
+        .getElementById(`row-${request.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    let newValue = value;
+
+    if (name === "valor") newValue = value.replace(/\D/g, "");
+    if (type === "checkbox") newValue = checked;
+    if (["quemPaga", "obra", "titular"].includes(name)) {
+      if (name === "titular" && typeof value === "string") {
+        newValue = value;
+        setIsTitularLocked(false);
+      } else {
+        // Obra e quemPaga são numéricos no backend
+        newValue = Number(value);
+      }
+    }
+
+    setEditFormData((prevData) => ({ ...prevData, [name]: newValue }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    const rawValue = String(editFormData.valor).replace(/\D/g, "");
+    if (rawValue.length === 0) {
+      toast.error("O campo 'VALOR' é obrigatório.");
+      setIsSaving(false);
+      return;
+    }
+    if (!editFormData.dataPagamento) {
+      toast.error("O campo 'Data Pagamento' é obrigatório.");
+      setIsSaving(false);
+      return;
+    }
+
+    try {
+      const dataToSave = { ...editFormData, valor: rawValue };
+      await atualizarFormulario(editingId, dataToSave);
+      toast.success("Solicitação atualizada com sucesso!");
+      setEditingId(null);
+      setEditFormData({});
+      setIsTitularLocked(false);
+      
+      // Recarrega os dados para atualizar a tabela
+      await fetchRequests();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar alterações.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditFormData({});
     setIsTitularLocked(false);
-    // Limpa autocomplete
-    setShowTitularSuggestions(false);
-    setTitularSuggestions([]);
-    setSelectedSuggestionIndex(-1);
-  };
-
-  const handleEditChange = (key, value) => {
-    if (editingId === null) return; // Segurança
-    
-    // Atualização para Titular, CPF/CNPJ ou Chave PIX
-    if (key === 'titular' || key === 'cpfCnpjTitularConta' || key === 'chavePix') {
-      // Se for titular e estiver travado, não permite a edição manual
-      if (key === 'titular' && isTitularLocked) return; 
-
-      setEditFormData(prev => ({ 
-        ...prev, 
-        [key]: value 
-      }));
-      // Ativa a busca de autocomplete apenas para o campo 'titular'
-      if (key === 'titular' && !isTitularLocked) {
-        searchTitular(value);
-      } else if (key === 'titular' && isTitularLocked) {
-        // Se travado, apenas esconde a sugestão, mas não bloqueia a alteração do valor
-        setShowTitularSuggestions(false);
-      } else {
-         // Esconde as sugestões para outros campos
-        setShowTitularSuggestions(false);
-      }
-
-    } else {
-      // Demais campos
-      setEditFormData(prev => ({ 
-        ...prev, 
-        [key]: value 
-      }));
-    }
-  };
-  
-
-  const handleSave = async () => {
-    if (!editingId || isSaving) return;
-
-    // Simples validação para campos importantes
-    if (!editFormData.valor || parseFloat(editFormData.valor.replace(/[R$\s.]/g, "").replace(",", ".")) <= 0) {
-      toast.error("O valor é obrigatório.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await atualizarFormulario(editingId, editFormData);
-      toast.success("Solicitação atualizada com sucesso!");
-      
-      // Atualiza o estado local
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
-          req.id === editingId ? { ...req, ...editFormData } : req
-        )
-      );
-
-      handleCancelEdit(); // Limpa a edição
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      toast.error("Erro ao salvar a edição. Tente novamente.");
-    } finally {
-      setIsSaving(false);
-    }
+    toast("Edição cancelada.", { icon: "👋" });
   };
 
   const handleRemove = async (id) => {
     if (editingId) {
-      toast.error("Salve ou cancele a edição atual antes de remover.");
+      toast.error("Finalize a edição atual antes de remover.");
       return;
     }
-
-    const confirmed = window.confirm(
-      "Tem certeza que deseja remover esta solicitação?"
-    );
-    if (!confirmed) return;
-
-    try {
-      await deletarFormulario(id);
-      toast.success("Solicitação removida!");
-      // Atualiza o estado local
-      setRequests((prevRequests) =>
-        prevRequests.filter((req) => req.id !== id)
-      );
-      setSelectedRequests((prev) => prev.filter((reqId) => reqId !== id)); // Remove da seleção
-    } catch (error) {
-      console.error("Erro ao remover:", error);
-      toast.error("Erro ao remover solicitação.");
+    if (window.confirm("Tem certeza que deseja remover esta solicitação?")) {
+      try {
+        await deletarFormulario(id);
+        setRequests((prev) => prev.filter((req) => req.id !== id));
+        setSelectedRequests((prev) => prev.filter((reqId) => reqId !== id));
+        toast.success("Solicitação removida.");
+      } catch (error) {
+        console.error(error);
+        toast.error("Erro ao remover solicitação.");
+      }
     }
   };
-  
-  // --- Toggle de Status (Lançado/Não Lançado) ---
+
+  // =========================================================================
+  // ✅ NOVO HANDLER: Toggle Status de Lançamento
+  // =========================================================================
   const handleToggleLancamento = async (id, isCurrentlyLancado) => {
+    if (editingId) {
+      toast.error("Finalize a edição atual antes de mudar o status.");
+      return;
+    }
+    
+    const novoStatus = !isCurrentlyLancado;
+    const actionText = novoStatus ? "Lançado" : "Pendente";
+    
+    const toastId = toast.loading(`Atualizando status para ${actionText}...`);
     try {
-      const newStatus = !isCurrentlyLancado;
+      // 1. Chama o serviço API para atualizar no banco de dados
+      await atualizarStatusLancamento(id, novoStatus);
       
-      // 1. Atualiza no backend
-      await atualizarStatusLancamento(id, newStatus);
-      
-      // 2. Atualiza no frontend
-      setRequests(prevRequests => 
-        prevRequests.map(req => 
-          req.id === id ? { ...req, lancado: newStatus } : req
+      // 2. Atualiza o estado local para uma resposta rápida da UI
+      setRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === id ? { ...req, statusLancamento: novoStatus } : req
         )
       );
       
-      toast.success(`Status alterado para: ${newStatus ? 'Lançado' : 'Não Lançado'}`);
-      
+      toast.success(`Status alterado para ${actionText} com sucesso.`, { id: toastId });
     } catch (error) {
       console.error("Erro ao alternar status:", error);
-      toast.error("Erro ao alternar status de lançamento.");
+      toast.error("Erro ao salvar o novo status.", { id: toastId });
     }
   };
 
 
-  // --- Lógica de Autocomplete de Titular ---
-  
-  const searchTitular = async (query) => {
-    if (query.length < 3) {
-      setTitularSuggestions([]);
-      setShowTitularSuggestions(false);
-      return;
-    }
+  // =========================================================================
+  // 5. LÓGICA DE AUTOCOMPLETE E DEPENDÊNCIAS
+  // =========================================================================
 
-    setIsLoadingSuggestions(true);
-    try {
-      const response = await fetch(`${API_URL}/formulario/titulares/search?q=${query}`);
-      if (!response.ok) throw new Error("Falha na busca de titulares.");
-      const data = await response.json();
-      setTitularSuggestions(data);
-      setShowTitularSuggestions(data.length > 0);
-      setSelectedSuggestionIndex(-1); // Reseta o índice de seleção
-    } catch (error) {
-      console.error("Erro na busca de titulares:", error);
-      setTitularSuggestions([]);
-      setShowTitularSuggestions(false);
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
-  };
-
-  const handleSelectTitular = (titularData) => {
-    if (editingId === null) return;
-    
-    // 1. Atualiza os campos do formulário
-    setEditFormData(prev => ({
-      ...prev,
-      titular: titularData.titular,
-      cpfCnpjTitularConta: titularData.cpf_cnpj || prev.cpfCnpjTitularConta, // Mantém o anterior se o novo for nulo
-    }));
-
-    // 2. Trava a edição do titular e CPF/CNPJ (se CPF/CNPJ foi preenchido)
-    if (titularData.cpf_cnpj) {
-      setIsTitularLocked(true);
-      toast.success("Titular e CPF/CNPJ preenchidos automaticamente.");
-    } else {
-      setIsTitularLocked(false);
-    }
-
-    // 3. Limpa e fecha o dropdown
-    setTitularSuggestions([]);
-    setShowTitularSuggestions(false);
-    setSelectedSuggestionIndex(-1);
-  };
-  
-  // Navegação no dropdown com teclado
-  const handleKeyDown = (e) => {
-    if (!showTitularSuggestions) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(prev => 
-        (prev + 1) % titularSuggestions.length
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(prev => 
-        (prev - 1 + titularSuggestions.length) % titularSuggestions.length
-      );
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedSuggestionIndex !== -1) {
-        handleSelectTitular(titularSuggestions[selectedSuggestionIndex]);
+  // Buscar Titulares (Autocomplete)
+  useEffect(() => {
+    const fetchTitularesSuggestions = async () => {
+      if (
+        !editFormData.titular ||
+        typeof editFormData.titular !== "string" ||
+        !editFormData.titular.trim()
+      ) {
+        setTitularSuggestions([]);
+        setShowTitularSuggestions(false);
+        return;
       }
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      setShowTitularSuggestions(false);
-      setSelectedSuggestionIndex(-1);
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(
+          `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(
+            editFormData.titular
+          )}`
+        );
+        if (!response.ok) throw new Error("Erro ao buscar titulares");
+
+        const data = await response.json();
+        setTitularSuggestions(data);
+        setShowTitularSuggestions(true);
+        setSelectedSuggestionIndex(-1);
+      } catch (error) {
+        console.error("Erro ao buscar titulares:", error);
+        setTitularSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchTitularesSuggestions, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [editFormData.titular]);
+
+  // Buscar quem_paga quando obra mudar
+  useEffect(() => {
+    const fetchQuemPaga = async () => {
+      // Se não tiver obra selecionada, não busca
+      if (!editFormData.obra) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/obras/${editFormData.obra}`);
+        if (!response.ok) throw new Error("Erro ao buscar obra");
+
+        const obra = await response.json();
+        // Garante que o campo quemPaga é atualizado
+        setEditFormData((prev) => ({ ...prev, quemPaga: obra.quem_paga }));
+      } catch (error) {
+        console.error("Erro ao buscar quem_paga:", error);
+      }
+    };
+
+    if (editingId !== null) {
+      fetchQuemPaga();
+    }
+  }, [editFormData.obra, editingId]);
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        autocompleteDropdownRef.current &&
+        !autocompleteDropdownRef.current.contains(event.target)
+      ) {
+        setShowTitularSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectTitular = (suggestion) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      titular: suggestion.titular,
+      cpfCnpjTitularConta: suggestion.cpf_cnpj,
+    }));
+    setIsTitularLocked(true);
+    setShowTitularSuggestions(false);
+    setTitularSuggestions([]);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showTitularSuggestions || titularSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < titularSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0) {
+          handleSelectTitular(titularSuggestions[selectedSuggestionIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setShowTitularSuggestions(false);
+        break;
+      default:
+        break;
     }
   };
 
-  // --- Lógica de Exportação Múltipla ---
-
-  const handleExportAndLaunch = async () => {
+  const handleGenerateCSV = async () => {
     if (selectedRequests.length === 0) {
-      toast.error("Selecione pelo menos uma solicitação para exportar/lançar.");
+      toast.error("Selecione pelo menos um registro para gerar o CSV.");
       return;
     }
-    
-    // Confirmação dupla
-    const confirmed = window.confirm(
-      `Você realmente deseja EXPORTAR E LANÇAR ${selectedRequests.length} solicitações? 
-      Isso as marcará como 'Lançadas' e iniciará o download do arquivo CSV.`
-    );
-    
-    if (!confirmed) return;
-    
-    const idList = selectedRequests;
     setIsSaving(true);
-    
-    try {
-      const response = await exportarELancarFormularios(idList);
-      
-      // 1. Inicia o download do arquivo CSV (response.data é um Blob)
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'lancamentos_exportados.csv');
-      document.body.appendChild(link);
-      link.click();
-      window.URL.revokeObjectURL(url);
-      
-      // 2. Atualiza o status 'lancado' dos itens no frontend (localmente)
-      setRequests(prevRequests => 
-        prevRequests.map(req => 
-          idList.includes(req.id) ? { ...req, lancado: true } : req
-        )
-      );
-      
-      // 3. Limpa a seleção
-      setSelectedRequests([]);
-      
-      toast.success(`${idList.length} solicitações exportadas e lançadas com sucesso!`);
+    let errorCount = 0;
+    // IMPORTANTE: O backend precisa ser adaptado para aceitar "statusGeradoCSV" se este
+    // campo for persistido. Por ora, vamos apenas simular a atualização.
+    for (const id of selectedRequests) {
+      const request = requests.find((r) => r.id === id);
+      if (request) {
+        try {
+          // Nota: Você pode precisar adicionar 'status_gerado_csv' ao seu PUT no Python.
+          // Por enquanto, atualizamos com o campo que o backend aceita.
+          await atualizarFormulario(id, { ...request, observacao: `CSV Gerado em ${new Date().toISOString().split('T')[0]}. ${request.observacao}` });
+        } catch (err) {
+          console.error(`Erro ao atualizar ID ${id}`, err);
+          errorCount++;
+        }
+      }
+    }
+    await fetchRequests();
+    setSelectedRequests([]);
+    setIsSaving(false);
 
-    } catch (error) {
-      console.error("Erro na exportação e lançamento:", error);
-      toast.error("Erro ao exportar/lançar. Verifique a conexão com a API.");
-    } finally {
-      setIsSaving(false);
+    if (errorCount === 0) {
+      toast.success(
+        `${selectedRequests.length} registro(s) marcados como 'Gerado'!`
+      );
+    } else {
+      toast.warning(`Concluído com ${errorCount} erro(s).`);
     }
   };
 
-
-  // --- Lógica de Expansão de Linha ---
-  const toggleRowExpansion = (id) => {
-    setExpandedRows((prevExpanded) =>
-      prevExpanded.includes(id)
-        ? prevExpanded.filter((rowId) => rowId !== id)
-        : [...prevExpanded, id]
-    );
-  };
-
-  // --- Colunas e Campos Expandidos (Memoização) ---
-  const columns = useMemo(() => getTableColumns(listaObras, listaUsuarios), [listaObras, listaUsuarios]);
-  const expandedFieldsConfig = useMemo(() => getExpandedFields(listaUsuarios), [listaUsuarios]);
-
-
-  // --- Lógica de FILTRAGEM (USANDO useMemo) ---
-  // ✅ NOVO BLOCO DE LÓGICA DE FILTRAGEM AVANÇADA
-  const filteredRequests = useMemo(() => {
-    if (!requests || requests.length === 0) return [];
-
-    let filtered = requests;
-    
-    // 1. Filtro por termo de busca geral (mantém a busca por texto)
-    if (filterTerm) {
-      const lowerCaseTerm = filterTerm.toLowerCase();
-      filtered = filtered.filter(request =>
-        Object.values(request).some(value => 
-          // Converte para string e checa se inclui o termo
-          String(value).toLowerCase().includes(lowerCaseTerm)
-        )
-      );
-    }
-    
-    // 2. Filtro por Obra (ID numérico)
-    if (filterState.obra) {
-      const obraId = Number(filterState.obra);
-      filtered = filtered.filter(request => request.obra === obraId);
-    }
-    
-    // 3. Filtro por Titular (Texto - busca parcial)
-    if (filterState.titular) {
-      const lowerCaseTitular = filterState.titular.toLowerCase();
-      filtered = filtered.filter(request => 
-        request.titular && request.titular.toLowerCase().includes(lowerCaseTitular)
-      );
-    }
-    
-    // 4. Filtro por Solicitante (Nome/Texto - busca parcial)
-    if (filterState.solicitante) {
-      const lowerCaseSolicitante = filterState.solicitante.toLowerCase();
-      filtered = filtered.filter(request => 
-        request.solicitante && request.solicitante.toLowerCase().includes(lowerCaseSolicitante)
-      );
-    }
-    
-    // 5. Filtro por Status (Lançado/Não Lançado)
-    if (filterState.status) {
-      const isLancado = filterState.status === 'Y';
-      // Converte o campo 'lancado' para booleano para comparação
-      filtered = filtered.filter(request => !!request.lancado === isLancado); 
-    }
-    
-    // 6. Filtro por Data de Pagamento (Data de Início)
-    if (filterState.dataPagamentoInicio) {
-      const start = new Date(filterState.dataPagamentoInicio).getTime();
-      filtered = filtered.filter(request => {
-        if (!request.dataPagamento) return false;
-        const paymentDate = new Date(request.dataPagamento).getTime();
-        return paymentDate >= start;
-      });
-    }
-
-    // 7. Filtro por Data de Pagamento (Data de Fim)
-    if (filterState.dataPagamentoFim) {
-      const end = new Date(filterState.dataPagamentoFim).getTime();
-      filtered = filtered.filter(request => {
-        if (!request.dataPagamento) return false;
-        const paymentDate = new Date(request.dataPagamento).getTime();
-        // Adiciona 23:59:59 ao final do dia para incluir o dia inteiro
-        return paymentDate <= end + 86399000; 
-      });
-    }
-
-    return filtered;
-
-  }, [
-    requests, 
-    filterTerm, 
-    filterState.obra, 
-    filterState.titular, 
-    filterState.solicitante, 
-    filterState.status,
-    filterState.dataPagamentoInicio,
-    filterState.dataPagamentoFim
-  ]);
-  // FIM DO BLOCO DE LÓGICA DE FILTRAGEM AVANÇADA
-
+  // =========================================================================
+  // 6. RENDERIZAÇÃO
+  // =========================================================================
 
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen font-sans text-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
       <Toaster position="top-right" />
 
-      <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 space-y-8">
-        {/* --- HEADER --- */}
-        <header className="flex justify-between items-center border-b pb-4">
-          <h1 className="text-3xl font-extrabold text-indigo-700 flex items-center gap-3">
-            <User className="w-8 h-8" />
-            Painel de Gestão de Pagamentos
+      {selectedRequests.length > 0 && (
+        <div className="fixed bottom-8 right-8 z-50">
+          <button
+            onClick={handleGenerateCSV}
+            className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-2xl hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
+            disabled={editingId !== null || isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <FileText className="w-5 h-5" />
+            )}
+            Gerar CSV ({selectedRequests.length})
+          </button>
+        </div>
+      )}
+
+      <div className="max-w-[1800px] mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
+          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+            Gerenciamento de Pagamentos
           </h1>
           <Link
-            to="/solicitacao"
-            className="px-6 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors transform hover:scale-105"
+            to="/dashboard/users"
+            className="flex gap-x-2 bg-green-500 w-fit text-white p-3 mt-10 rounded-xl shadow-lg shadow-gray-400 cursor-pointer"
           >
-            Nova Solicitação
+            <User />
+            <p>Gerenciamento de Usuários</p>
           </Link>
-        </header>
-
-        {/* --- BARRA DE AÇÕES E BUSCA --- */}
-        <div className="flex justify-between items-center space-x-4">
-          {/* Busca por Texto Geral */}
-          <div className="flex-1 max-w-lg relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar em todas as colunas (Titular, Obra, Valor, etc.)..."
-              value={filterTerm}
-              onChange={(e) => setFilterTerm(e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-shadow shadow-sm"
-            />
-          </div>
-
-          {/* Ações Múltiplas */}
-          <div className="flex space-x-3 items-center">
-            {selectedRequests.length > 0 && (
-              <button
-                onClick={handleExportAndLaunch}
-                disabled={isSaving}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center space-x-2 ${
-                  isSaving 
-                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700 shadow-md'
-                }`}
-              >
-                {isSaving ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <FileText className="w-5 h-5" />
-                )}
-                <span>{isSaving ? 'Lançando...' : `Exportar & Lançar (${selectedRequests.length})`}</span>
-              </button>
-            )}
-
-            {/* Botão de Atualizar Dados */}
-            <button
-              onClick={fetchData}
-              disabled={isLoadingData || isSaving}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center space-x-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200"
-            >
-              <RotateCcw className={`w-5 h-5 ${isLoadingData ? 'animate-spin' : ''}`} />
-              <span>Atualizar</span>
-            </button>
-          </div>
         </div>
-        
-        {/* NOVO BLOCO: --- FILTROS AVANÇADOS UI --- */}
-        <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-100">
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-3">
-            <FileText className="w-6 h-6 text-indigo-500" />
-            Lista de Solicitações ({filteredRequests.length})
-          </h2>
 
-          <div className="flex space-x-3">
-            {/* Botão de Filtro */}
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center space-x-2 ${
-                isFilterOpen ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-indigo-600 border border-indigo-500 hover:bg-indigo-50'
-              } shadow-sm`}
-            >
-              <Filter size={18} />
-              <span>{isFilterOpen ? 'Fechar Filtros' : 'Filtros Avançados'}</span>
-            </button>
+        {/* Container de Filtros */}
+        <div className="bg-white rounded-2xl shadow-md p-5 mb-6 border border-gray-100">
+          <div className="flex items-center gap-2 mb-4 text-gray-700 font-semibold border-b pb-2">
+            <Filter className="w-5 h-5 text-indigo-600" />
+            <span>Filtros de Pesquisa</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             
-            {/* Botão de Reset de Filtros (Mostra se algum filtro avançado ou busca por texto estiver ativo) */}
-            {(filterTerm || Object.values(filterState).some(val => !!val)) && (
-              <button
-                onClick={handleResetFilters}
-                className="px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center space-x-2 bg-red-50 text-red-600 border border-red-300 hover:bg-red-100 shadow-sm"
-              >
-                <RotateCcw size={18} />
-                <span>Limpar Filtros</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Painel de Filtros Avançados */}
-        <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            isFilterOpen ? "max-h-96 opacity-100 mb-6" : "max-h-0 opacity-0 mb-0"
-          } bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-inner`}
-        >
-          <h4 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">
-            Opções de Filtragem
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Filtro Obra */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Obra</label>
+            {/* Status */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Status
+              </label>
               <select
-                value={filterState.obra}
-                onChange={(e) => setFilterState({ ...filterState, obra: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                name="statusLancamento"
+                value={filters.statusLancamento}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
-                <option value="">Todas as Obras</option>
-                {listaObras.map((obra) => (
-                  <option key={obra.id} value={obra.id}>
-                    {obra.nome}
+                <option value="">Todos</option>
+                <option value="true">Sim (Lançado)</option>
+                <option value="false">Não (Pendente)</option>
+              </select>
+            </div>
+
+            {/* Forma Pagto */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Forma Pagto
+              </label>
+              <select
+                name="formaDePagamento"
+                value={filters.formaDePagamento}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Todas</option>
+                {formaPagamentoOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Filtro Titular */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Titular</label>
+            {/* Data */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Data
+              </label>
               <input
-                type="text"
-                placeholder="Nome do titular..."
-                value={filterState.titular}
-                onChange={(e) => setFilterState({ ...filterState, titular: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              />
+                type="date"
+                name="data"
+                value={filters.data}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              ></input>
             </div>
-            
-            {/* Filtro Solicitante */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Solicitante</label>
+
+            {/* Obra (Filtra por ID numérico) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Obra
+              </label>
               <select
-                value={filterState.solicitante}
-                onChange={(e) => setFilterState({ ...filterState, solicitante: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                name="obra"
+                value={filters.obra}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
-                <option value="">Todos os Solicitantes</option>
-                {/* Usuários listados como: { id: 1, nome: "Usuário" } */}
-                {listaUsuarios.map((user) => (
-                  <option key={user.id} value={user.nome}>
-                    {user.nome}
+                <option value="">Todas</option>
+                {listaObras.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.nome}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Filtro Status (Lançado/Não Lançado) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            {/* Titular (Filtra por String/Nome) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Titular
+              </label>
               <select
-                value={filterState.status}
-                onChange={(e) => setFilterState({ ...filterState, status: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                name="titular"
+                value={filters.titular}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
-                <option value="">Todos os Status</option>
-                <option value="Y">Lançado</option>
-                <option value="N">Não Lançado</option>
+                <option value="">Todos</option>
+                {/* Aqui, t.id é o NOME do titular (string) */}
+                {listaTitulares.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nome}
+                  </option>
+                ))}
               </select>
             </div>
-            
-            {/* Filtro Data de Pagamento Início */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pagamento Após</label>
-              <input
-                type="date"
-                value={filterState.dataPagamentoInicio}
-                onChange={(e) => setFilterState({ ...filterState, dataPagamentoInicio: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              />
-            </div>
 
-            {/* Filtro Data de Pagamento Fim */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pagamento Antes</label>
-              <input
-                type="date"
-                value={filterState.dataPagamentoFim}
-                onChange={(e) => setFilterState({ ...filterState, dataPagamentoFim: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              />
-            </div>
+            {/* Botão Limpar */}
+            <button
+              onClick={clearFilters}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm h-[42px]"
+            >
+              <RotateCcw className="w-4 h-4" /> Limpar
+            </button>
           </div>
         </div>
-        {/* FIM DO BLOCO: --- FILTROS AVANÇADOS UI --- */}
 
-
-        {/* --- TABELA DE PAGAMENTOS --- */}
+        {/* Tabela de Pagamentos */}
         {isLoadingData ? (
-          <div className="flex justify-center items-center py-12">
+          <div className="flex justify-center items-center p-12">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             <span className="ml-3 text-gray-600">Carregando dados...</span>
           </div>
         ) : (
           <PaymentTable
-            // Configuração
+            // Props de Configuração
             columns={columns}
             expandedFieldsConfig={expandedFieldsConfig}
             
@@ -738,7 +691,8 @@ export const Dashboard = () => {
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
             handleToggleLancamento={handleToggleLancamento} 
-            
+            //{/* ✅ NOVO: Passando o handler de status */}
+
             // Props de Autocomplete
             titularSuggestions={titularSuggestions}
             isLoadingSuggestions={isLoadingSuggestions}

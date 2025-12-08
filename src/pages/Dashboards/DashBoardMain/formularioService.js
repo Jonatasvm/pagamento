@@ -37,35 +37,49 @@ const adapterBackendToFrontend = (data) => {
     dataLancamento: formatDateToInput(data.data_lancamento),
     solicitante: data.solicitante,
     titular: data.titular,
-    // ... (campos omitidos por brevidade)
-    dataCompetencia: formatDateToInput(data.data_competencia), // Correção na formatação
-    
-    // Novo Campo de Status
-    isLancado: data.lancado === 'Y', // 'Y' (Sim) ou 'N' (Não)
-    lancado: data.lancado, // Mantém o campo original para o adapter
+    referente: data.referente,
+    valor: data.valor
+      ? String(Number(data.valor).toFixed(2)).replace(".", "")
+      : "",
+    obra: data.obra,
+    dataPagamento: formatDateToInput(data.data_pagamento),
+    formaDePagamento: data.forma_pagamento,
+    // Converte '1', 'S', 'Y' para true, e o resto para false.
+    statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
+    cpfCnpjTitularConta: data.cpf_cnpj,
+    chavePix: data.chave_pix,
+    dataCompetencia: formatDateToInput(data.data_competencia),
+    observacao: data.observacao,
+    carimboDataHora: data.carimbo,
+    conta: data.conta || null,
+    quemPaga: data.quem_paga || null,
+    linkAnexo: data.link_anexo || "",
+    categoria: data.categoria || "Outros",
   };
 };
 
 const adapterFrontendToBackend = (data) => {
-  // Converte a moeda (string com R$) para o formato float do Python
-  const valorFormatado = data.valor.replace(/[R$\s.]/g, "").replace(",", ".");
-
-  // O 'lancado' será 'Y' ou 'N'
-  const lancadoStatus = data.isLancado ? 'Y' : 'N';
-  
   return {
-    id_obra: Number(data.obra),
+    data_lancamento: data.dataLancamento,
     solicitante: data.solicitante,
     titular: data.titular,
-    // ... (campos omitidos por brevidade)
-    data_lancamento: data.dataLancamento,
+    referente: data.referente,
+    valor: data.valor ? parseFloat(data.valor) / 100 : 0,
+    obra: Number(data.obra), // Garante que obra seja enviada como número
+    data_pagamento: data.dataPagamento,
+    forma_pagamento: data.formaDePagamento.toUpperCase(), // <--- FORÇA MAIÚSCULAS
+    
+    // ✅ CORREÇÃO CRÍTICA: Mapeia statusLancamento (boolean) para lancado ('Y'/'N')
+    lancado: data.statusLancamento ? 'Y' : 'N', 
+    
+    cpf_cnpj: data.cpfCnpjTitularConta,
+    chave_pix: data.chavePix,
     data_competencia: data.dataCompetencia,
-    lancado: data.lancado || lancadoStatus, // Adiciona o campo
+    observacao: data.observacao,
   };
 };
 
-// --- SERVIÇOS DE CRUD ---
-
+// --- CHAMADAS API ---
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
   return response.data.map(adapterBackendToFrontend);
@@ -104,40 +118,7 @@ export const atualizarStatusLancamento = async (id, isLancado) => {
   const payload = {
     lancado: statusBackend,
   };
-  
-  // 🛠️ CORREÇÃO: Chamada à API e o fechamento da função
-  await api.put(`/formulario/${id}/status`, payload); 
-}; // <--- ESSA CHAVE ESTAVA FALTANDO E CAUSAVA O ERRO!
-// ----------------------------------------------------------------------
 
-
-// ======================================================================
-// ✅ NOVO SERVIÇO: EXPORTAR E LANÇAR MÚLTIPLOS REGISTROS
-// ======================================================================
-export const exportarELancarFormularios = async (ids) => {
-  const response = await api.post("/formulario/exportar", { ids: ids }, {
-    // IMPORTANTE: Configura a resposta para receber o arquivo como um blob
-    responseType: 'blob', 
-  });
-
-  // Cria um objeto URL para o Blob (o arquivo)
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  
-  // Cria um link temporário para forçar o download
-  const link = document.createElement('a');
-  link.href = url;
-  
-  // Define o nome do arquivo que será baixado
-  link.setAttribute('download', 'formularios_exportados.xlsx'); 
-  document.body.appendChild(link);
-  
-  // Dispara o clique para iniciar o download
-  link.click();
-  
-  // Limpa o objeto URL e o link temporário
-  link.remove();
-  window.URL.revokeObjectURL(url);
-  
-  // Retorna para que o frontend possa atualizar o dashboard
-  return response.status === 200;
+  const response = await api.put(`/formulario/${id}`, payload);
+  return response.data;
 };
