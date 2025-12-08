@@ -164,7 +164,15 @@ export const UserManager = ({ API_IP, availableObras }) => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    // Adiciona uma verificação simples antes de buscar
+    const token = localStorage.getItem("token");
+    if (token) {
+        fetchUsers();
+    } else {
+        // Opcional: Avisar o usuário que precisa logar ou tratar o 401 de outra forma.
+        // Se a aplicação espera que o usuário esteja logado, essa mensagem é importante.
+        console.warn("Token de autenticação não encontrado. Não é possível carregar usuários.");
+    }
   }, [API_IP]);
 
   // --- CREATE USER ---
