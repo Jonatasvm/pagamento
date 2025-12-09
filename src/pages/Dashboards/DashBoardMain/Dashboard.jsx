@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo,useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { Loader2, FileText, Filter, RotateCcw, User } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -17,7 +17,6 @@ import {
   atualizarFormulario,
   deletarFormulario,
   atualizarStatusLancamento, // ✅ NOVO IMPORT: Para o toggle de status
-  exportarFormulariosParaXLS,
 } from "./formularioService";
 
 const API_URL = "http://91.98.132.210:5631";
@@ -507,39 +506,6 @@ export const Dashboard = () => {
     }
   };
 
-  //gera XML 
-  const handleExportToXLS = useCallback(async () => {
-    if (selectedRequests.length === 0) {
-      toast.error("Selecione pelo menos um registro para exportar.");
-      return;
-    }
-
-    const toastId = toast.loading(`Exportando ${selectedRequests.length} registro(s)...`);
-
-    try {
-      // Mapeia para obter apenas os IDs dos registros selecionados
-      const idsToExport = selectedRequests.map(req => req.id);
-      
-      const result = await exportarFormulariosParaXLS(idsToExport);
-
-      if (result.success) {
-        // A mensagem de sucesso é mostrada no service após o download, mas garantimos o toque
-        toast.success("Exportação concluída! Verifique seus downloads.", { id: toastId }); 
-        // Desselecionar todos após a exportação (boa prática)
-        setSelectedRequests([]);
-      } else {
-        toast.error(result.message, { id: toastId });
-      }
-      
-    } catch (error) {
-      console.error("Erro na exportação:", error);
-      toast.error("Ocorreu um erro inesperado ao tentar exportar os dados.", { id: toastId });
-    } finally {
-      toast.dismiss(toastId);
-    }
-  }, [selectedRequests]);
-
-
   // =========================================================================
   // 6. RENDERIZAÇÃO
   // =========================================================================
@@ -725,8 +691,6 @@ export const Dashboard = () => {
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
             handleToggleLancamento={handleToggleLancamento} 
-            handleExportToXLS={handleExportToXLS}
-
             //{/* ✅ NOVO: Passando o handler de status */}
 
             // Props de Autocomplete
