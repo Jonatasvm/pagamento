@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit, Save, Trash2, X, Loader2, ChevronDown } from "lucide-react";
+import { Edit, Save, Trash2, X, Loader2, ChevronDown,FileText } from "lucide-react";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
 import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data"; 
 // import toast from "react-hot-toast"; // Removido se não estiver sendo usado
@@ -30,6 +30,8 @@ const PaymentTable = ({
   handleRemove,
   toggleRowExpansion,
   handleEditChange, 
+  handleToggleLancamento,
+  handleExportToXLS,
 
   // Props para autocomplete de titular
   titularSuggestions = [],
@@ -298,27 +300,59 @@ const PaymentTable = ({
   };
 
   // --- RENDERIZAÇÃO PRINCIPAL ---
-  return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
-      {filteredRequests.length === 0 ? (
-        <div className="p-12 text-center text-gray-500">
-          Nenhum registro encontrado.
-        </div>
-      ) : (
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-20">
-            <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded"
-                    disabled={editingId !== null}
-                  />
-                  Ações
-                </div>
+return (
+  // O wrapper principal da tabela
+  <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+
+    {/* ========================================================= */}
+    {/* ✅ NOVO CONTROLE DE AÇÃO E EXPORTAÇÃO */}
+    {/* Este bloco fica acima da tabela ou da mensagem de "nenhum registro encontrado" */}
+    {/* ========================================================= */}
+    <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+      
+      {/* Exibe o número de itens selecionados */}
+      <span className="text-sm font-medium text-gray-700">
+        {/* Usa selectedRequests.length que deve vir das props */}
+        {selectedRequests.length > 0 ? `${selectedRequests.length} registro(s) selecionado(s)` : 'Nenhum registro selecionado'}
+      </span>
+
+      {/* --- BOTÃO DE EXPORTAÇÃO --- */}
+      <button
+        type="button"
+        // handleExportToXLS é a nova prop do Dashboard
+        onClick={handleExportToXLS} 
+        // Desabilita se nada estiver selecionado OU se estiver editando
+        disabled={selectedRequests.length === 0 || editingId !== null} 
+        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white transition-colors duration-150 ${
+          selectedRequests.length > 0 && editingId === null
+            ? 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+            : 'bg-gray-400 cursor-not-allowed' // Estilo para desabilitado
+        }`}
+      >
+        <FileText className="h-5 w-5 mr-2" /> 
+        Exportar para XLS
+      </button>
+    </div>
+    
+    {filteredRequests.length === 0 ? (
+      <div className="p-12 text-center text-gray-500">
+        Nenhum registro encontrado.
+      </div>
+    ) : (
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50 sticky top-0 z-20">
+          <tr>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                  disabled={editingId !== null}
+                />
+                Ações
+              </div>
               </th>
               {/* Mapeia as colunas recebidas via Props */}
               {columns.map((col) => (
