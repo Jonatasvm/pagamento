@@ -3,7 +3,6 @@ import toast, { Toaster } from "react-hot-toast";
 import { Loader2, FileText, Filter, RotateCcw, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
-import * as XLSX from "xlsx";
 
 // Imports Locais
 import PaymentTable from "./PaymentTable";
@@ -488,7 +487,6 @@ export const Dashboard = () => {
         if (!request) return null;
         
         return {
-          "ID": request.id,
           "Status": request.statusLancamento ? "LANÇADO" : "PENDENTE",
           "Data Pagto": request.dataPagamento || "",
           "Valor": request.valor ? (Number(request.valor) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "",
@@ -514,7 +512,6 @@ export const Dashboard = () => {
       
       // Ajustar largura das colunas
       const colWidths = [
-        { wch: 8 },   // ID
         { wch: 12 },  // Status
         { wch: 12 },  // Data Pagto
         { wch: 15 },  // Valor
