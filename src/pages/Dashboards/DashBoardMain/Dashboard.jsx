@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { Loader2, FileText, Filter, RotateCcw, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import * as XLSX from "xlsx";
+import * as XLSX from "xlsx";
 
 // Imports Locais
 import PaymentTable from "./PaymentTable";
@@ -473,36 +475,81 @@ export const Dashboard = () => {
 
   const handleGenerateCSV = async () => {
     if (selectedRequests.length === 0) {
-      toast.error("Selecione pelo menos um registro para gerar o CSV.");
+      toast.error("Selecione pelo menos um registro para gerar o Excel.");
       return;
     }
+    
     setIsSaving(true);
-    let errorCount = 0;
-    // IMPORTANTE: O backend precisa ser adaptado para aceitar "statusGeradoCSV" se este
-    // campo for persistido. Por ora, vamos apenas simular a atualização.
-    for (const id of selectedRequests) {
-      const request = requests.find((r) => r.id === id);
-      if (request) {
-        try {
-          // Nota: Você pode precisar adicionar 'status_gerado_csv' ao seu PUT no Python.
-          // Por enquanto, atualizamos com o campo que o backend aceita.
-          await atualizarFormulario(id, { ...request, observacao: `CSV Gerado em ${new Date().toISOString().split('T')[0]}. ${request.observacao}` });
-        } catch (err) {
-          console.error(`Erro ao atualizar ID ${id}`, err);
-          errorCount++;
-        }
-      }
-    }
-    await fetchRequests();
-    setSelectedRequests([]);
-    setIsSaving(false);
-
-    if (errorCount === 0) {
-      toast.success(
-        `${selectedRequests.length} registro(s) marcados como 'Gerado'!`
-      );
-    } else {
-      toast.warning(`Concluído com ${errorCount} erro(s).`);
+    
+    try {
+      // Preparar dados para o Excel
+      const dataToExport = selectedRequests.map((id) => {
+        const request = requests.find((r) => r.id === id);
+        if (!request) return null;
+        
+        return {
+          "ID": request.id,
+          "Status": request.statusLancamento ? "LANÇADO" : "PENDENTE",
+          "Data Pagto": request.dataPagamento || "",
+          "Valor": request.valor ? (Number(request.valor) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "",
+          "Titular": request.titular || "",
+          "Referente": request.referente || "",
+          "Obra": request.obra || "",
+          "Data Lançamento": request.dataLancamento || "",
+          "Solicitante": request.solicitante || "",
+          "Data Competência": request.dataCompetencia || "",
+          "Forma de Pagamento": request.formaDePagamento || "",
+          "CPF/CNPJ": request.cpfCnpjTitularConta || "",
+          "Chave PIX": request.chavePix || "",
+          "Conta": request.conta || "",
+          "Link Anexo": request.linkAnexo || "",
+          "Observação": request.observacao || "",
+        };
+      }).filter(item => item !== null);
+      
+      // Criar workbook e worksheet
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Pagamentos");
+      
+      // Ajustar largura das colunas
+      const colWidths = [
+        { wch: 8 },   // ID
+        { wch: 12 },  // Status
+        { wch: 12 },  // Data Pagto
+        { wch: 15 },  // Valor
+        { wch: 20 },  // Titular
+        { wch: 25 },  // Referente
+        { wch: 15 },  // Obra
+        { wch: 15 },  // Data Lançamento
+        { wch: 15 },  // Solicitante
+        { wch: 15 },  // Data Competência
+        { wch: 18 },  // Forma de Pagamento
+        { wch: 18 },  // CPF/CNPJ
+        { wch: 20 },  // Chave PIX
+        { wch: 25 },  // Conta
+        { wch: 30 },  // Link Anexo
+        { wch: 30 },  // Observação
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Gerar nome do arquivo com data/hora
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const fileName = `Pagamentos_${dateStr}_${timeStr}.xlsx`;
+      
+      // Fazer download
+      XLSX.writeFile(wb, fileName);
+      
+      toast.success(`Excel gerado com ${selectedRequests.length} registro(s)!`);
+      setSelectedRequests([]);
+      
+    } catch (error) {
+      console.error("Erro ao gerar Excel:", error);
+      toast.error("Erro ao gerar arquivo Excel.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
