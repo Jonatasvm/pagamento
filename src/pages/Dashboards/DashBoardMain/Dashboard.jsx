@@ -500,7 +500,6 @@ export const Dashboard = () => {
           "CPF/CNPJ": request.cpfCnpjTitularConta || "",
           "Chave PIX": request.chavePix || "",
           "Conta": request.conta || "",
-          "Link Anexo": request.linkAnexo || "",
           "Observação": request.observacao || "",
         };
       }).filter(item => item !== null);
@@ -525,7 +524,6 @@ export const Dashboard = () => {
         { wch: 18 },  // CPF/CNPJ
         { wch: 20 },  // Chave PIX
         { wch: 25 },  // Conta
-        { wch: 30 },  // Link Anexo
         { wch: 30 },  // Observação
       ];
       ws['!cols'] = colWidths;
@@ -538,6 +536,22 @@ export const Dashboard = () => {
       
       // Fazer download
       XLSX.writeFile(wb, fileName);
+      
+      // Atualizar status para "Lançado" se estiver "Pendente"
+      for (const id of selectedRequests) {
+        const request = requests.find((r) => r.id === id);
+        if (request && !request.statusLancamento) {
+          // Se status é false (Pendente), atualiza para true (Lançado)
+          try {
+            await atualizarStatusLancamento(id, true);
+          } catch (error) {
+            console.error(`Erro ao atualizar status do ID ${id}:`, error);
+          }
+        }
+      }
+      
+      // Recarrega os dados após atualizar status
+      await fetchRequests();
       
       toast.success(`Excel gerado com ${selectedRequests.length} registro(s)!`);
       setSelectedRequests([]);
