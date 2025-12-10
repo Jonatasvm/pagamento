@@ -113,6 +113,7 @@ const TelaSolicitacao = () => {
     dataVencimento: "",
     installmentsCount: 1,
     anexos: [], // Múltiplos arquivos
+    observacao: "", // ✅ NOVO: Campo de observação
   });
 
   // Estados de Controle
@@ -402,7 +403,7 @@ const TelaSolicitacao = () => {
         lancado: "N",
         cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatação
         chave_pix: formData.pixKey || "",
-        observacao: "",
+        observacao: formData.observacao || "", // ✅ NOVO: Usar observação do formulário
         // O anexo será tratado separadamente ou via outro campo/API, aqui é só o dado
       };
 
@@ -489,6 +490,7 @@ const TelaSolicitacao = () => {
         dataVencimento: "",
         installmentsCount: 1,
         anexos: [],
+        observacao: "", // ✅ NOVO: Reset observação
       });
       setSchedule([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -873,12 +875,26 @@ const TelaSolicitacao = () => {
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
+                )}              </div>
+            </div>
 
-          {/* SUBMIT */}
+            {/* BLOCO: OBSERVAÇÕES */}
+            <div>
+              <label htmlFor="observacao" className={labelClass}>
+                <AlertCircle className="w-4 h-4 mr-2 text-blue-600" /> Observações (Opcional)
+              </label>
+              <textarea
+                name="observacao"
+                rows="3"
+                value={formData.observacao}
+                onChange={handleChange}
+                placeholder="Adicione qualquer observação ou detalhe importante sobre esta solicitação..."
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+          </div>
+
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={isSubmitting || (obras.length === 0 && !isLoadingObras)}
