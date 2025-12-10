@@ -100,21 +100,20 @@ const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 const TelaSolicitacao = () => {
   const fileInputRef = useRef(null);
   const autocompleteDropdownRef = useRef(null);
-
-  // Estado do Formulário
-  const [formData, setFormData] = useState({
-    obra: "",
-    referente: "",
-    valor: "",
-    paymentMethod: "PIX",
-    pixKeyType: "CPF",
-    pixKey: "",
-    titular: "",
-    cpfCnpj: "",
-    dataVencimento: "",
-    installmentsCount: 1,
-    anexo: null, // O arquivo em si
-  });
+  // Estado do Formulário
+  const [formData, setFormData] = useState({
+    obra: "",
+    referente: "",
+    valor: "",
+    paymentMethod: "PIX",
+    pixKeyType: "CPF",
+    pixKey: "",
+    titular: "",
+    cpfCnpj: "",
+    dataVencimento: "",
+    installmentsCount: 1,
+    anexos: [], // Múltiplos arquivos
+  });
 
   // Estados de Controle
   const [obras, setObras] = useState([]);
@@ -309,17 +308,25 @@ const TelaSolicitacao = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      // Adiciona os novos arquivos à lista existente
+      const newFiles = Array.from(e.target.files);
+      setFormData((prev) => ({
+        ...prev,
+        anexos: [...prev.anexos, ...newFiles],
+      }));
+    }
+  };
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData((prev) => ({ ...prev, anexo: e.target.files[0] }));
-    }
-  };
-
-  const removeFile = () => {
-    setFormData((prev) => ({ ...prev, anexo: null }));
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  const removeFile = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      anexos: prev.anexos.filter((_, i) => i !== index),
+    }));
+    // Limpa o input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Edição manual das parcelas (Tabela)
   const handleScheduleEdit = (index, field, value) => {
@@ -340,12 +347,10 @@ const TelaSolicitacao = () => {
     // 🛑 AJUSTE 1: VALIDAÇÃO DO ANEXO OBRIGATÓRIO (CORRIGIDO)
     const isPaymentMethodRequiringFile = 
       formData.paymentMethod === "Cheque" || 
-      formData.paymentMethod === "Boleto";
-
-    if (isPaymentMethodRequiringFile && !formData.anexo) {
-      toast.error("O anexo do arquivo é obrigatório para Cheque e Boleto.", { 
-          duration: 4000 
-      });
+      formData.paymentMethod === "Boleto";    if (isPaymentMethodRequiringFile && formData.anexos.length === 0) {
+      toast.error("Você precisa enviar pelo menos um arquivo para Cheque e Boleto.", { 
+          duration: 4000 
+      });
       setIsSubmitting(false); // Reseta o botão de envio
       return; //  Impede a submissão
     }
@@ -386,85 +391,113 @@ const TelaSolicitacao = () => {
     }
 
     const usuarioLogado = localStorage.getItem("usuario") || "Usuário";
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = new Date().toISOString().split("T")[0];    try {
+      const requests = [];
+      const basePayload = {
+        data_lancamento: hoje,
+        solicitante: usuarioLogado,
+        titular: formData.titular,
+        obra: formData.obra,
+        forma_pagamento: formData.paymentMethod, // Usando o estado atual
+        lancado: "N",
+        cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatação
+        chave_pix: formData.pixKey || "",
+        observacao: "",
+        // O anexo será tratado separadamente ou via outro campo/API, aqui é só o dado
+      };
 
-    try {
-      const requests = [];
-      const basePayload = {
-        data_lancamento: hoje,
-        solicitante: usuarioLogado,
-        titular: formData.titular,
-        obra: formData.obra,
-        forma_pagamento: formData.paymentMethod, // Usando o estado atual
-        lancado: "N",
-        cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatação
-        chave_pix: formData.pixKey || "",
-        observacao: "",
-        // O anexo será tratado separadamente ou via outro campo/API, aqui é só o dado
-      };
+      if (formData.installmentsCount > 1) {
+        // Múltiplas requisições
+        schedule.forEach((parcela) => {
+          requests.push(
+            fetch(`${API_URL}/formulario`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...basePayload,
+                referente: `${formData.referente} (${parcela.number}/${formData.installmentsCount})`,
+                valor: parseCurrencyToFloat(parcela.value),
+                data_pagamento: parcela.date,
+                data_competencia: parcela.date,
+              }),
+            })
+          );
+        });
+      } else {
+        // Requisição Única
+        requests.push(
+          fetch(`${API_URL}/formulario`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...basePayload,
+              referente: formData.referente,
+              valor: parseCurrencyToFloat(formData.valor),
+              data_pagamento: formData.dataVencimento,
+              data_competencia: formData.dataVencimento,
+            }),
+            })
+        );
+      }
 
-      if (formData.installmentsCount > 1) {
-        // Múltiplas requisições
-        schedule.forEach((parcela) => {
-          requests.push(
-            fetch(`${API_URL}/formulario`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...basePayload,
-                referente: `${formData.referente} (${parcela.number}/${formData.installmentsCount})`,
-                valor: parseCurrencyToFloat(parcela.value),
-                data_pagamento: parcela.date,
-                data_competencia: parcela.date,
-              }),
-            })
-          );
-        });
-      } else {
-        // Requisição Única
-        requests.push(
-          fetch(`${API_URL}/formulario`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...basePayload,
-              referente: formData.referente,
-              valor: parseCurrencyToFloat(formData.valor),
-              data_pagamento: formData.dataVencimento,
-              data_competencia: formData.dataVencimento,
-            }),
-          })
-        );
-      }
+      const responses = await Promise.all(requests);
+      const responseData = await Promise.all(
+        responses.map(async (r) => {
+          if (!r.ok) throw new Error("Falha em um dos envios");
+          return r.json();
+        })
+      );
 
-      const responses = await Promise.all(requests);
-      if (responses.some((r) => !r.ok))
-        throw new Error("Falha em um dos envios");
+      // Pega o ID do primeiro formulário criado (se múltiplos, usa o primeiro)
+      const firstFormId = responseData[0]?.id;
 
-      toast.success("Solicitação enviada com sucesso!");
+      // Se houver anexos, fazer upload para Google Drive
+      if (formData.anexos.length > 0 && firstFormId) {
+        const formDataUpload = new FormData();
+        formData.anexos.forEach((file) => {
+          formDataUpload.append("files", file);
+        });
 
-      // Reset Form
-      setFormData({
-        obra: "",
-        referente: "",
-        valor: "",
-        paymentMethod: "PIX",
-        pixKeyType: "CPF",
-        pixKey: "",
-        titular: "",
-        cpfCnpj: "",
-        dataVencimento: "",
-        installmentsCount: 1,
-        anexo: null,
-      });
-      setSchedule([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao conectar com o servidor.");
-    } finally {
-      setIsSubmitting(false);
-    }
+        const uploadResponse = await fetch(
+          `${API_URL}/formulario/${firstFormId}/upload-anexos`,
+          {
+            method: "POST",
+            body: formDataUpload,
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          console.warn("Aviso: Formulário criado, mas falha ao fazer upload dos arquivos");
+        } else {
+          const uploadData = await uploadResponse.json();
+          console.log("Arquivos upados com sucesso:", uploadData);
+        }
+      }
+
+      toast.success("Solicitação enviada com sucesso!");
+
+      // Reset Form
+      setFormData({
+        obra: "",
+        referente: "",
+        valor: "",
+        paymentMethod: "PIX",
+        pixKeyType: "CPF",
+        pixKey: "",
+        titular: "",
+        cpfCnpj: "",
+        dataVencimento: "",
+        installmentsCount: 1,
+        anexos: [],
+      });
+      setSchedule([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao conectar com o servidor.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // --- RENDERIZADORES AUXILIARES ---
@@ -805,31 +838,43 @@ const TelaSolicitacao = () => {
                 {(formData.paymentMethod === "Cheque" || formData.paymentMethod === "Boleto") && (
                     <span className="text-red-500 ml-1">*</span>
                 )}
-              </label>
-              <div className="mt-1 flex items-center">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current.click()}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Escolher arquivo
-                </button>
-                {formData.anexo && (
-                  <span className="ml-3 flex items-center text-sm text-gray-600 bg-blue-50 px-2 py-1 rounded-md">
-                    {formData.anexo.name}
-                    <X
-                      className="w-4 h-4 ml-2 cursor-pointer text-red-500"
-                      onClick={removeFile}
-                    />
-                  </span>
-                )}
-              </div>
+              </label>              <div className="mt-1 flex flex-col gap-3">
+                <div className="flex items-center">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    multiple
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current.click()}
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Escolher arquivo(s)
+                  </button>
+                  <span className="ml-2 text-xs text-gray-500">
+                    {formData.anexos.length > 0 && `${formData.anexos.length} arquivo(s) selecionado(s)`}
+                  </span>
+                </div>
+                {formData.anexos.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {formData.anexos.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-md"
+                      >
+                        <span className="truncate">{file.name}</span>
+                        <X
+                          className="w-4 h-4 ml-2 cursor-pointer text-red-500 hover:text-red-700 shrink-0"
+                          onClick={() => removeFile(index)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
