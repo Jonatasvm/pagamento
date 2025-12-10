@@ -10,7 +10,6 @@ import {
   getExpandedFields,
   formaPagamentoOptions,
 } from "./dashboard.data";
-import ExportButton from "../components/ExportButton";  // ← ADICIONAR ESTA LINHA
 
 // Import do Serviço de API
 import {
@@ -515,74 +514,22 @@ export const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
       <Toaster position="top-right" />
 
-{selectedRequests.length > 0 && (
-  <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-3">
-    {/* Botão Exportar XLS */}
-    <button
-      onClick={async () => {
-        if (selectedRequests.length === 0) {
-          toast.error('Selecione pelo menos um registro para exportar');
-          return;
-        }
-
-        const toastId = toast.loading('Gerando arquivo Excel...');
-
-        try {
-          const registrosParaExportar = requests.filter(req => 
-            selectedRequests.includes(req.id)
-          );
-
-          const response = await fetch(`${API_URL}/api/export/xls`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ registros: registrosParaExportar }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Erro ao gerar arquivo');
-          }
-
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `pagamentos_${new Date().toISOString().split('T')[0]}.xlsx`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-
-          toast.success(`${selectedRequests.length} registro(s) exportado(s) com sucesso!`, { id: toastId });
-
-        } catch (error) {
-          console.error('Erro:', error);
-          toast.error('Erro ao exportar dados', { id: toastId });
-        }
-      }}
-      className="flex items-center gap-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-2xl hover:shadow-green-500/50 hover:scale-105 transition-all duration-300"
-      disabled={editingId !== null || isSaving}
-    >
-      <FileText className="w-5 h-5" />
-      Exportar XLS ({selectedRequests.length})
-    </button>
-
-    {/* Botão Gerar CSV (existente) */}
-    <button
-      onClick={handleGenerateCSV}
-      className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-2xl hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
-      disabled={editingId !== null || isSaving}
-    >
-      {isSaving ? (
-        <Loader2 className="w-5 h-5 animate-spin" />
-      ) : (
-        <FileText className="w-5 h-5" />
+      {selectedRequests.length > 0 && (
+        <div className="fixed bottom-8 right-8 z-50">
+          <button
+            onClick={handleGenerateCSV}
+            className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-2xl hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
+            disabled={editingId !== null || isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <FileText className="w-5 h-5" />
+            )}
+            Gerar CSV ({selectedRequests.length})
+          </button>
+        </div>
       )}
-      Gerar CSV ({selectedRequests.length})
-    </button>
-  </div>
-)}
 
       <div className="max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
