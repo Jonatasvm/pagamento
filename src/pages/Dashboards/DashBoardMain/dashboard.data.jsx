@@ -149,33 +149,41 @@ export const getExpandedFields = (listaUsuarios) => [
         const anexos = typeof value === "string" ? JSON.parse(value) : value;
         if (!Array.isArray(anexos) || anexos.length === 0) return "—";
         
-        // Função para baixar todos os arquivos
-        const handleDownloadAll = (e) => {
+        // Função para baixar todos os arquivos usando iframes
+        const handleDownloadAll = async (e) => {
           e.preventDefault();
-          anexos.forEach((anexo, index) => {
-            // Delay entre downloads para não bloquear o navegador
+          
+          for (let i = 0; i < anexos.length; i++) {
+            const anexo = anexos[i];
+            const downloadUrl = anexo.download || `https://drive.google.com/uc?export=download&id=${anexo.drive_id}`;
+            
+            // Cria um iframe oculto para cada download
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = downloadUrl;
+            document.body.appendChild(iframe);
+            
+            // Remove o iframe após 5 segundos
             setTimeout(() => {
-              const downloadUrl = anexo.download || `https://drive.google.com/uc?export=download&id=${anexo.drive_id}`;
-              const link = document.createElement('a');
-              link.href = downloadUrl;
-              link.download = anexo.name;
-              link.target = '_blank';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }, index * 500);
-          });
+              document.body.removeChild(iframe);
+            }, 5000);
+            
+            // Aguarda 1 segundo entre cada download
+            if (i < anexos.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
         };
 
         return (
           <div className="flex flex-col gap-2">
             {/* Botão Baixar Todos */}
-            {anexos.length > 0 && (
+            {anexos.length > 1 && (
               <button
                 onClick={handleDownloadAll}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition w-fit"
               >
-                ⬇️ Baixar {anexos.length > 1 ? `todos (${anexos.length})` : "arquivo"}
+                ⬇️ Baixar todos ({anexos.length})
               </button>
             )}
             {/* Links individuais */}
@@ -186,7 +194,6 @@ export const getExpandedFields = (listaUsuarios) => [
                   <a
                     key={idx}
                     href={downloadUrl}
-                    download={anexo.name}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
