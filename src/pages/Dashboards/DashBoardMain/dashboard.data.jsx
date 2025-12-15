@@ -140,9 +140,44 @@ export const getExpandedFields = (listaUsuarios) => [
   },
   {
     key: "linkAnexo",
-    label: "Link do Anexo",
-    type: "text",
-    isLink: true,
+    label: "Anexos",
+    type: "anexos",
+    editable: false,
+    format: (value) => {
+      if (!value) return "—";
+      try {
+        const anexos = typeof value === "string" ? JSON.parse(value) : value;
+        if (!Array.isArray(anexos) || anexos.length === 0) return "—";
+        return (
+          <div className="flex flex-wrap gap-2">
+            {anexos.map((anexo, idx) => (
+              <a
+                key={idx}
+                href={anexo.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
+                title={anexo.name}
+              >
+                📎 {anexo.name?.length > 15 ? anexo.name.substring(0, 15) + "..." : anexo.name}
+              </a>
+            ))}
+          </div>
+        );
+      } catch {
+        // Se não for JSON, tenta como link único
+        return (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            📎 Ver anexo
+          </a>
+        );
+      }
+    },
   },
   {
     key: "observacao",
