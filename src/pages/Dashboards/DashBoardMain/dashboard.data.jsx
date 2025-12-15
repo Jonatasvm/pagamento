@@ -148,20 +148,55 @@ export const getExpandedFields = (listaUsuarios) => [
       try {
         const anexos = typeof value === "string" ? JSON.parse(value) : value;
         if (!Array.isArray(anexos) || anexos.length === 0) return "—";
+        
+        // Função para baixar todos os arquivos
+        const handleDownloadAll = (e) => {
+          e.preventDefault();
+          anexos.forEach((anexo, index) => {
+            // Delay entre downloads para não bloquear o navegador
+            setTimeout(() => {
+              const downloadUrl = anexo.download || `https://drive.google.com/uc?export=download&id=${anexo.drive_id}`;
+              const link = document.createElement('a');
+              link.href = downloadUrl;
+              link.download = anexo.name;
+              link.target = '_blank';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }, index * 500);
+          });
+        };
+
         return (
-          <div className="flex flex-wrap gap-2">
-            {anexos.map((anexo, idx) => (
-              <a
-                key={idx}
-                href={anexo.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
-                title={anexo.name}
+          <div className="flex flex-col gap-2">
+            {/* Botão Baixar Todos */}
+            {anexos.length > 0 && (
+              <button
+                onClick={handleDownloadAll}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition w-fit"
               >
-                📎 {anexo.name?.length > 15 ? anexo.name.substring(0, 15) + "..." : anexo.name}
-              </a>
-            ))}
+                ⬇️ Baixar {anexos.length > 1 ? `todos (${anexos.length})` : "arquivo"}
+              </button>
+            )}
+            {/* Links individuais */}
+            <div className="flex flex-wrap gap-2">
+              {anexos.map((anexo, idx) => {
+                const downloadUrl = anexo.download || `https://drive.google.com/uc?export=download&id=${anexo.drive_id}`;
+                return (
+                  <a
+                    key={idx}
+                    href={downloadUrl}
+                    download={anexo.name}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
+                    title={`Baixar: ${anexo.name}`}
+                  >
+                    📎 {anexo.name?.length > 15 ? anexo.name.substring(0, 15) + "..." : anexo.name}
+                  </a>
+                );
+              })}
+            </div>
           </div>
         );
       } catch {
@@ -173,7 +208,7 @@ export const getExpandedFields = (listaUsuarios) => [
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            📎 Ver anexo
+            📎 Baixar anexo
           </a>
         );
       }
