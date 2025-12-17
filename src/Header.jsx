@@ -2,7 +2,17 @@ import { LogOut } from "lucide-react";
 
 export default function Header() {
   function handleLogout() {
+    // ✅ Remove token e dados do usuário
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("usuario");
+    
+    // ✅ Remove credenciais salvas também (para segurança)
+    localStorage.removeItem("savedUsuario");
+    localStorage.removeItem("savedPassword");
+    
+    // Redireciona para login
     window.location.href = "/";
   }
 
