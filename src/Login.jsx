@@ -34,7 +34,7 @@ export default function Login() {
     }
   }, []);
 
-  // ✅ Função para fazer auto-login
+  // ✅ Função para fazer auto-logina
   const autoLogin = async (usr, pwd) => {
     try {
       const res = await axios.post(`${API_URL}/login`, {
