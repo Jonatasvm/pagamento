@@ -481,26 +481,40 @@ export const Dashboard = () => {
     setIsSaving(true);
     
     try {
-      // Preparar dados para o Excel
+      // Preparar dados para o Excel com a estrutura correta
       const dataToExport = selectedRequests.map((id) => {
         const request = requests.find((r) => r.id === id);
         if (!request) return null;
         
+        // Formatar datas para DD/MM/YYYY
+        const formatDate = (dateStr) => {
+          if (!dateStr) return "";
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('pt-BR');
+        };
+
+        // Formatar valor em R$ com 2 casas decimais
+        const formatCurrency = (value) => {
+          if (!value) return "";
+          const num = Number(value) / 100;
+          return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        };
+
         return {
-          "Status": request.statusLancamento ? "LANÇADO" : "PENDENTE",
-          "Data Pagto": request.dataPagamento || "",
-          "Valor": request.valor ? (Number(request.valor) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "",
-          "Titular": request.titular || "",
-          "Referente": request.referente || "",
-          "Obra": request.obra || "",
-          "Data Lançamento": request.dataLancamento || "",
-          "Solicitante": request.solicitante || "",
-          "Data Competência": request.dataCompetencia || "",
+          "Data de competência*": formatDate(request.dataCompetencia),
+          "Data de vencimento*": formatDate(request.dataPagamento),
+          "Data de pagamento": formatDate(request.dataPagamento),
+          "Valor*": formatCurrency(request.valor),
+          "Pago a (Fornecedor)": request.titular || "",
+          "Descrição": request.referente || "",
+          "Número do Documento": request.id ? `${request.id}` : "",
+          "Categoria*": "sem NF-e",
           "Forma de Pagamento": request.formaDePagamento || "",
-          "CPF/CNPJ": request.cpfCnpjTitularConta || "",
-          "Chave PIX": request.chavePix || "",
-          "Conta": request.conta || "",
-          "Observação": request.observacao || "",
+          "Quem Paga*": request.quemPaga || "",
+          "Conta Bancária*": request.conta || "",
+          "Centro de Custo*": "geral",
+          "Obra": request.obra || "",
+          "Índice Etapa / Item": "1.0",
         };
       }).filter(item => item !== null);
       
@@ -511,20 +525,20 @@ export const Dashboard = () => {
       
       // Ajustar largura das colunas
       const colWidths = [
-        { wch: 12 },  // Status
-        { wch: 12 },  // Data Pagto
+        { wch: 18 },  // Data de competência
+        { wch: 18 },  // Data de vencimento
+        { wch: 18 },  // Data de pagamento
         { wch: 15 },  // Valor
-        { wch: 20 },  // Titular
-        { wch: 25 },  // Referente
-        { wch: 15 },  // Obra
-        { wch: 15 },  // Data Lançamento
-        { wch: 15 },  // Solicitante
-        { wch: 15 },  // Data Competência
+        { wch: 25 },  // Pago a (Fornecedor)
+        { wch: 30 },  // Descrição
+        { wch: 15 },  // Número do Documento
+        { wch: 18 },  // Categoria
         { wch: 18 },  // Forma de Pagamento
-        { wch: 18 },  // CPF/CNPJ
-        { wch: 20 },  // Chave PIX
-        { wch: 25 },  // Conta
-        { wch: 30 },  // Observação
+        { wch: 18 },  // Quem Paga
+        { wch: 20 },  // Conta Bancária
+        { wch: 18 },  // Centro de Custo
+        { wch: 20 },  // Obra
+        { wch: 18 },  // Índice Etapa / Item
       ];
       ws['!cols'] = colWidths;
       
