@@ -53,7 +53,7 @@ const adapterBackendToFrontend = (data) => {
     carimboDataHora: data.carimbo,
     conta: data.conta || null,
     quemPaga: data.quem_paga || null,
-    linkAnexo: data.link_anexo || "",
+    link_anexo: data.link_anexo || "",
     categoria: data.categoria || "Outros",
   };
 };

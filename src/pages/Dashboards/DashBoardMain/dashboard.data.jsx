@@ -139,7 +139,7 @@ export const getExpandedFields = (listaUsuarios) => [
     type: "text",
   },
   {
-    key: "linkAnexo",
+    key: "link_anexo",
     label: "Anexos",
     type: "anexos",
     editable: false,
