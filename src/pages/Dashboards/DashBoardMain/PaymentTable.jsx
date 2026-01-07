@@ -282,14 +282,24 @@ const PaymentTable = ({
 
 
     if (fieldConfig.isLink && value) {
+      // Extrair o file_id da URL do Google Drive
+      const fileIdMatch = value.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      const fileId = fileIdMatch ? fileIdMatch[1] : null;
+      
+      // Construir URL de download direto (alt=media força download em vez de visualização)
+      const downloadUrl = fileId 
+        ? `https://drive.google.com/uc?export=download&id=${fileId}`
+        : value;
+
       return (
         <a
-          href={value}
+          href={downloadUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 underline"
+          className="text-blue-600 underline hover:text-blue-800 transition"
+          title="Clique para baixar o arquivo"
         >
-          {value}
+          📎 Anexo
         </a>
       );
     }
