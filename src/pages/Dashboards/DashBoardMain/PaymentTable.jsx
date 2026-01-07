@@ -1,8 +1,8 @@
 import React from "react";
 import { Edit, Save, Trash2, X, Loader2, ChevronDown } from "lucide-react";
+import toast from "react-hot-toast";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
-import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data"; 
-// import toast from "react-hot-toast"; // Removido se não estiver sendo usado
+import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data";
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
@@ -41,6 +41,38 @@ const PaymentTable = ({
   handleKeyDown = () => {},
   autocompleteDropdownRef = null,
 }) => {
+  
+  // ✅ FUNÇÃO DE DOWNLOAD DIRETO DO GOOGLE DRIVE
+  const handleDownloadFile = async (driveUrl) => {
+    try {
+      // Extrair o file_id da URL do Google Drive
+      const fileIdMatch = driveUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      const fileId = fileIdMatch ? fileIdMatch[1] : null;
+
+      if (!fileId) {
+        toast.error("ID do arquivo inválido");
+        return;
+      }
+
+      // URL de download direto do Google Drive
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+      // Criar um elemento <a> invisível para triggar o download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", "");
+      link.style.display = "none";
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Download iniciado!");
+    } catch (error) {
+      console.error("Erro ao fazer download:", error);
+      toast.error("Erro ao fazer download do arquivo");
+    }
+  };
   
   // --- Lógica de Renderização de Campos ---
   const renderField = (key, data, isEditing, colConfig = {}, request) => {
@@ -282,25 +314,14 @@ const PaymentTable = ({
 
 
     if (fieldConfig.isLink && value) {
-      // Extrair o file_id da URL do Google Drive
-      const fileIdMatch = value.match(/\/d\/([a-zA-Z0-9-_]+)/);
-      const fileId = fileIdMatch ? fileIdMatch[1] : null;
-      
-      // Construir URL de download direto (alt=media força download em vez de visualização)
-      const downloadUrl = fileId 
-        ? `https://drive.google.com/uc?export=download&id=${fileId}`
-        : value;
-
       return (
-        <a
-          href={downloadUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline hover:text-blue-800 transition"
+        <button
+          onClick={() => handleDownloadFile(value)}
+          className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition duration-200"
           title="Clique para baixar o arquivo"
         >
-          📎 Anexo
-        </a>
+          📎 Baixar
+        </button>
       );
     }
 
