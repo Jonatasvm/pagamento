@@ -512,7 +512,7 @@ const TelaSolicitacao = () => {
     <div className="min-h-screen bg-gray-50 flex justify-center py-2 px-2 sm:px-2 lg:px-2 font-sans">
       <Toaster position="top-right" />
 
-      <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-2 md:p-10">
+      <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-4 md:p-10">
         {/* HEADER */}
         <div className="border-b-4 border-blue-500/50 pb-4 mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 flex items-center">
