@@ -486,6 +486,9 @@ export const Dashboard = () => {
         const request = requests.find((r) => r.id === id);
         if (!request) return null;
         
+        // 🔍 LOG: Mostrar tudo que está vindo em request
+        console.log("📋 DADOS COMPLETOS DO REQUEST:", request);
+        
         // Formatar datas para DD/MM/YYYY
         const formatDate = (dateStr) => {
           if (!dateStr) return "";
