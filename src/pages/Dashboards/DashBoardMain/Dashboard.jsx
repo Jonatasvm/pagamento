@@ -503,7 +503,7 @@ export const Dashboard = () => {
         return {
           "Data de competência*": formatDate(request.dataCompetencia),
           "Data de vencimento*": formatDate(request.dataPagamento),
-          "Data de pagamento": formatDate(request.dataPagamento),
+          "Data de pagamento": "",
           "Valor*": formatCurrency(request.valor),
           "Pago a (Fornecedor)": request.titular || "",
           "Descrição": request.referente || "",
