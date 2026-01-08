@@ -86,11 +86,11 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {
-    key: "quemPaga",
-    label: "Quem Paga",
+    key: "conta",
+    label: "Banco",
     type: "text",
-    minWidth: "100px",
-    editable: false, 
+    minWidth: "150px",
+    editable: true,
   },
   {
     key: "solicitante",
