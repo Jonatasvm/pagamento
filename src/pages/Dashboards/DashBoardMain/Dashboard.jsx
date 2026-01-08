@@ -77,6 +77,7 @@ export const Dashboard = () => {
       const response = await fetch(`${API_URL}/obras`);
       if (!response.ok) throw new Error("Erro ao buscar lista de obras");
       const data = await response.json();
+      console.log("✅ LISTA DE OBRAS CARREGADA:", data);
       setListaObras(data);
     } catch (error) {
       console.error("Erro ao carregar obras:", error);
