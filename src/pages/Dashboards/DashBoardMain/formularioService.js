@@ -82,38 +82,7 @@ const adapterFrontendToBackend = (data) => {
 // --- CHAMADAS API ---
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
-  const dados = response.data.map(adapterBackendToFrontend);
-  
-  // 🔍 LOGS DETALHADOS
-  console.log("=".repeat(80));
-  console.log("📋 TODOS OS DADOS BRUTOS DO BACKEND:");
-  console.log(response.data);
-  
-  console.log("\n" + "=".repeat(80));
-  console.log("📋 DADOS APÓS CONVERSÃO (FRONTEND):");
-  console.log(dados);
-  
-  console.log("\n" + "=".repeat(80));
-  console.log("🏗️ DADOS RELACIONADOS A 'OBRA':");
-  dados.forEach((item, index) => {
-    console.log(`Item ${index + 1}:`, {
-      id: item.id,
-      obra: item.obra,
-      obra_type: typeof item.obra,
-    });
-  });
-  
-  console.log("\n" + "=".repeat(80));
-  console.log("🔎 PROCURANDO POR 'MARMOARIA':");
-  const marmoraria = dados.filter(item => 
-    String(item.obra).toLowerCase().includes('marmoaria') ||
-    String(item.referente).toLowerCase().includes('marmoaria') ||
-    String(item.observacao).toLowerCase().includes('marmoaria')
-  );
-  console.log("Resultados encontrados:", marmoraria);
-  console.log("=".repeat(80));
-  
-  return dados;
+  return response.data.map(adapterBackendToFrontend);
 };
 
 export const atualizarFormulario = async (id, data) => {

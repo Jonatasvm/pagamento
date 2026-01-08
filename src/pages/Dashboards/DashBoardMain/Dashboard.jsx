@@ -516,8 +516,8 @@ export const Dashboard = () => {
           "Quem Paga*": "empresa",
           "Conta Bancária*": request.conta || "",
           "Centro de Custo*": "obra",
-          // ✅ CORREÇÃO: Trazer o NOME da obra em lowercase, não o ID
-          "Obra": (listaObras.find(o => o.id === request.obra)?.nome || "").toLowerCase(),
+          // ✅ CORREÇÃO: Trazer o NOME da obra do endpoint /obras (campo "nome")
+          "Obra": listaObras.find(o => o.id === request.obra)?.nome || "",
           "Índice Etapa / Item": "",
         };
       }).filter(item => item !== null);
