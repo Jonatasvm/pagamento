@@ -482,21 +482,28 @@ export const Dashboard = () => {
     setIsSaving(true);
     
     try {
+      // ✅ GARANTIR QUE LISTA DE OBRAS ESTÁ CARREGADA
+      let obrasAtualizada = listaObras;
+      if (!listaObras || listaObras.length === 0) {
+        try {
+          const response = await fetch(`${API_URL}/obras`);
+          if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+          obrasAtualizada = await response.json();
+        } catch (error) {
+          console.error("⚠️ Erro ao recarregar lista de obras:", error);
+          obrasAtualizada = [];
+        }
+      }
+      
       // Preparar dados para o Excel com a estrutura correta
       const dataToExport = selectedRequests.map((id) => {
         const request = requests.find((r) => r.id === id);
         if (!request) return null;
         
-        // 🔍 LOG DETALHADO
-        console.log("=".repeat(80));
-        console.log("📋 REQUEST ID:", request.id);
-        console.log("📋 REQUEST.OBRA (ID):", request.obra);
-        console.log("📋 LISTA OBRAS COMPLETA:", listaObras);
-        
-        const obraEncontrada = listaObras.find(o => o.id === request.obra);
-        console.log("🔎 OBRA ENCONTRADA:", obraEncontrada);
-        console.log("📌 NOME DA OBRA:", obraEncontrada?.nome || "NÃO ENCONTRADA");
-        console.log("=".repeat(80));
+        // Buscar obra com tratamento robusto
+        const obraEncontrada = obrasAtualizada && obrasAtualizada.length > 0
+          ? obrasAtualizada.find(o => Number(o.id) === Number(request.obra))
+          : null;
         
         // Formatar datas para DD/MM/YYYY
         const formatDate = (dateStr) => {
@@ -526,7 +533,7 @@ export const Dashboard = () => {
           "Conta Bancária*": request.conta || "",
           "Centro de Custo*": "obra",
           // ✅ CORREÇÃO: Trazer o NOME da obra do endpoint /obras (campo "nome")
-          "Obra": listaObras.find(o => o.id === request.obra)?.nome || "",
+          "Obra": obraEncontrada?.nome || "",
           "Índice Etapa / Item": "",
         };
       }).filter(item => item !== null);
@@ -565,6 +572,7 @@ export const Dashboard = () => {
       XLSX.writeFile(wb, fileName);
       
       // Atualizar status para "Lançado" se estiver "Pendente"
+      let statusUpdateErrors = 0;
       for (const id of selectedRequests) {
         const request = requests.find((r) => r.id === id);
         if (request && !request.statusLancamento) {
@@ -573,6 +581,7 @@ export const Dashboard = () => {
             await atualizarStatusLancamento(id, true);
           } catch (error) {
             console.error(`Erro ao atualizar status do ID ${id}:`, error);
+            statusUpdateErrors++;
           }
         }
       }
@@ -580,7 +589,12 @@ export const Dashboard = () => {
       // Recarrega os dados após atualizar status
       await fetchRequests();
       
-      toast.success(`Excel gerado com ${selectedRequests.length} registro(s)!`);
+      // Mensagem de sucesso com informações adicionais se houver erros
+      if (statusUpdateErrors > 0) {
+        toast.success(`Excel gerado com ${selectedRequests.length} registro(s)! (⚠️ ${statusUpdateErrors} status não atualizados)`);
+      } else {
+        toast.success(`Excel gerado com ${selectedRequests.length} registro(s)!`);
+      }
       setSelectedRequests([]);
       
     } catch (error) {
