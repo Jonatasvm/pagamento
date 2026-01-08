@@ -507,15 +507,15 @@ export const Dashboard = () => {
           "Valor*": formatCurrency(request.valor),
           "Pago a (Fornecedor)": request.titular || "",
           "Descrição": request.referente || "",
-          // ✅ CORREÇÃO: Usar chave_pix quando disponível (para PIX), deixar vazio para boleto/cheque
           "Número do Documento": request.chavePix || "",
-          "Categoria*": "sem NF-e",
+          "Categoria*": "Sem NF",
           "Forma de Pagamento": request.formaDePagamento || "",
-          "Quem Paga*": request.quemPaga || "",
+          "Quem Paga*": "empresa",
           "Conta Bancária*": request.conta || "",
-          "Centro de Custo*": "geral",
-          "Obra": request.obra || "",
-          "Índice Etapa / Item": "1.0",
+          "Centro de Custo*": "obra",
+          // ✅ CORREÇÃO: Trazer o NOME da obra, não o ID
+          "Obra": listaObras.find(o => o.id === request.obra)?.nome || "",
+          "Índice Etapa / Item": "",
         };
       }).filter(item => item !== null);
       
