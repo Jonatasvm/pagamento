@@ -512,7 +512,7 @@ const TelaSolicitacao = () => {
     <div className="min-h-screen bg-gray-50 flex justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <Toaster position="top-right" />
 
-      <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-8 md:p-10">
+      <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-4 md:p-10">
         {/* HEADER */}
         <div className="border-b-4 border-blue-500/50 pb-4 mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 flex items-center">
@@ -625,7 +625,7 @@ const TelaSolicitacao = () => {
           </div>
 
           {/* BLOCO 3: DETALHES ESPECÍFICOS (PIX e PARCELAS) */}
-          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 space-y-6">
+          <div className="bg-gray-50 rounded-xl p-2 border border-gray-200 space-y-6">
             {/* LINHA 1: PIX (Se selecionado) */}
             {formData.paymentMethod === "PIX" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fadeIn">
