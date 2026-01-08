@@ -110,7 +110,7 @@ export const ObrasManager = ({
         </div>
         <div className="flex-1 w-full">
           <label className="text-xs text-gray-500 font-semibold mb-1 block">
-            Quem Paga
+            Conta Bancaria
           </label>
           <input
             type="text"
@@ -138,7 +138,7 @@ export const ObrasManager = ({
           <thead className="bg-blue-500">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Nome da Obra</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Quem Paga</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Conta Bancaria</th>
               <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase">Ações</th>
             </tr>
           </thead>
