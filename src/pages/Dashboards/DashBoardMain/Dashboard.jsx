@@ -486,8 +486,16 @@ export const Dashboard = () => {
         const request = requests.find((r) => r.id === id);
         if (!request) return null;
         
-        // 🔍 LOG: Mostrar tudo que está vindo em request
-        console.log("📋 DADOS COMPLETOS DO REQUEST:", request);
+        // 🔍 LOG DETALHADO
+        console.log("=".repeat(80));
+        console.log("📋 REQUEST ID:", request.id);
+        console.log("📋 REQUEST.OBRA (ID):", request.obra);
+        console.log("📋 LISTA OBRAS COMPLETA:", listaObras);
+        
+        const obraEncontrada = listaObras.find(o => o.id === request.obra);
+        console.log("🔎 OBRA ENCONTRADA:", obraEncontrada);
+        console.log("📌 NOME DA OBRA:", obraEncontrada?.nome || "NÃO ENCONTRADA");
+        console.log("=".repeat(80));
         
         // Formatar datas para DD/MM/YYYY
         const formatDate = (dateStr) => {
