@@ -507,7 +507,8 @@ export const Dashboard = () => {
           "Valor*": formatCurrency(request.valor),
           "Pago a (Fornecedor)": request.titular || "",
           "Descrição": request.referente || "",
-          "Número do Documento": request.id ? `${request.id}` : "",
+          // ✅ CORREÇÃO: Usar chave_pix quando disponível (para PIX), deixar vazio para boleto/cheque
+          "Número do Documento": request.chavePix || "",
           "Categoria*": "sem NF-e",
           "Forma de Pagamento": request.formaDePagamento || "",
           "Quem Paga*": request.quemPaga || "",
