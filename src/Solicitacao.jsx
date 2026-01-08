@@ -701,57 +701,55 @@ const TelaSolicitacao = () => {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
               </div>
-            </div>
-
-            {/* TABELA DE PARCELAS (Se > 1) */}
-            {formData.installmentsCount > 1 && schedule.length > 0 && (
-              <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">
-                        Parc.
-                      </th>
-                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">
-                        Valor
-                      </th>
-                      <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase text-left">
-                        Data
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {schedule.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="px-4 py-2 text-sm font-medium text-gray-900">
-                          {item.number}
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="text"
-                            value={item.value}
-                            onChange={(e) =>
-                              handleScheduleEdit(idx, "value", e.target.value)
-                            }
-                            className="w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-green-600 font-semibold"
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="date"
-                            value={item.date}
-                            onChange={(e) =>
-                              handleScheduleEdit(idx, "date", e.target.value)
-                            }
-                            className="w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            </div>            {/* TABELA DE PARCELAS (Se > 1) */}
+            {formData.installmentsCount > 1 && schedule.length > 0 && (
+              <div className="border border-gray-200 bg-white rounded-lg overflow-x-auto md:overflow-hidden">
+                <table className="w-full divide-y divide-gray-200 md:w-full">
+                  <thead className="bg-gray-100 sticky top-0">
+                    <tr>
+                      <th className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-500 uppercase text-left whitespace-nowrap">
+                        Parc.
+                      </th>
+                      <th className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-500 uppercase text-left whitespace-nowrap">
+                        Valor
+                      </th>
+                      <th className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-500 uppercase text-left whitespace-nowrap">
+                        Data
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {schedule.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-900 whitespace-nowrap">
+                          {item.number}
+                        </td>
+                        <td className="px-3 md:px-4 py-2 min-w-[110px] md:min-w-auto">
+                          <input
+                            type="text"
+                            value={item.value}
+                            onChange={(e) =>
+                              handleScheduleEdit(idx, "value", e.target.value)
+                            }
+                            className="w-full text-xs md:text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-green-600 font-semibold px-2 py-1"
+                          />
+                        </td>
+                        <td className="px-3 md:px-4 py-2 min-w-[120px] md:min-w-auto">
+                          <input
+                            type="date"
+                            value={item.date}
+                            onChange={(e) =>
+                              handleScheduleEdit(idx, "date", e.target.value)
+                            }
+                            className="w-full text-xs md:text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 px-2 py-1"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* BLOCO 4: RECEBEDOR E ANEXO */}
