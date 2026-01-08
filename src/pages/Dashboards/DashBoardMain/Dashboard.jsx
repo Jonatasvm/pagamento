@@ -513,8 +513,8 @@ export const Dashboard = () => {
           "Quem Paga*": "empresa",
           "Conta Bancária*": request.conta || "",
           "Centro de Custo*": "obra",
-          // ✅ CORREÇÃO: Trazer o NOME da obra, não o ID
-          "Obra": listaObras.find(o => o.id === request.obra)?.nome || "",
+          // ✅ CORREÇÃO: Trazer o NOME da obra em lowercase, não o ID
+          "Obra": (listaObras.find(o => o.id === request.obra)?.nome || "").toLowerCase(),
           "Índice Etapa / Item": "",
         };
       }).filter(item => item !== null);
