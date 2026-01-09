@@ -30,6 +30,7 @@ export const Dashboard = () => {
   const [listaUsuarios, setListaUsuarios] = useState([]); // Se houver rota para usuários, deve ser preenchida
   const [listaObras, setListaObras] = useState([]);
   const [listaTitulares, setListaTitulares] = useState([]);
+  const [listaBancos, setListaBancos] = useState([]);
 
   // --- Estados de Edição e Seleção ---
   const [editingId, setEditingId] = useState(null);
@@ -100,11 +101,24 @@ export const Dashboard = () => {
     }
   };
 
+  const fetchListaBancos = async () => {
+    try {
+      const response = await fetch(`${API_URL}/bancos`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de bancos");
+      const data = await response.json();
+      console.log("✅ LISTA DE BANCOS CARREGADA:", data);
+      setListaBancos(data);
+    } catch (error) {
+      console.error("Erro ao carregar bancos:", error);
+    }
+  };
+
   // Carrega tudo ao montar o componente
   useEffect(() => {
     fetchRequests();
     fetchListaObras();
     fetchListaTitulares();
+    fetchListaBancos();
     // Se tiver fetchListaUsuarios(), chame aqui
   }, []);
 
@@ -114,8 +128,8 @@ export const Dashboard = () => {
   
   // O useMemo garante que as colunas sejam recriadas quando listaObras for carregada via API.
   const columns = useMemo(
-    () => getTableColumns(listaUsuarios, listaObras, listaTitulares),
-    [listaUsuarios, listaObras, listaTitulares]
+    () => getTableColumns(listaUsuarios, listaObras, listaTitulares, listaBancos),
+    [listaUsuarios, listaObras, listaTitulares, listaBancos]
   );
 
   const expandedFieldsConfig = useMemo(
@@ -896,6 +910,7 @@ export const Dashboard = () => {
             listaObras={listaObras}
             listaTitulares={listaTitulares}
             listaUsuarios={listaUsuarios}
+            listaBancos={listaBancos}
             
             // Props de Dados
             filteredRequests={filteredRequests}

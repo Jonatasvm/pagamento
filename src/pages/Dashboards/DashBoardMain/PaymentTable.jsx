@@ -8,7 +8,8 @@ const PaymentTable = ({
   // Novas props para configuração dinâmica
   listaObras = [], // Recebe a lista de obras
   listaTitulares = [], 
-  listaUsuarios = [], 
+  listaUsuarios = [],
+  listaBancos = [],
   columns = [],
   expandedFieldsConfig = [],
 
@@ -99,6 +100,8 @@ const PaymentTable = ({
             selectOptions = listaTitulares;
         } else if (key === "solicitante") {
             selectOptions = listaUsuarios;
+        } else if (key === "conta") {
+            selectOptions = listaBancos;
         }
         
         // Verifica se é um select de IDs (Objeto {id, nome})

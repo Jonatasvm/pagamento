@@ -84,7 +84,7 @@ export function getStatusClasses(isLancado) {
 }
 
 // --- CONFIGURAÇÃO DE COLUNAS DA TABELA (Colunas Visíveis) ---
-export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
+export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, listaBancos = []) => [
   {
     key: "statusLancamento",
     label: "Status",
@@ -135,9 +135,11 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
   {
     key: "conta",
     label: "Banco",
-    type: "text",
+    type: "select",
+    options: listaBancos,
     minWidth: "150px",
     editable: true,
+    format: (value) => getNameById(listaBancos, value),
   },
   {
     key: "solicitante",

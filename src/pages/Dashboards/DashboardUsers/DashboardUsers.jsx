@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { Building2, Users, ArrowLeft, Landmark } from "lucide-react";
+import { Building2, Users, ArrowLeft, Landmark, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 // IMPORTANTE: Certifique-se que os managers são exportados como 'export const'
 // Se estiver usando 'export default', tire as chaves { } do import abaixo.
 import { ObrasManager } from "./ObrasManager"; 
@@ -235,14 +236,24 @@ export default function DashboardUsers() {
         {/* --- MENU PRINCIPAL (Seleção de Gerenciadores) --- */}
         {currentTab === "menu" && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-2 text-center">
-              Gerenciamento do Sistema
-            </h1>
-            <p className="text-center text-gray-600 mb-12">
-              Selecione uma opção para começar
-            </p>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+                  Gerenciamento do Sistema
+                </h1>
+                <p className="text-gray-600">
+                  Selecione uma opção para começar
+                </p>
+              </div>
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+              >
+                <Home size={20} /> Voltar ao Dashboard
+              </Link>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               {/* --- CARD GERENCIAR OBRAS --- */}
               <button
                 onClick={() => {
