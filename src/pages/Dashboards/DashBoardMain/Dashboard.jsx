@@ -51,8 +51,13 @@ export const Dashboard = () => {
     statusLancamento: "",
     formaDePagamento: "",
     data: "",
+    dataInicio: "",
+    dataFim: "",
     obra: "",
     titular: "",
+    solicitante: "",
+    referente: "",
+    busca: "",
   });
 
   // =========================================================================
@@ -138,16 +143,18 @@ export const Dashboard = () => {
       if (requestValue !== filterValue) return false;
     }
 
-    // FILTRO DE DATA
+    // FILTRO DE DATA (Single Date)
     if (filters.data && req.dataPagamento !== filters.data) return false;
+
+    // FILTRO DE DATA INTERVALO (Data Início - Fim)
+    if (filters.dataInicio && req.dataPagamento < filters.dataInicio) return false;
+    if (filters.dataFim && req.dataPagamento > filters.dataFim) return false;
 
     // FILTRO DE OBRA (Comparação Robusta de IDs)
     if (filters.obra) {
       const filterIdString = String(filters.obra);
       const requestObraIdString = req.obra ? String(req.obra) : "";
-      if (requestObraIdString !== filterIdString) {
-        return false;
-      }
+      if (requestObraIdString !== filterIdString) return false;
     }
 
     // FILTRO DE TITULAR
@@ -157,6 +164,38 @@ export const Dashboard = () => {
         ? String(req.titular).trim().toUpperCase()
         : "";
       if (requestValue !== filterValue) return false;
+    }
+
+    // FILTRO DE SOLICITANTE
+    if (filters.solicitante) {
+      const filterValue = filters.solicitante.trim().toUpperCase();
+      const requestValue = req.solicitante
+        ? String(req.solicitante).trim().toUpperCase()
+        : "";
+      if (!requestValue.includes(filterValue)) return false;
+    }
+
+    // FILTRO DE REFERENTE (DESCRIÇÃO)
+    if (filters.referente) {
+      const filterValue = filters.referente.trim().toUpperCase();
+      const requestValue = req.referente
+        ? String(req.referente).trim().toUpperCase()
+        : "";
+      if (!requestValue.includes(filterValue)) return false;
+    }
+
+    // FILTRO DE BUSCA MISTA (Valor, Titular, Referente)
+    if (filters.busca) {
+      const searchValue = filters.busca.trim().toUpperCase();
+      const valor = req.valor ? String(req.valor).toUpperCase() : "";
+      const titular = req.titular ? String(req.titular).toUpperCase() : "";
+      const referente = req.referente ? String(req.referente).toUpperCase() : "";
+      
+      const encontrado = valor.includes(searchValue) || 
+                        titular.includes(searchValue) || 
+                        referente.includes(searchValue);
+      
+      if (!encontrado) return false;
     }
 
     return true;
@@ -172,8 +211,13 @@ export const Dashboard = () => {
       statusLancamento: "",
       formaDePagamento: "",
       data: "",
+      dataInicio: "",
+      dataFim: "",
       obra: "",
       titular: "",
+      solicitante: "",
+      referente: "",
+      busca: "",
     });
     toast.success("Filtros limpos");
   };
@@ -650,7 +694,9 @@ export const Dashboard = () => {
             <Filter className="w-5 h-5 text-indigo-600" />
             <span>Filtros de Pesquisa</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+          
+          {/* Linha 1: Status, Forma Pagto, Data, Obra */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-4">
             
             {/* Status */}
             <div className="flex flex-col gap-1">
@@ -689,10 +735,10 @@ export const Dashboard = () => {
               </select>
             </div>
 
-            {/* Data */}
+            {/* Data Única */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
-                Data
+                Data (Exata)
               </label>
               <input
                 type="date"
@@ -703,7 +749,7 @@ export const Dashboard = () => {
               ></input>
             </div>
 
-            {/* Obra (Filtra por ID numérico) */}
+            {/* Obra */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Obra
@@ -722,8 +768,40 @@ export const Dashboard = () => {
                 ))}
               </select>
             </div>
+          </div>
 
-            {/* Titular (Filtra por String/Nome) */}
+          {/* Linha 2: Intervalo de Data, Titular, Solicitante */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-4">
+            
+            {/* Data Início (Intervalo) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Data Início
+              </label>
+              <input
+                type="date"
+                name="dataInicio"
+                value={filters.dataInicio}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              ></input>
+            </div>
+
+            {/* Data Fim (Intervalo) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Data Fim
+              </label>
+              <input
+                type="date"
+                name="dataFim"
+                value={filters.dataFim}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              ></input>
+            </div>
+
+            {/* Titular */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Titular
@@ -735,7 +813,6 @@ export const Dashboard = () => {
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
                 <option value="">Todos</option>
-                {/* Aqui, t.id é o NOME do titular (string) */}
                 {listaTitulares.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.nome}
@@ -744,12 +821,61 @@ export const Dashboard = () => {
               </select>
             </div>
 
-            {/* Botão Limpar */}
+            {/* Solicitante */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Solicitante
+              </label>
+              <input
+                type="text"
+                name="solicitante"
+                placeholder="Digitar nome..."
+                value={filters.solicitante}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Linha 3: Descrição (Referente), Busca Mista, Botão Limpar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            
+            {/* Descrição (Referente) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Descrição
+              </label>
+              <input
+                type="text"
+                name="referente"
+                placeholder="Buscar descrição..."
+                value={filters.referente}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+
+            {/* Busca Mista (Valor, Titular, Referente) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Busca Rápida
+              </label>
+              <input
+                type="text"
+                name="busca"
+                placeholder="Valor, titular ou descrição..."
+                value={filters.busca}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+
+            {/* Botão Limpar - Espande para 2 colunas em telas pequenas */}
             <button
               onClick={clearFilters}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm h-[42px]"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm h-[42px] lg:col-span-2"
             >
-              <RotateCcw className="w-4 h-4" /> Limpar
+              <RotateCcw className="w-4 h-4" /> Limpar Filtros
             </button>
           </div>
         </div>

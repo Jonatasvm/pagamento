@@ -9,6 +9,52 @@ export const formaPagamentoOptions = [
 
 // --- FUNÇÕES UTILITÁRIAS ---
 
+// ✅ Formatar CPF/CNPJ com máscara
+export const formatCPFCNPJ = (value) => {
+  if (!value) return "";
+  const clean = String(value).replace(/\D/g, "");
+  
+  if (clean.length === 11) {
+    // CPF: xxx.xxx.xxx-xx
+    return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  } else if (clean.length === 14) {
+    // CNPJ: xx.xxx.xxx/xxxx-xx
+    return clean.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  }
+  return value;
+};
+
+// ✅ Formatar data em português (DD/MM/YYYY)
+export const formatDatePT = (dateStr) => {
+  if (!dateStr) return "—";
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString('pt-BR');
+  } catch {
+    return "—";
+  }
+};
+
+// ✅ Traduzir data de carimbo para português
+export const formatCarimbo = (dateStr) => {
+  if (!dateStr) return "—";
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleString('pt-BR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  } catch {
+    return "—";
+  }
+};
+
 // ✅ CORREÇÃO AQUI: Alteramos a lógica de fallback para ser menos intrusiva
 export const getNameById = (list, id) => {
   if (!list || id == null || id === "") return '—';
@@ -55,6 +101,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares) => [
     label: "Data Pagto",
     type: "date",
     minWidth: "120px",
+    format: (value) => formatDatePT(value),
   },
   {
     key: "valor",
@@ -127,6 +174,7 @@ export const getExpandedFields = (listaUsuarios) => [
     key: "cpfCnpjTitularConta",
     label: "CPF/CNPJ Titular",
     type: "text",
+    format: (value) => formatCPFCNPJ(value),
   },
   {
     key: "chavePix",
@@ -228,8 +276,9 @@ export const getExpandedFields = (listaUsuarios) => [
   },
   {
     key: "carimboDataHora",
-    label: "Carimbo",
+    label: "Data/Hora",
     type: "text",
     editable: false,
+    format: (value) => formatCarimbo(value),
   },
 ];
