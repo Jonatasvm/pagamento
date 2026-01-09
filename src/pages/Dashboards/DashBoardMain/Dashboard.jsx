@@ -684,7 +684,7 @@ export const Dashboard = () => {
             className="flex gap-x-2 bg-green-500 w-fit text-white p-3 mt-10 rounded-xl shadow-lg shadow-gray-400 cursor-pointer"
           >
             <User />
-            <p>Gerenciamento de Usuários</p>
+            <p>Gerenciamento do Sistema</p>
           </Link>
         </div>
 
