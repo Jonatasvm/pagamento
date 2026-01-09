@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
+import { Building2, Users, ArrowLeft } from "lucide-react";
 // IMPORTANTE: Certifique-se que o ObrasManager é exportado como 'export const ObrasManager'
 // Se estiver usando 'export default', tire as chaves { } do import abaixo.
 import { ObrasManager } from "./ObrasManager"; 
@@ -8,6 +9,9 @@ import { UserManager } from "./UsersManager";
 const API_IP = "http://91.98.132.210:5631";
 
 export default function DashboardUsers() {
+  // --- ESTADO DE NAVEGAÇÃO ENTRE ABAS ---
+  const [currentTab, setCurrentTab] = useState("menu"); // "menu" | "obras" | "usuarios"
+  
   const [obrasList, setObrasList] = useState([]);
   const [loadingObras, setLoadingObras] = useState(false);
 
@@ -107,24 +111,102 @@ export default function DashboardUsers() {
   const obrasNamesForDropdown = obrasList.map((o) => o.nome);
 
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen font-sans text-slate-800">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen font-sans text-slate-800">
       <Toaster position="top-right" />
 
-      <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-12">
+      {/* HEADER - Título da página com contexto */}
+      <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-40">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {currentTab === "menu" && "Painel de Controle"}
+              {currentTab === "obras" && "Gerenciamento de Obras"}
+              {currentTab === "usuarios" && "Gerenciamento de Usuários"}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {currentTab === "menu" && "Escolha uma opção para começar"}
+              {currentTab === "obras" && "Gerencie todas as obras cadastradas"}
+              {currentTab === "usuarios" && "Gerencie usuários e suas permissões"}
+            </p>
+          </div>
+          {/* Breadcrumb simples */}
+          {currentTab !== "menu" && (
+            <button
+              onClick={() => setCurrentTab("menu")}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+            >
+              <ArrowLeft size={18} /> Voltar
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto">
         
-        {/* AQUI ESTAVA O PROBLEMA POTENCIAL */}
-        {/* Estamos passando explicitamente a função handleAddObra para a prop onAddObra */}
-        <ObrasManager
-          obras={obrasList}
-          isLoading={loadingObras}
-          onAddObra={handleAddObra}       // <--- Verifique se esta linha existe e está colorida no seu editor
-          onUpdateObra={handleUpdateObra}
-          onRequestDeleteObra={handleDeleteObra}
-        />
+        {/* --- MENU PRINCIPAL (Seleção de Gerenciadores) --- */}
+        {currentTab === "menu" && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-2 text-center">
+              Gerenciamento do Sistema
+            </h1>
+            <p className="text-center text-gray-600 mb-12">
+              Selecione uma opção para começar
+            </p>
 
-        <hr className="border-gray-200" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* --- CARD GERENCIAR OBRAS --- */}
+              <button
+                onClick={() => {
+                  setCurrentTab("obras");
+                  fetchObras();
+                }}
+                className="h-48 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+              >
+                <Building2 size={48} className="text-blue-100" />
+                <h2 className="text-2xl font-bold">Gerenciar Obras</h2>
+                <p className="text-sm text-blue-100">
+                  Adicionar, editar e remover obras
+                </p>
+              </button>
 
-        <UserManager API_IP={API_IP} availableObras={obrasNamesForDropdown} />
+              {/* --- CARD GERENCIAR USUÁRIOS --- */}
+              <button
+                onClick={() => setCurrentTab("usuarios")}
+                className="h-48 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+              >
+                <Users size={48} className="text-purple-100" />
+                <h2 className="text-2xl font-bold">Gerenciar Usuários</h2>
+                <p className="text-sm text-purple-100">
+                  Criar usuários e vincular às obras
+                </p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- ABA GERENCIAR OBRAS --- */}
+        {currentTab === "obras" && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            {/* Componente de Obras */}
+            <ObrasManager
+              obras={obrasList}
+              isLoading={loadingObras}
+              onAddObra={handleAddObra}
+              onUpdateObra={handleUpdateObra}
+              onRequestDeleteObra={handleDeleteObra}
+            />
+          </div>
+        )}
+
+        {/* --- ABA GERENCIAR USUÁRIOS --- */}
+        {currentTab === "usuarios" && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            {/* Componente de Usuários */}
+            <UserManager API_IP={API_IP} availableObras={obrasList} />
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );

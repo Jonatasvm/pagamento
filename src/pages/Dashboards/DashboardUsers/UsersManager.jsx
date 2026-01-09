@@ -69,6 +69,16 @@ const LevelBadge = ({ level }) => {
 // --- COMPONENTE USER MANAGER ---
 
 export const UserManager = ({ API_IP, availableObras }) => {
+  // Função helper para extrair nome da obra (suporta string ou objeto)
+  const getObraName = (obra) => {
+    return typeof obra === "string" ? obra : (obra?.nome || obra?.name || "");
+  };
+
+  // Normalizar availableObras para apenas nomes
+  const obrasNormalizadas = Array.isArray(availableObras)
+    ? availableObras.map(getObraName).filter(Boolean)
+    : [];
+
   const availableLevels = useMemo(
     () => [
       { value: "user", label: "Usuário" },
@@ -449,12 +459,12 @@ export const UserManager = ({ API_IP, availableObras }) => {
             </div>
             {isNewUserDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto z-20">
-                {availableObras.length === 0 ? (
+                {obrasNormalizadas.length === 0 ? (
                   <div className="p-3 text-sm text-gray-500">
                     Nenhuma obra disponível
                   </div>
                 ) : (
-                  availableObras.map((obra) => (
+                  obrasNormalizadas.map((obra) => (
                     <div
                       key={obra}
                       onClick={() => toggleNewUserObra(obra)}
@@ -667,7 +677,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
                           </div>
                           {isDropdownOpen && (
                             <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded shadow-lg z-50 max-h-40 overflow-y-auto">
-                              {availableObras.map((o) => (
+                              {obrasNormalizadas.map((o) => (
                                 <div
                                   key={o}
                                   onClick={() => toggleObraEdit(o)}
