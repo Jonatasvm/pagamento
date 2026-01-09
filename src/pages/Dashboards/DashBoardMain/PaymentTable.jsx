@@ -304,11 +304,12 @@ const PaymentTable = ({
     }
     
     // ✅ CORREÇÃO 2: A tradução de ID fica como fallback, se não houver um formatador específico
-    if (["obra", "titular", "solicitante"].includes(key)) {
+    if (["obra", "titular", "solicitante", "conta"].includes(key)) {
         let list;
         if (key === "obra") list = listaObras;
         else if (key === "titular") list = listaTitulares; 
         else if (key === "solicitante") list = listaUsuarios;
+        else if (key === "conta") list = listaBancos;
 
         // Usa a função auxiliar para traduzir o ID para o Nome
         const name = list ? getNameById(list, value) : (value || "—"); 
