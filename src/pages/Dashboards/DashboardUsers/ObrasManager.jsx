@@ -2,20 +2,21 @@ import React, { useState } from "react";
 import { Edit, Trash2, Save, X, Plus, Zap } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-// CORREÇÃO AQUI: As chaves { } garantem que onAddObra seja lido corretamente
+// CORREÇÃO AQUI: As chaves { } garantem que as props sejam lidas corretamente
 export const ObrasManager = ({
   obras,
   isLoading,
-  onAddObra, // Esta é a função que estava dando erro
+  availableBanks,
+  onAddObra,
   onUpdateObra,
   onRequestDeleteObra,
 }) => {
   const [newObraName, setNewObraName] = useState("");
-  const [newQuemPaga, setNewQuemPaga] = useState("");
+  const [newBankId, setNewBankId] = useState("");
 
   const [editingObraId, setEditingObraId] = useState(null);
   const [editedObraName, setEditedObraName] = useState("");
-  const [editedQuemPaga, setEditedQuemPaga] = useState("");
+  const [editedBankId, setEditedBankId] = useState("");
 
   const checkNameExists = (name, excludeId = null) => {
     if (!obras) return false;
@@ -35,14 +36,13 @@ export const ObrasManager = ({
     }
 
     const trimmedName = newObraName.trim();
-    const trimmedQuemPaga = newQuemPaga.trim();
 
     if (!trimmedName) {
       toast.error("O nome da Obra não pode ser vazio.");
       return;
     }
-    if (!trimmedQuemPaga) {
-      toast.error("O campo 'Quem Paga' é obrigatório.");
+    if (!newBankId) {
+      toast.error("Selecione um banco.");
       return;
     }
     if (checkNameExists(trimmedName)) {
@@ -50,25 +50,35 @@ export const ObrasManager = ({
       return;
     }
 
-    // Chama a função do Pai
-    onAddObra(trimmedName, trimmedQuemPaga);
+    // Encontra o banco selecionado para obter o nome
+    const selectedBank = availableBanks.find((b) => b.id === parseInt(newBankId));
+    if (!selectedBank) {
+      toast.error("Banco inválido.");
+      return;
+    }
+
+    // Chama a função do Pai com o nome do banco (compatível com campo "quem_paga")
+    onAddObra(trimmedName, selectedBank.nome);
 
     setNewObraName("");
-    setNewQuemPaga("");
+    setNewBankId("");
   };
 
-  const handleStartEdit = (id, name, quemPaga) => {
+  const handleStartEdit = (id, name, bankId) => {
     setEditingObraId(id);
     setEditedObraName(name);
-    setEditedQuemPaga(quemPaga || "");
+    setEditedBankId(bankId || "");
   };
 
   const handleSaveClick = (id) => {
     const trimmedName = editedObraName.trim();
-    const trimmedQuemPaga = editedQuemPaga.trim();
 
-    if (!trimmedName || !trimmedQuemPaga) {
-      toast.error("Todos os campos são obrigatórios.");
+    if (!trimmedName) {
+      toast.error("O nome da Obra não pode ser vazio.");
+      return;
+    }
+    if (!editedBankId) {
+      toast.error("Selecione um banco.");
       return;
     }
     if (checkNameExists(trimmedName, id)) {
@@ -76,10 +86,17 @@ export const ObrasManager = ({
       return;
     }
 
-    onUpdateObra(id, trimmedName, trimmedQuemPaga);
+    // Encontra o banco selecionado para obter o nome
+    const selectedBank = availableBanks.find((b) => b.id === parseInt(editedBankId));
+    if (!selectedBank) {
+      toast.error("Banco inválido.");
+      return;
+    }
+
+    onUpdateObra(id, trimmedName, selectedBank.nome);
     setEditingObraId(null);
     setEditedObraName("");
-    setEditedQuemPaga("");
+    setEditedBankId("");
   };
 
   const handleDeleteClick = (id) => {
@@ -110,18 +127,26 @@ export const ObrasManager = ({
         </div>
         <div className="flex-1 w-full">
           <label className="text-xs text-gray-500 font-semibold mb-1 block">
-            Conta Bancaria
+            Conta Bancária
           </label>
-          <input
-            type="text"
-            value={newQuemPaga}
-            onChange={(e) => setNewQuemPaga(e.target.value)}
-            placeholder="Ex: Construtora XYZ"
+          <select
+            value={newBankId}
+            onChange={(e) => setNewBankId(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 transition"
-            onKeyPress={(e) => e.key === "Enter" && handleAddClick()}
-          />
+          >
+            <option value="">-- Selecione um banco --</option>
+            {availableBanks && availableBanks.length > 0 ? (
+              availableBanks.map((bank) => (
+                <option key={bank.id} value={bank.id}>
+                  {bank.nome}
+                </option>
+              ))
+            ) : (
+              <option disabled>Nenhum banco disponível</option>
+            )}
+          </select>
         </div>
-        <div className="flex-shrink-0 w-full md:w-auto">
+        <div className="shrink-0 w-full md:w-auto">
           <button
             onClick={handleAddClick}
             disabled={isLoading}
@@ -138,7 +163,7 @@ export const ObrasManager = ({
           <thead className="bg-blue-500">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Nome da Obra</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Conta Bancaria</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Conta Bancária</th>
               <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase">Ações</th>
             </tr>
           </thead>
@@ -157,7 +182,18 @@ export const ObrasManager = ({
                   </td>
                   <td className="px-6 py-3 text-sm text-gray-600 align-middle">
                     {editingObraId === obra.id ? (
-                      <input type="text" value={editedQuemPaga} onChange={(e) => setEditedQuemPaga(e.target.value)} className="border border-blue-400 rounded px-3 py-1 w-full outline-none" onKeyPress={(e) => e.key === "Enter" && handleSaveClick(obra.id)} />
+                      <select
+                        value={editedBankId}
+                        onChange={(e) => setEditedBankId(e.target.value)}
+                        className="border border-blue-400 rounded px-3 py-1 w-full outline-none"
+                      >
+                        <option value="">-- Selecione --</option>
+                        {availableBanks && availableBanks.map((bank) => (
+                          <option key={bank.id} value={bank.id}>
+                            {bank.nome}
+                          </option>
+                        ))}
+                      </select>
                     ) : (obra.quem_paga || "-")}
                   </td>
                   <td className="px-6 py-3 text-right align-middle">
@@ -169,7 +205,7 @@ export const ObrasManager = ({
                         </>
                       ) : (
                         <>
-                          <button onClick={() => handleStartEdit(obra.id, obra.nome, obra.quem_paga)} className="p-2 rounded-full text-blue-600 hover:bg-blue-100"><Edit size={18} /></button>
+                          <button onClick={() => handleStartEdit(obra.id, obra.nome, obra.bank_id)} className="p-2 rounded-full text-blue-600 hover:bg-blue-100"><Edit size={18} /></button>
                           <button onClick={() => handleDeleteClick(obra.id)} className="p-2 rounded-full text-red-600 hover:bg-red-100"><Trash2 size={18} /></button>
                         </>
                       )}

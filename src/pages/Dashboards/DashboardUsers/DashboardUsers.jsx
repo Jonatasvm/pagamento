@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { Building2, Users, ArrowLeft } from "lucide-react";
-// IMPORTANTE: Certifique-se que o ObrasManager é exportado como 'export const ObrasManager'
+import { Building2, Users, ArrowLeft, Landmark } from "lucide-react";
+// IMPORTANTE: Certifique-se que os managers são exportados como 'export const'
 // Se estiver usando 'export default', tire as chaves { } do import abaixo.
 import { ObrasManager } from "./ObrasManager"; 
-import { UserManager } from "./UsersManager"; 
+import { UserManager } from "./UsersManager";
+import { BanksManager } from "./BanksManager"; 
 
 const API_IP = "http://91.98.132.210:5631";
 
 export default function DashboardUsers() {
   // --- ESTADO DE NAVEGAÇÃO ENTRE ABAS ---
-  const [currentTab, setCurrentTab] = useState("menu"); // "menu" | "obras" | "usuarios"
+  const [currentTab, setCurrentTab] = useState("menu"); // "menu" | "obras" | "usuarios" | "bancos"
   
   const [obrasList, setObrasList] = useState([]);
   const [loadingObras, setLoadingObras] = useState(false);
+
+  const [banksList, setBanksList] = useState([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
 
   // --- 1. GET: Buscar Obras ---
   const fetchObras = async () => {
@@ -110,6 +114,88 @@ export default function DashboardUsers() {
 
   const obrasNamesForDropdown = obrasList.map((o) => o.nome);
 
+  // --- FUNÇÕES PARA BANCOS ---
+  // GET: Buscar Bancos
+  const fetchBanks = async () => {
+    setLoadingBanks(true);
+    try {
+      const response = await fetch(`${API_IP}/bancos`);
+      if (!response.ok) throw new Error("Falha ao conectar com servidor");
+      const data = await response.json();
+      setBanksList(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar lista de bancos.");
+    } finally {
+      setLoadingBanks(false);
+    }
+  };
+
+  // POST: Adicionar Banco
+  const handleAddBank = async (nomeBanco) => {
+    setLoadingBanks(true);
+    try {
+      const payload = { nome: nomeBanco };
+
+      const response = await fetch(`${API_IP}/bancos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Erro ao salvar no banco");
+      }
+
+      toast.success("Banco criado com sucesso!");
+      await fetchBanks();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Não foi possível adicionar o banco.");
+    } finally {
+      setLoadingBanks(false);
+    }
+  };
+
+  // PUT: Atualizar Banco
+  const handleUpdateBank = async (id, novoNome) => {
+    try {
+      const payload = { nome: novoNome };
+
+      const response = await fetch(`${API_IP}/bancos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Erro ao atualizar");
+
+      toast.success("Banco atualizado!");
+      await fetchBanks();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao editar banco.");
+    }
+  };
+
+  // DELETE: Remover Banco
+  const handleDeleteBank = async (id) => {
+    try {
+      const response = await fetch(`${API_IP}/bancos/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Erro ao deletar");
+
+      toast.success("Banco removido!");
+      setBanksList((prev) => prev.filter((b) => b.id !== id));
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir banco.");
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen font-sans text-slate-800">
       <Toaster position="top-right" />
@@ -122,11 +208,13 @@ export default function DashboardUsers() {
               {currentTab === "menu" && "Painel de Controle"}
               {currentTab === "obras" && "Gerenciamento de Obras"}
               {currentTab === "usuarios" && "Gerenciamento de Usuários"}
+              {currentTab === "bancos" && "Gerenciamento de Contas Bancárias"}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               {currentTab === "menu" && "Escolha uma opção para começar"}
               {currentTab === "obras" && "Gerencie todas as obras cadastradas"}
               {currentTab === "usuarios" && "Gerencie usuários e suas permissões"}
+              {currentTab === "bancos" && "Cadastre e gerencie suas contas bancárias"}
             </p>
           </div>
           {/* Breadcrumb simples */}
@@ -154,14 +242,14 @@ export default function DashboardUsers() {
               Selecione uma opção para começar
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* --- CARD GERENCIAR OBRAS --- */}
               <button
                 onClick={() => {
                   setCurrentTab("obras");
                   fetchObras();
                 }}
-                className="h-48 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+                className="h-48 bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
               >
                 <Building2 size={48} className="text-blue-100" />
                 <h2 className="text-2xl font-bold">Gerenciar Obras</h2>
@@ -173,12 +261,27 @@ export default function DashboardUsers() {
               {/* --- CARD GERENCIAR USUÁRIOS --- */}
               <button
                 onClick={() => setCurrentTab("usuarios")}
-                className="h-48 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+                className="h-48 bg-linear-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
               >
                 <Users size={48} className="text-purple-100" />
                 <h2 className="text-2xl font-bold">Gerenciar Usuários</h2>
                 <p className="text-sm text-purple-100">
                   Criar usuários e vincular às obras
+                </p>
+              </button>
+
+              {/* --- CARD GERENCIAR BANCOS --- */}
+              <button
+                onClick={() => {
+                  setCurrentTab("bancos");
+                  fetchBanks();
+                }}
+                className="h-48 bg-linear-to-br from-green-500 to-green-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+              >
+                <Landmark size={48} className="text-green-100" />
+                <h2 className="text-2xl font-bold">Gerenciar Bancos</h2>
+                <p className="text-sm text-green-100">
+                  Cadastrar contas bancárias
                 </p>
               </button>
             </div>
@@ -192,6 +295,7 @@ export default function DashboardUsers() {
             <ObrasManager
               obras={obrasList}
               isLoading={loadingObras}
+              availableBanks={banksList}
               onAddObra={handleAddObra}
               onUpdateObra={handleUpdateObra}
               onRequestDeleteObra={handleDeleteObra}
@@ -204,6 +308,20 @@ export default function DashboardUsers() {
           <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
             {/* Componente de Usuários */}
             <UserManager API_IP={API_IP} availableObras={obrasList} />
+          </div>
+        )}
+
+        {/* --- ABA GERENCIAR BANCOS --- */}
+        {currentTab === "bancos" && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            {/* Componente de Bancos */}
+            <BanksManager
+              banks={banksList}
+              isLoading={loadingBanks}
+              onAddBank={handleAddBank}
+              onUpdateBank={handleUpdateBank}
+              onDeleteBank={handleDeleteBank}
+            />
           </div>
         )}
         </div>
