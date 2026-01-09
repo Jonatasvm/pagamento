@@ -48,7 +48,7 @@ export const Dashboard = () => {
 
   // --- Filtros ---
   const [filters, setFilters] = useState({
-    statusLancamento: "true", // ✅ PADRÃO: "Não pendentes" (já lançados) - evita carregar dados desnecessários
+    statusLancamento: "false", // ✅ PADRÃO: "Não (Pendente)" - mostra apenas lançamentos pendentes
     formaDePagamento: "",
     data: "",
     dataInicio: "",
@@ -208,7 +208,7 @@ export const Dashboard = () => {
 
   const clearFilters = () => {
     setFilters({
-      statusLancamento: "true", // ✅ Mantém padrão "Não pendentes"
+      statusLancamento: "false", // ✅ Mantém padrão "Não (Pendente)"
       formaDePagamento: "",
       data: "",
       dataInicio: "",
