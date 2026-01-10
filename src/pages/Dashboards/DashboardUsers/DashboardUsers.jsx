@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { Building2, Users, ArrowLeft, Landmark, Home } from "lucide-react";
+import { Building2, Users, Landmark, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 // IMPORTANTE: Certifique-se que os managers são exportados como 'export const'
 // Se estiver usando 'export default', tire as chaves { } do import abaixo.
@@ -201,34 +201,7 @@ export default function DashboardUsers() {
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen font-sans text-slate-800">
       <Toaster position="top-right" />
 
-      {/* HEADER - Título da página com contexto */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-40">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {currentTab === "menu" && "Painel de Controle"}
-              {currentTab === "obras" && "Gerenciamento de Obras"}
-              {currentTab === "usuarios" && "Gerenciamento de Usuários"}
-              {currentTab === "bancos" && "Gerenciamento de Contas Bancárias"}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {currentTab === "menu" && "Escolha uma opção para começar"}
-              {currentTab === "obras" && "Gerencie todas as obras cadastradas"}
-              {currentTab === "usuarios" && "Gerencie usuários e suas permissões"}
-              {currentTab === "bancos" && "Cadastre e gerencie suas contas bancárias"}
-            </p>
-          </div>
-          {/* Breadcrumb simples */}
-          {currentTab !== "menu" && (
-            <button
-              onClick={() => setCurrentTab("menu")}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-            >
-              <ArrowLeft size={18} /> Voltar
-            </button>
-          )}
-        </div>
-      </div>
+      {/* HEADER - Sem o botão de voltar aqui */}
 
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
@@ -302,6 +275,14 @@ export default function DashboardUsers() {
         {/* --- ABA GERENCIAR OBRAS --- */}
         {currentTab === "obras" && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+              >
+                <Home size={20} /> Voltar ao Dashboard
+              </Link>
+            </div>
             {/* Componente de Obras */}
             <ObrasManager
               obras={obrasList}
@@ -317,6 +298,14 @@ export default function DashboardUsers() {
         {/* --- ABA GERENCIAR USUÁRIOS --- */}
         {currentTab === "usuarios" && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+              >
+                <Home size={20} /> Voltar ao Dashboard
+              </Link>
+            </div>
             {/* Componente de Usuários */}
             <UserManager API_IP={API_IP} availableObras={obrasList} />
           </div>
@@ -325,6 +314,14 @@ export default function DashboardUsers() {
         {/* --- ABA GERENCIAR BANCOS --- */}
         {currentTab === "bancos" && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+              >
+                <Home size={20} /> Voltar ao Dashboard
+              </Link>
+            </div>
             {/* Componente de Bancos */}
             <BanksManager
               banks={banksList}
