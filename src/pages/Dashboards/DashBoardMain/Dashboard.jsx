@@ -285,10 +285,12 @@ export const Dashboard = () => {
     setEditingId(request.id);
 
     // ✅ CORREÇÃO: Prepara o formulário. 
-    // Converte 'obra' para string para garantir que o <select> encontre o valor correto.
+    // Converte 'obra', 'conta' e 'quemPaga' para string para garantir que o <select> encontre o valor correto.
     setEditFormData({
       ...request,
       obra: request.obra ? String(request.obra) : "",
+      conta: request.conta ? String(request.conta) : "",
+      quemPaga: request.quemPaga ? String(request.quemPaga) : "",
     });
 
     setIsTitularLocked(false);
@@ -307,12 +309,12 @@ export const Dashboard = () => {
 
     if (name === "valor") newValue = value.replace(/\D/g, "");
     if (type === "checkbox") newValue = checked;
-    if (["quemPaga", "obra", "titular"].includes(name)) {
+    if (["quemPaga", "obra", "conta", "titular"].includes(name)) {
       if (name === "titular" && typeof value === "string") {
         newValue = value;
         setIsTitularLocked(false);
       } else {
-        // Obra e quemPaga são numéricos no backend
+        // Obra, quemPaga e conta são numéricos no backend
         newValue = Number(value);
       }
     }
