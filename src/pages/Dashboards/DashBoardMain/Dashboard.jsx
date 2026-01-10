@@ -286,11 +286,15 @@ export const Dashboard = () => {
 
     // ✅ CORREÇÃO: Prepara o formulário. 
     // Converte 'obra', 'conta' e 'quemPaga' para string para garantir que o <select> encontre o valor correto.
+    // Se 'conta' não estiver preenchido mas 'quemPaga' estiver, usa 'quemPaga' como padrão
+    const contaValue = request.conta || request.quemPaga || "";
+    const quemPagaValue = request.quemPaga || "";
+    
     setEditFormData({
       ...request,
       obra: request.obra ? String(request.obra) : "",
-      conta: request.conta ? String(request.conta) : "",
-      quemPaga: request.quemPaga ? String(request.quemPaga) : "",
+      conta: contaValue ? String(contaValue) : "",
+      quemPaga: quemPagaValue ? String(quemPagaValue) : "",
     });
 
     setIsTitularLocked(false);
@@ -466,8 +470,12 @@ export const Dashboard = () => {
         if (!response.ok) throw new Error("Erro ao buscar obra");
 
         const obra = await response.json();
-        // Garante que o campo quemPaga é atualizado
-        setEditFormData((prev) => ({ ...prev, quemPaga: obra.quem_paga }));
+        // Garante que os campos quemPaga e conta são atualizados com o banco vinculado à obra
+        setEditFormData((prev) => ({ 
+          ...prev, 
+          quemPaga: obra.quem_paga,
+          conta: obra.quem_paga, // ✅ NOVO: Sincroniza o banco com quem_paga da obra
+        }));
       } catch (error) {
         console.error("Erro ao buscar quem_paga:", error);
       }
