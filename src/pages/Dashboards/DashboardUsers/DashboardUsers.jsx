@@ -38,6 +38,7 @@ export default function DashboardUsers() {
 
   useEffect(() => {
     fetchObras();
+    fetchBanks(); // ✅ NOVO: Carrega também a lista de bancos ao iniciar
   }, []);
 
   // --- 2. POST: Adicionar Obra ---
@@ -232,6 +233,7 @@ export default function DashboardUsers() {
                 onClick={() => {
                   setCurrentTab("obras");
                   fetchObras();
+                  fetchBanks(); // ✅ NOVO: Carrega também os bancos ao abrir a aba de obras
                 }}
                 className="h-48 bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
               >
