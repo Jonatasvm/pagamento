@@ -197,7 +197,8 @@ const TelaSolicitacao = () => {
       }
     }
   }, [formData.obra, bancos, obras]);
-  // 2. Recalcular Parcelas Automaticamente  useEffect(() => {
+  // 2. Recalcular Parcelas Automaticamente
+  useEffect(() => {
     if (
       formData.installmentsCount > 1 &&
       formData.valor &&
