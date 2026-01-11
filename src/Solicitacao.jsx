@@ -169,26 +169,22 @@ const TelaSolicitacao = () => {
     fetchBancos();
   }, []);
 
-  // ✅ NOVO: Sincronizar banco quando obra mudar
+  // ✅ Sincronizar banco quando obra mudar (usando banco_id da obra)
   useEffect(() => {
-    if (formData.obra && bancos.length > 0) {
+    if (formData.obra) {
       const obraEncontrada = obras.find((o) => o.id === Number(formData.obra));
       if (obraEncontrada) {
-        console.log("🔍 Sincronizando banco para obra:", obraEncontrada.nome, "| quem_paga:", obraEncontrada.quem_paga);
+        console.log("🔍 Sincronizando banco para obra:", obraEncontrada.nome, "| banco_id:", obraEncontrada.banco_id);
         
-        // Encontra o banco pelo nome (quem_paga)
-        const bancoEncontrado = bancos.find(
-          (b) => b.nome.toLowerCase() === obraEncontrada.quem_paga.toLowerCase()
-        );
-        
-        if (bancoEncontrado) {
-          console.log("✅ Banco encontrado:", bancoEncontrado);
+        // Usa o banco_id diretamente da obra
+        if (obraEncontrada.banco_id) {
+          console.log("✅ Usando banco_id da obra:", obraEncontrada.banco_id);
           setFormData((prev) => ({
             ...prev,
-            conta: String(bancoEncontrado.id),
+            conta: String(obraEncontrada.banco_id),
           }));
         } else {
-          console.log("⚠️ Banco não encontrado para:", obraEncontrada.quem_paga);
+          console.log("⚠️ Obra não tem banco_id vinculado");
           setFormData((prev) => ({
             ...prev,
             conta: "",
@@ -196,7 +192,7 @@ const TelaSolicitacao = () => {
         }
       }
     }
-  }, [formData.obra, bancos, obras]);
+  }, [formData.obra, obras]);
   // 2. Recalcular Parcelas Automaticamente
   useEffect(() => {
     if (

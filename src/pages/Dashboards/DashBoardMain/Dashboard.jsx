@@ -318,22 +318,19 @@ export const Dashboard = () => {
         })
         .then((obra) => {
           console.log("📘 Obra encontrada:", obra);
-          console.log("🏦 Banco da obra (quem_paga):", obra.quem_paga);
+          console.log("🏦 Banco da obra (banco_id):", obra.banco_id);
           
-          // ✅ NOVO: Encontra o ID do banco pelo nome
-          const bancoEncontrado = listaBancos.find(
-            (b) => b.nome.toLowerCase() === obra.quem_paga.toLowerCase()
-          );
-          console.log("🔎 Banco encontrado na lista:", bancoEncontrado);
-          
-          const bancoId = bancoEncontrado ? bancoEncontrado.id : obra.quem_paga;
-          console.log("💾 Usando ID do banco:", bancoId);
-          
-          setEditFormData((prev) => ({
-            ...prev,
-            quemPaga: obra.quem_paga,
-            conta: Number(bancoId), // ✅ Usa o ID do banco como NÚMERO
-          }));
+          // ✅ Usa diretamente o banco_id da obra
+          if (obra.banco_id) {
+            setEditFormData((prev) => ({
+              ...prev,
+              quemPaga: obra.quem_paga,
+              conta: Number(obra.banco_id),
+            }));
+            console.log("💾 Usando banco_id da obra:", obra.banco_id);
+          } else {
+            console.log("⚠️ Obra não tem banco_id vinculado");
+          }
         })
         .catch((error) => console.error("❌ Erro ao sincronizar banco:", error));
     }
@@ -513,26 +510,22 @@ export const Dashboard = () => {
 
         const obra = await response.json();
         console.log("📘 Obra encontrada:", obra);
+        console.log("🏦 Banco da obra (banco_id):", obra.banco_id);
         
-        // ✅ NOVO: Encontra o ID do banco pelo nome
-        const bancoEncontrado = listaBancos.find(
-          (b) => b.nome.toLowerCase() === obra.quem_paga.toLowerCase()
-        );
-        console.log("🔎 Banco encontrado na lista:", bancoEncontrado);
-        
-        const bancoId = bancoEncontrado ? bancoEncontrado.id : obra.quem_paga;
-        console.log("💾 Usando ID do banco:", bancoId);
-        
-        // Garante que os campos quemPaga e conta são atualizados com o banco vinculado à obra
-        setEditFormData((prev) => { 
-          const updated = {
-            ...prev, 
-            quemPaga: obra.quem_paga,
-            conta: Number(bancoId), // ✅ Usa o ID do banco como NÚMERO
-          };
-          console.log("✅ FormData atualizado com banco:", updated.conta);
-          return updated;
-        });
+        // ✅ Usa diretamente o banco_id da obra
+        if (obra.banco_id) {
+          setEditFormData((prev) => { 
+            const updated = {
+              ...prev, 
+              quemPaga: obra.quem_paga,
+              conta: Number(obra.banco_id),
+            };
+            console.log("✅ FormData atualizado com banco:", updated.conta);
+            return updated;
+          });
+        } else {
+          console.log("⚠️ Obra não tem banco_id vinculado");
+        }
       } catch (error) {
         console.error("❌ Erro ao buscar quem_paga:", error);
       }
@@ -541,7 +534,7 @@ export const Dashboard = () => {
     if (editingId !== null && editFormData.obra) {
       fetchQuemPaga();
     }
-  }, [editFormData.obra, editingId, listaBancos]);
+  }, [editFormData.obra, editingId]);
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {

@@ -57,8 +57,8 @@ export const ObrasManager = ({
       return;
     }
 
-    // Chama a função do Pai com o nome do banco (compatível com campo "quem_paga")
-    onAddObra(trimmedName, selectedBank.nome);
+    // Chama a função do Pai com o nome do banco e o ID
+    onAddObra(trimmedName, selectedBank.nome, selectedBank.id);
 
     setNewObraName("");
     setNewBankId("");
@@ -93,7 +93,7 @@ export const ObrasManager = ({
       return;
     }
 
-    onUpdateObra(id, trimmedName, selectedBank.nome);
+    onUpdateObra(id, trimmedName, selectedBank.nome, selectedBank.id);
     setEditingObraId(null);
     setEditedObraName("");
     setEditedBankId("");
