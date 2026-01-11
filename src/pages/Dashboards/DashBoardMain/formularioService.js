@@ -41,7 +41,7 @@ const adapterBackendToFrontend = (data) => {
     valor: data.valor
       ? String(Number(data.valor).toFixed(2)).replace(".", "")
       : "",
-    obra: data.obra,
+    obra: data.obra ? Number(data.obra) : null, // ✅ CONVERTENDO para número
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
     // Converte '1', 'S', 'Y' para true, e o resto para false.
@@ -51,8 +51,8 @@ const adapterBackendToFrontend = (data) => {
     dataCompetencia: formatDateToInput(data.data_competencia),
     observacao: data.observacao,
     carimboDataHora: data.carimbo,
-    conta: data.conta || null,
-    quemPaga: data.quem_paga || null,
+    conta: data.conta ? Number(data.conta) : null, // ✅ Convertendo para número também
+    quemPaga: data.quem_paga ? Number(data.quem_paga) : null,
     link_anexo: data.link_anexo || "",
     categoria: data.categoria || "Outros",
   };

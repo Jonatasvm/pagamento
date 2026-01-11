@@ -319,10 +319,20 @@ export const Dashboard = () => {
         .then((obra) => {
           console.log("📘 Obra encontrada:", obra);
           console.log("🏦 Banco da obra (quem_paga):", obra.quem_paga);
+          
+          // ✅ NOVO: Encontra o ID do banco pelo nome
+          const bancoEncontrado = listaBancos.find(
+            (b) => b.nome.toLowerCase() === obra.quem_paga.toLowerCase()
+          );
+          console.log("🔎 Banco encontrado na lista:", bancoEncontrado);
+          
+          const bancoId = bancoEncontrado ? bancoEncontrado.id : obra.quem_paga;
+          console.log("💾 Usando ID do banco:", bancoId);
+          
           setEditFormData((prev) => ({
             ...prev,
             quemPaga: obra.quem_paga,
-            conta: String(obra.quem_paga),
+            conta: String(bancoId),
           }));
         })
         .catch((error) => console.error("❌ Erro ao sincronizar banco:", error));
@@ -502,12 +512,21 @@ export const Dashboard = () => {
         const obra = await response.json();
         console.log("📘 Obra encontrada:", obra);
         
+        // ✅ NOVO: Encontra o ID do banco pelo nome
+        const bancoEncontrado = listaBancos.find(
+          (b) => b.nome.toLowerCase() === obra.quem_paga.toLowerCase()
+        );
+        console.log("🔎 Banco encontrado na lista:", bancoEncontrado);
+        
+        const bancoId = bancoEncontrado ? bancoEncontrado.id : obra.quem_paga;
+        console.log("💾 Usando ID do banco:", bancoId);
+        
         // Garante que os campos quemPaga e conta são atualizados com o banco vinculado à obra
         setEditFormData((prev) => { 
           const updated = {
             ...prev, 
             quemPaga: obra.quem_paga,
-            conta: obra.quem_paga, // ✅ NOVO: Sincroniza o banco com quem_paga da obra
+            conta: String(bancoId), // ✅ Usa o ID do banco
           };
           console.log("✅ FormData atualizado com banco:", updated.conta);
           return updated;
@@ -520,7 +539,7 @@ export const Dashboard = () => {
     if (editingId !== null && editFormData.obra) {
       fetchQuemPaga();
     }
-  }, [editFormData.obra, editingId]);
+  }, [editFormData.obra, editingId, listaBancos]);
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
