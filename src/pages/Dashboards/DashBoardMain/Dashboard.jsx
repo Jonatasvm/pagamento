@@ -290,14 +290,34 @@ export const Dashboard = () => {
     const contaValue = request.conta || request.quemPaga || "";
     const quemPagaValue = request.quemPaga || "";
     
-    setEditFormData({
+    const newFormData = {
       ...request,
       obra: request.obra ? String(request.obra) : "",
       conta: contaValue ? String(contaValue) : "",
       quemPaga: quemPagaValue ? String(quemPagaValue) : "",
-    });
+    };
+    
+    setEditFormData(newFormData);
 
     setIsTitularLocked(false);
+
+    // ✅ NOVO: Se não tiver 'conta' mas tiver 'obra', busca o banco vinculado à obra
+    if (request.obra && !request.conta) {
+      fetch(`${API_URL}/obras/${request.obra}`)
+        .then((response) => {
+          if (!response.ok) throw new Error("Erro ao buscar obra");
+          return response.json();
+        })
+        .then((obra) => {
+          console.log("📘 Sincronizando banco para obra sem conta:", obra);
+          setEditFormData((prev) => ({
+            ...prev,
+            quemPaga: obra.quem_paga,
+            conta: String(obra.quem_paga),
+          }));
+        })
+        .catch((error) => console.error("❌ Erro ao sincronizar banco:", error));
+    }
 
     // Scroll suave até a linha
     setTimeout(() => {
