@@ -224,6 +224,11 @@ const TelaSolicitacao = () => {
 
   // 3. Buscar Titulares para Autocomplete
   useEffect(() => {
+    // Se acabou de selecionar um titular, nao buscar novamente
+    if (titularJustSelected) {
+      return;
+    }
+
     const fetchTitulares = async () => {
       if (!formData.titular.trim()) {
         setTitularSuggestions([]);
@@ -255,7 +260,7 @@ const TelaSolicitacao = () => {
     // Debounce de 300ms para evitar muitas requisicoes
     const debounceTimer = setTimeout(fetchTitulares, 300);
     return () => clearTimeout(debounceTimer);
-  }, [formData.titular]);
+  }, [formData.titular, titularJustSelected]);
 
   // --- HANDLERS ---
 
@@ -300,6 +305,7 @@ const TelaSolicitacao = () => {
 
   // Handler para selecionar um titular da lista de sugestoes
   const handleSelectTitular = (suggestion) => {
+    setTitularJustSelected(true); // Marca que acabou de selecionar
     setFormData((prev) => ({
       ...prev,
       titular: suggestion.titular,
