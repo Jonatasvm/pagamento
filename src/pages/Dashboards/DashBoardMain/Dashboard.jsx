@@ -69,6 +69,8 @@ export const Dashboard = () => {
     setIsLoadingData(true);
     try {
       const data = await listarFormularios();
+      console.log("📊 DADOS DO BACKEND (solicitações):", data);
+      console.log("🔍 Campo 'conta' das solicitações:", data.map(r => ({ id: r.id, conta: r.conta, obra: r.obra })));
       setRequests(data);
     } catch (error) {
       console.error("Erro ao carregar requisições:", error);
@@ -272,6 +274,9 @@ export const Dashboard = () => {
       return;
     }
     
+    console.log("✏️ EDITANDO SOLICITAÇÃO:", request);
+    console.log("📦 Dados recebidos:", { id: request.id, conta: request.conta, obra: request.obra, quemPaga: request.quemPaga });
+    
     // Abre a linha para edição
     setExpandedRows((prev) =>
       prev.includes(request.id) ? prev : [...prev, request.id]
@@ -290,6 +295,8 @@ export const Dashboard = () => {
     const contaValue = request.conta || request.quemPaga || "";
     const quemPagaValue = request.quemPaga || "";
     
+    console.log("🔄 Sincronizando valores:", { conta: contaValue, quemPaga: quemPagaValue });
+    
     const newFormData = {
       ...request,
       obra: request.obra ? String(request.obra) : "",
@@ -303,13 +310,15 @@ export const Dashboard = () => {
 
     // ✅ NOVO: Se não tiver 'conta' mas tiver 'obra', busca o banco vinculado à obra
     if (request.obra && !request.conta) {
+      console.log("🔍 Buscando banco para obra:", request.obra);
       fetch(`${API_URL}/obras/${request.obra}`)
         .then((response) => {
           if (!response.ok) throw new Error("Erro ao buscar obra");
           return response.json();
         })
         .then((obra) => {
-          console.log("📘 Sincronizando banco para obra sem conta:", obra);
+          console.log("📘 Obra encontrada:", obra);
+          console.log("🏦 Banco da obra (quem_paga):", obra.quem_paga);
           setEditFormData((prev) => ({
             ...prev,
             quemPaga: obra.quem_paga,
