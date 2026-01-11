@@ -457,11 +457,12 @@ export const Dashboard = () => {
     return () => clearTimeout(debounceTimer);
   }, [editFormData.titular]);
 
-  // Buscar quem_paga quando obra mudar
+  // Buscar quem_paga e sincronizar conta quando obra mudar
   useEffect(() => {
     const fetchQuemPaga = async () => {
       // Se não tiver obra selecionada, não busca
       if (!editFormData.obra) {
+        console.log("⚠️ Nenhuma obra selecionada");
         return;
       }
 
@@ -470,18 +471,24 @@ export const Dashboard = () => {
         if (!response.ok) throw new Error("Erro ao buscar obra");
 
         const obra = await response.json();
+        console.log("📘 Obra encontrada:", obra);
+        
         // Garante que os campos quemPaga e conta são atualizados com o banco vinculado à obra
-        setEditFormData((prev) => ({ 
-          ...prev, 
-          quemPaga: obra.quem_paga,
-          conta: obra.quem_paga, // ✅ NOVO: Sincroniza o banco com quem_paga da obra
-        }));
+        setEditFormData((prev) => { 
+          const updated = {
+            ...prev, 
+            quemPaga: obra.quem_paga,
+            conta: obra.quem_paga, // ✅ NOVO: Sincroniza o banco com quem_paga da obra
+          };
+          console.log("✅ FormData atualizado com banco:", updated.conta);
+          return updated;
+        });
       } catch (error) {
-        console.error("Erro ao buscar quem_paga:", error);
+        console.error("❌ Erro ao buscar quem_paga:", error);
       }
     };
 
-    if (editingId !== null) {
+    if (editingId !== null && editFormData.obra) {
       fetchQuemPaga();
     }
   }, [editFormData.obra, editingId]);
