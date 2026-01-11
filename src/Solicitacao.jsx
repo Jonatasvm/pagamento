@@ -121,10 +121,9 @@ const TelaSolicitacao = () => {
   const [obras, setObras] = useState([]);
   const [isLoadingObras, setIsLoadingObras] = useState(true);
   const [bancos, setBancos] = useState([]); // ✅ NOVO: Lista de bancos
-  // Estados para Autocomplete
-  const [titularSuggestions, setTitularSuggestions] = useState([]);
-  const [isCpfCnpjLocked, setIsCpfCnpjLocked] = useState(false);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schedule, setSchedule] = useState([]); // Parcelas calculadas
+
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
 
