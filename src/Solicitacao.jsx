@@ -128,7 +128,12 @@ const TelaSolicitacao = () => {
   const [titularSuggestions, setTitularSuggestions] = useState([]);
   const [isCpfCnpjLocked, setIsCpfCnpjLocked] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-        const userId = localStorage.getItem("user_id");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+
+  // 1. Buscar Obras (Com Filtro de Usuário)
+  useEffect(() => {
+    const fetchObras = async () => {
         if (!userId) {
           toast.error("Sessão inválida. Faça login novamente.");
           return;
@@ -191,7 +196,7 @@ const TelaSolicitacao = () => {
       }
     }
   }, [formData.obra, bancos, obras]);
-  useEffect(() => {
+  // 2. Recalcular Parcelas Automaticamente  useEffect(() => {
     if (
       formData.installmentsCount > 1 &&
       formData.valor &&
