@@ -865,16 +865,27 @@ const TelaSolicitacao = () => {
                 value={formData.titular}
                 onChange={(e) => {
                   handleChange(e);
-                  setTitularJustSelected(false); // Reset flag ao digitar
+                  setTitularJustSelected(false);
                 }}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
-                  // So reabre sugestoes se nao acabou de selecionar um titular
                   if (!titularJustSelected && formData.titular.trim() && titularSuggestions.length > 0) {
                     setShowSuggestions(true);
                   }
                 }}
                 placeholder="Digite o nome do fornecedor..."
+                className={inputClass}
+                autoComplete="off"
+              />
+
+              {/* Dropdown de Sugestoes */}
+              {showSuggestions && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {isLoadingSuggestions ? (
+                    <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                      Carregando...
+                    </div>
+                  ) : titularSuggestions.length > 0 ? (
                     <ul className="divide-y divide-gray-200">
                       {titularSuggestions.map((suggestion, index) => (
                         <li
