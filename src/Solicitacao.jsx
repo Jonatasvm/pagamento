@@ -134,9 +134,8 @@ const TelaSolicitacao = () => {
   // 1. Buscar Obras (Com Filtro de Usuário)
   useEffect(() => {
     const fetchObras = async () => {
-        if (!userId) {
-          toast.error("Sessão inválida. Faça login novamente.");
-          return;
+      try {
+        const userId = localStorage.getItem("user_id");
         }
 
         const response = await fetch(`${API_URL}/obras?user_id=${userId}`);
