@@ -136,10 +136,12 @@ const TelaSolicitacao = () => {
     const fetchObras = async () => {
       try {
         const userId = localStorage.getItem("user_id");
-        }
-
-        const response = await fetch(`${API_URL}/obras?user_id=${userId}`);
-        if (!response.ok) throw new Error("Erro ao buscar obras");
+        if (!userId) {
+          toast.error("Sessão inválida. Faça login novamente.");
+          return;
+        }
+        const response = await fetch(`${API_URL}/obras?user_id=${userId}`);
+        if (!response.ok) throw new Error("Erro ao buscar obras");
 
         const data = await response.json();
         setObras(data);
