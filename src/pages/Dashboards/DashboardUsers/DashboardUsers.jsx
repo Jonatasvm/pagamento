@@ -80,14 +80,19 @@ export default function DashboardUsers() {
       const payload = {
         nome: novoNome,
         quem_paga: novoQuemPaga,
-        banco_id: bancoId ? Number(bancoId) : null, // ✅ NOVO: Enviar banco_id
+        banco_id: bancoId ? Number(bancoId) : null,
       };
+
+      console.log("📤 ENVIANDO ATUALIZAÇÃO DE OBRA:", { id, payload });
 
       const response = await fetch(`${API_IP}/obras/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      const responseData = await response.json();
+      console.log("📥 RESPOSTA DO BACKEND:", responseData);
 
       if (!response.ok) throw new Error("Erro ao atualizar");
 
