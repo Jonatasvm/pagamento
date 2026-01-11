@@ -124,13 +124,10 @@ const TelaSolicitacao = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schedule, setSchedule] = useState([]); // Parcelas calculadas
 
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-
-  // 1. Buscar Obras (Com Filtro de Usuário)
-  useEffect(() => {
-    const fetchObras = async () => {
-      try {
+  // Estados para Autocomplete
+  const [titularSuggestions, setTitularSuggestions] = useState([]);
+  const [isCpfCnpjLocked, setIsCpfCnpjLocked] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
         const userId = localStorage.getItem("user_id");
         if (!userId) {
           toast.error("Sessão inválida. Faça login novamente.");
