@@ -86,7 +86,14 @@ const adapterFrontendToBackend = (data) => {
 // --- CHAMADAS API ---
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
-  return response.data.map(adapterBackendToFrontend);
+  const adapted = response.data.map(adapterBackendToFrontend);
+  console.log("📥 DADOS ADAPTADOS (após listar):");
+  adapted.forEach((item) => {
+    if (item.obra) {
+      console.log(`  ID ${item.id}: obra=${item.obra}, conta=${item.conta} (tipo: ${typeof item.conta})`);
+    }
+  });
+  return adapted;
 };
 
 export const atualizarFormulario = async (id, data) => {

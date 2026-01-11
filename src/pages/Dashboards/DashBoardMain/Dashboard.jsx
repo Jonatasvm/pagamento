@@ -332,7 +332,7 @@ export const Dashboard = () => {
           setEditFormData((prev) => ({
             ...prev,
             quemPaga: obra.quem_paga,
-            conta: String(bancoId),
+            conta: Number(bancoId), // ✅ Usa o ID do banco como NÚMERO
           }));
         })
         .catch((error) => console.error("❌ Erro ao sincronizar banco:", error));
@@ -528,7 +528,7 @@ export const Dashboard = () => {
           const updated = {
             ...prev, 
             quemPaga: obra.quem_paga,
-            conta: String(bancoId), // ✅ Usa o ID do banco
+            conta: Number(bancoId), // ✅ Usa o ID do banco como NÚMERO
           };
           console.log("✅ FormData atualizado com banco:", updated.conta);
           return updated;
