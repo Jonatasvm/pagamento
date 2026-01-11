@@ -86,6 +86,7 @@ const adapterFrontendToBackend = (data) => {
 // --- CHAMADAS API ---
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
+  console.log("📤 RESPOSTA RAW DO BACKEND:", response.data.slice(0, 5)); // Mostra os 5 primeiros
   const adapted = response.data.map(adapterBackendToFrontend);
   console.log("📥 DADOS ADAPTADOS (após listar):");
   adapted.forEach((item) => {

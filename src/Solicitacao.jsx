@@ -114,14 +114,13 @@ const TelaSolicitacao = () => {
     installmentsCount: 1,
     anexos: [], // Múltiplos arquivos
     observacao: "", // ✅ NOVO: Campo de observação
+    conta: "", // ✅ NOVO: Campo de banco (conta bancária)
   });
 
   // Estados de Controle
   const [obras, setObras] = useState([]);
   const [isLoadingObras, setIsLoadingObras] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [schedule, setSchedule] = useState([]); // Parcelas calculadas
-
+  const [bancos, setBancos] = useState([]); // ✅ NOVO: Lista de bancos
   // Estados para Autocomplete
   const [titularSuggestions, setTitularSuggestions] = useState([]);
   const [isCpfCnpjLocked, setIsCpfCnpjLocked] = useState(false);
@@ -152,9 +151,50 @@ const TelaSolicitacao = () => {
       }
     };
     fetchObras();
-  }, []);
 
-  // 2. Recalcular Parcelas Automaticamente
+    // ✅ NOVO: Buscar lista de bancos
+    const fetchBancos = async () => {
+      try {
+        const response = await fetch(`${API_URL}/bancos`);
+        if (!response.ok) throw new Error("Erro ao buscar bancos");
+        const data = await response.json();
+        setBancos(data);
+        console.log("✅ BANCOS CARREGADOS EM SOLICITACAO:", data);
+      } catch (error) {
+        console.error("Erro ao carregar bancos:", error);
+      }
+    };
+    fetchBancos();
+  }, []);
+
+  // ✅ NOVO: Sincronizar banco quando obra mudar
+  useEffect(() => {
+    if (formData.obra && bancos.length > 0) {
+      const obraEncontrada = obras.find((o) => o.id === Number(formData.obra));
+      if (obraEncontrada) {
+        console.log("🔍 Sincronizando banco para obra:", obraEncontrada.nome, "| quem_paga:", obraEncontrada.quem_paga);
+        
+        // Encontra o banco pelo nome (quem_paga)
+        const bancoEncontrado = bancos.find(
+          (b) => b.nome.toLowerCase() === obraEncontrada.quem_paga.toLowerCase()
+        );
+        
+        if (bancoEncontrado) {
+          console.log("✅ Banco encontrado:", bancoEncontrado);
+          setFormData((prev) => ({
+            ...prev,
+            conta: String(bancoEncontrado.id),
+          }));
+        } else {
+          console.log("⚠️ Banco não encontrado para:", obraEncontrada.quem_paga);
+          setFormData((prev) => ({
+            ...prev,
+            conta: "",
+          }));
+        }
+      }
+    }
+  }, [formData.obra, bancos, obras]);
   useEffect(() => {
     if (
       formData.installmentsCount > 1 &&
@@ -404,6 +444,7 @@ const TelaSolicitacao = () => {
         cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatação
         chave_pix: formData.pixKey || "",
         observacao: formData.observacao || "", // ✅ NOVO: Usar observação do formulário
+        conta: formData.conta ? Number(formData.conta) : null, // ✅ NOVO: Enviar o banco (conta)
         // O anexo será tratado separadamente ou via outro campo/API, aqui é só o dado
       };
 
