@@ -70,7 +70,7 @@ export const Dashboard = () => {
     try {
       const data = await listarFormularios();
       console.log("📊 DADOS DO BACKEND (solicitações):", data);
-      console.log("🔍 Campo 'conta' das solicitações:", data.map(r => ({ id: r.id, conta: r.conta, obra: r.obra })));
+      console.log("🔍 Campo 'conta' das solicitações:", data.map(r => ({ id: r.id, conta: r.conta, obra: r.obra, tipo_conta: typeof r.conta })));
       setRequests(data);
     } catch (error) {
       console.error("Erro ao carregar requisições:", error);
@@ -381,6 +381,8 @@ export const Dashboard = () => {
 
     try {
       const dataToSave = { ...editFormData, valor: rawValue };
+      console.log("💾 SALVANDO DADOS:", dataToSave);
+      console.log("🏦 CAMPO CONTA AO SALVAR:", dataToSave.conta, "| Tipo:", typeof dataToSave.conta);
       await atualizarFormulario(editingId, dataToSave);
       toast.success("Solicitação atualizada com sucesso!");
       setEditingId(null);

@@ -59,7 +59,7 @@ const adapterBackendToFrontend = (data) => {
 };
 
 const adapterFrontendToBackend = (data) => {
-  return {
+  const payload = {
     data_lancamento: data.dataLancamento,
     solicitante: data.solicitante,
     titular: data.titular,
@@ -78,6 +78,9 @@ const adapterFrontendToBackend = (data) => {
     observacao: data.observacao,
     conta: data.conta ? Number(data.conta) : null, // ✅ NOVO: Mapeia o campo conta (banco)
   };
+  console.log("📤 PAYLOAD ENVIADO AO BACKEND:", payload);
+  console.log("🏦 CONTA NO PAYLOAD:", payload.conta, "| Tipo:", typeof payload.conta);
+  return payload;
 };
 
 // --- CHAMADAS API ---
