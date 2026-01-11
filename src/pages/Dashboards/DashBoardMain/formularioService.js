@@ -110,11 +110,10 @@ export const criarFormulario = async (data) => {
   // A função adapterFrontendToBackend agora inclui 'lancado'
   const payload = adapterFrontendToBackend(data);
   
-  // Mantendo as correções anteriores para criação,
-  // mas o 'lancado' da linha abaixo agora sobrescreve o valor do payload, 
-  // garantindo que novos formulários sejam sempre 'Y' (como era sua intenção original)
+  // Novos formulários sempre começam como "não lançados" (N)
+  // para aparecerem na lista de pendentes do dashboard
   payload.titular = '0'; 
-  payload.lancado = 'Y'; 
+  payload.lancado = 'N'; 
   
   const response = await api.post("/formulario", payload);
   return response.data;
