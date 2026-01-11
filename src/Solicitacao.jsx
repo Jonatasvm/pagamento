@@ -1,106 +1,106 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  User,
-  Building,
-  Tag,
-  Paperclip,
-  DollarSign,
-  Key,
-  Calendar,
-  CreditCard,
-  Send,
-  Loader2,
-  X,
-  ChevronDown,
-  List,
-  AlertCircle,
+  User,
+  Building,
+  Tag,
+  Paperclip,
+  DollarSign,
+  Key,
+  Calendar,
+  CreditCard,
+  Send,
+  Loader2,
+  X,
+  ChevronDown,
+  List,
+  AlertCircle,
 } from "lucide-react";
 
-// --- CONFIGURAÇÃO ---
+// --- CONFIGURACAO ---
 const API_URL = "http://91.98.132.210:5631";
 
-// --- UTILITÁRIOS (Helpers) ---
+// --- UTILITARIOS (Helpers) ---
 
 const cleanDigits = (value) => value.replace(/\D/g, "");
 
 const formatCurrency = (value) => {
-  const digits = cleanDigits(value).substring(0, 15);
-  if (!digits) return "";
-  const cents = digits.slice(-2).padStart(2, "0");
-  const reais = digits.slice(0, -2) || "0";
-  return `R$ ${parseInt(reais, 10).toLocaleString("pt-BR")},${cents}`;
+  const digits = cleanDigits(value).substring(0, 15);
+  if (!digits) return "";
+  const cents = digits.slice(-2).padStart(2, "0");
+  const reais = digits.slice(0, -2) || "0";
+  return `R$ ${parseInt(reais, 10).toLocaleString("pt-BR")},${cents}`;
 };
 
 const parseCurrencyToFloat = (value) => {
-  if (!value) return 0;
-  return parseFloat(value.replace(/[R$\s.]/g, "").replace(",", "."));
+  if (!value) return 0;
+  return parseFloat(value.replace(/[R$\s.]/g, "").replace(",", "."));
 };
 
 const formatCpfCnpj = (value) => {
-  const clean = cleanDigits(value).substring(0, 14);
-  if (clean.length <= 11) {
-    return clean
-      .replace(/^(\d{3})(\d)/, "$1.$2")
-      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
-  }
-  return clean
-    .replace(/^(\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
-    .replace(/(\d{4})(\d)/, "$1-$2");
+  const clean = cleanDigits(value).substring(0, 14);
+  if (clean.length <= 11) {
+    return clean
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+  }
+  return clean
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
+    .replace(/(\d{4})(\d)/, "$1-$2");
 };
 
 const addMonths = (dateStr, months) => {
-  const d = new Date(dateStr + "T00:00:00"); // T00:00:00 evita problemas de fuso
-  const originalDay = d.getDate();
-  d.setMonth(d.getMonth() + months);
-  if (d.getDate() !== originalDay) {
-    d.setDate(0); // Ajuste para virada de mês (ex: 31 jan -> 28 fev)
-  }
-  return d.toISOString().split("T")[0];
+  const d = new Date(dateStr + "T00:00:00"); // T00:00:00 evita problemas de fuso
+  const originalDay = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  if (d.getDate() !== originalDay) {
+    d.setDate(0); // Ajuste para virada de mes (ex: 31 jan -> 28 fev)
+  }
+  return d.toISOString().split("T")[0];
 };
 
-// Cálculo de Parcelas
+// Calculo de Parcelas
 const calculateInstallments = (totalValueStr, count, startDateStr) => {
-  const totalCents = parseInt(cleanDigits(totalValueStr), 10);
-  if (!totalCents || count < 1 || !startDateStr) return [];
+  const totalCents = parseInt(cleanDigits(totalValueStr), 10);
+  if (!totalCents || count < 1 || !startDateStr) return [];
 
-  const installmentCents = Math.floor(totalCents / count);
-  const remainderCents = totalCents % count;
-  const results = [];
+  const installmentCents = Math.floor(totalCents / count);
+  const remainderCents = totalCents % count;
+  const results = [];
 
-  for (let i = 0; i < count; i++) {
-    let currentCents = installmentCents;
-    if (i === 0) currentCents += remainderCents; // Resto vai na 1ª parcela
+  for (let i = 0; i < count; i++) {
+    let currentCents = installmentCents;
+    if (i === 0) currentCents += remainderCents; // Resto vai na 1a parcela
 
-    const valStr = currentCents.toString().padStart(3, "0");
-    results.push({
-      number: i + 1,
-      value: formatCurrency(valStr),
-      date: addMonths(startDateStr, i),
-    });
-  }
-  return results;
+    const valStr = currentCents.toString().padStart(3, "0");
+    results.push({
+      number: i + 1,
+      value: formatCurrency(valStr),
+      date: addMonths(startDateStr, i),
+    });
+  }
+  return results;
 };
 
-// --- CONSTANTES ESTÁTICAS ---
-const PIX_KEY_TYPES = ["CPF", "CNPJ", "E-mail", "Telefone", "Chave Aleatória"];
+// --- CONSTANTES ESTATICAS ---
+const PIX_KEY_TYPES = ["CPF", "CNPJ", "E-mail", "Telefone", "Chave Aleatoria"];
 const PIX_LIMITS = {
-  CPF: { len: 11, type: "numeric" },
-  CNPJ: { len: 14, type: "numeric" },
-  Telefone: { len: 14, type: "numeric" },
-  "E-mail": { len: 100, type: "text" },
-  "Chave Aleatória": { len: 36, type: "text" },
+  CPF: { len: 11, type: "numeric" },
+  CNPJ: { len: 14, type: "numeric" },
+  Telefone: { len: 14, type: "numeric" },
+  "E-mail": { len: 100, type: "text" },
+  "Chave Aleatoria": { len: 36, type: "text" },
 };
 const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 // --- COMPONENTE PRINCIPAL ---
 const TelaSolicitacao = () => {
-  const fileInputRef = useRef(null);
-  const autocompleteDropdownRef = useRef(null);
-  // Estado do Formulário
+  const fileInputRef = useRef(null);
+  const autocompleteDropdownRef = useRef(null);
+  // Estado do Formulario
   const [formData, setFormData] = useState({
     obra: "",
     referente: "",
@@ -112,56 +112,62 @@ const TelaSolicitacao = () => {
     cpfCnpj: "",
     dataVencimento: "",
     installmentsCount: 1,
-    anexos: [], // Múltiplos arquivos
-    observacao: "", // ✅ NOVO: Campo de observação
-    conta: "", // ✅ NOVO: Campo de banco (conta bancária)
+    anexos: [], // Multiplos arquivos
+    observacao: "", // ? NOVO: Campo de observacao
+    conta: "", // ? NOVO: Campo de banco (conta bancaria)
   });
 
-  // Estados de Controle
-  const [obras, setObras] = useState([]);
-  const [isLoadingObras, setIsLoadingObras] = useState(true);
-  const [bancos, setBancos] = useState([]); // ✅ NOVO: Lista de bancos
+  // Estados de Controle
+  const [obras, setObras] = useState([]);
+  const [isLoadingObras, setIsLoadingObras] = useState(true);
+  const [bancos, setBancos] = useState([]); // ? NOVO: Lista de bancos
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schedule, setSchedule] = useState([]); // Parcelas calculadas
 
-  // Estados para Autocomplete
+  // Estados para Autocomplete de Titular
   const [titularSuggestions, setTitularSuggestions] = useState([]);
   const [isCpfCnpjLocked, setIsCpfCnpjLocked] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [titularJustSelected, setTitularJustSelected] = useState(false);
 
-  // 1. Buscar Obras (Com Filtro de Usuário)
+  // Estados para Autocomplete de Obra
+  const [obraBusca, setObraBusca] = useState("");
+  const [showObraDropdown, setShowObraDropdown] = useState(false);
+  const obraDropdownRef = useRef(null);
+
+  // 1. Buscar Obras (Com Filtro de Usuario)
   useEffect(() => {
     const fetchObras = async () => {
       try {
         const userId = localStorage.getItem("user_id");
         if (!userId) {
-          toast.error("Sessão inválida. Faça login novamente.");
+          toast.error("Sessao invalida. Faca login novamente.");
           return;
         }
         const response = await fetch(`${API_URL}/obras?user_id=${userId}`);
         if (!response.ok) throw new Error("Erro ao buscar obras");
 
-        const data = await response.json();
-        setObras(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Erro ao carregar obras.");
-      } finally {
-        setIsLoadingObras(false);
-      }
-    };
-    fetchObras();
+        const data = await response.json();
+        setObras(data);
+      } catch (error) {
+        console.error(error);
+        toast.error("Erro ao carregar obras.");
+      } finally {
+        setIsLoadingObras(false);
+      }
+    };
+    fetchObras();
 
-    // ✅ NOVO: Buscar lista de bancos
+    // ? NOVO: Buscar lista de bancos
     const fetchBancos = async () => {
       try {
         const response = await fetch(`${API_URL}/bancos`);
         if (!response.ok) throw new Error("Erro ao buscar bancos");
         const data = await response.json();
         setBancos(data);
-        console.log("✅ BANCOS CARREGADOS EM SOLICITACAO:", data);
+        console.log("? BANCOS CARREGADOS EM SOLICITACAO:", data);
       } catch (error) {
         console.error("Erro ao carregar bancos:", error);
       }
@@ -169,22 +175,22 @@ const TelaSolicitacao = () => {
     fetchBancos();
   }, []);
 
-  // ✅ Sincronizar banco quando obra mudar (usando banco_id da obra)
+  // ? Sincronizar banco quando obra mudar (usando banco_id da obra)
   useEffect(() => {
     if (formData.obra) {
       const obraEncontrada = obras.find((o) => o.id === Number(formData.obra));
       if (obraEncontrada) {
-        console.log("🔍 Sincronizando banco para obra:", obraEncontrada.nome, "| banco_id:", obraEncontrada.banco_id);
+        console.log("? Sincronizando banco para obra:", obraEncontrada.nome, "| banco_id:", obraEncontrada.banco_id);
         
         // Usa o banco_id diretamente da obra
         if (obraEncontrada.banco_id) {
-          console.log("✅ Usando banco_id da obra:", obraEncontrada.banco_id);
+          console.log("? Usando banco_id da obra:", obraEncontrada.banco_id);
           setFormData((prev) => ({
             ...prev,
             conta: String(obraEncontrada.banco_id),
           }));
         } else {
-          console.log("⚠️ Obra não tem banco_id vinculado");
+          console.log("? Obra nao tem banco_id vinculado");
           setFormData((prev) => ({
             ...prev,
             conta: "",
@@ -195,162 +201,182 @@ const TelaSolicitacao = () => {
   }, [formData.obra, obras]);
   // 2. Recalcular Parcelas Automaticamente
   useEffect(() => {
-    if (
-      formData.installmentsCount > 1 &&
-      formData.valor &&
-      formData.dataVencimento
-    ) {
-      const newSchedule = calculateInstallments(
-        formData.valor,
-        formData.installmentsCount,
-        formData.dataVencimento
-      );
+    if (
+      formData.installmentsCount > 1 &&
+      formData.valor &&
+      formData.dataVencimento
+    ) {
+      const newSchedule = calculateInstallments(
+        formData.valor,
+        formData.installmentsCount,
+        formData.dataVencimento
+      );
 
-      // Só atualiza se houver mudança real para evitar loop
-      if (JSON.stringify(newSchedule) !== JSON.stringify(schedule)) {
-        setSchedule(newSchedule);
-      }
-    } else {
-      setSchedule([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.valor, formData.installmentsCount, formData.dataVencimento]);
+      // So atualiza se houver mudanca real para evitar loop
+      if (JSON.stringify(newSchedule) !== JSON.stringify(schedule)) {
+        setSchedule(newSchedule);
+      }
+    } else {
+      setSchedule([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.valor, formData.installmentsCount, formData.dataVencimento]);
 
-  // 3. Buscar Titulares para Autocomplete
-  useEffect(() => {
-    const fetchTitulares = async () => {
-      if (!formData.titular.trim()) {
-        setTitularSuggestions([]);
-        setShowSuggestions(false);
-        return;
-      }
+  // 3. Buscar Titulares para Autocomplete
+  useEffect(() => {
+    const fetchTitulares = async () => {
+      if (!formData.titular.trim()) {
+        setTitularSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
 
-      setIsLoadingSuggestions(true);
-      try {
-        const response = await fetch(
-          `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(
-            formData.titular
-          )}`
-        );
-        if (!response.ok) throw new Error("Erro ao buscar titulares");
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(
+          `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(
+            formData.titular
+          )}`
+        );
+        if (!response.ok) throw new Error("Erro ao buscar titulares");
 
-        const data = await response.json();
-        setTitularSuggestions(data);
-        setShowSuggestions(true);
-        setSelectedSuggestionIndex(-1);
-      } catch (error) {
-        console.error("Erro ao buscar titulares:", error);
-        setTitularSuggestions([]);
-      } finally {
-        setIsLoadingSuggestions(false);
-      }
-    };
+        const data = await response.json();
+        setTitularSuggestions(data);
+        setShowSuggestions(true);
+        setSelectedSuggestionIndex(-1);
+      } catch (error) {
+        console.error("Erro ao buscar titulares:", error);
+        setTitularSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
 
-    // Debounce de 300ms para evitar muitas requisições
-    const debounceTimer = setTimeout(fetchTitulares, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [formData.titular]);
+    // Debounce de 300ms para evitar muitas requisicoes
+    const debounceTimer = setTimeout(fetchTitulares, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [formData.titular]);
 
-  // --- HANDLERS ---
+  // --- HANDLERS ---
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    let newValue = value;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    let newValue = value;
 
-    // Máscaras específicas
-    if (name === "valor") newValue = formatCurrency(value);
-    if (name === "cpfCnpj") newValue = formatCpfCnpj(value);
-    if (name === "pixKey") {
-      const limit = PIX_LIMITS[formData.pixKeyType];
-      if (limit.type === "numeric")
-        newValue = cleanDigits(value).substring(0, limit.len);
-      else newValue = value.substring(0, limit.len);
-    }
+    // Mascaras especificas
+    if (name === "valor") newValue = formatCurrency(value);
+    if (name === "cpfCnpj") newValue = formatCpfCnpj(value);
+    if (name === "pixKey") {
+      const limit = PIX_LIMITS[formData.pixKeyType];
+      if (limit.type === "numeric")
+        newValue = cleanDigits(value).substring(0, limit.len);
+      else newValue = value.substring(0, limit.len);
+    }
 
-    // Lógica específica de troca de tipo de pagamento ou chave
-    if (name === "paymentMethod") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: newValue,
-        pixKey: "",
-        pixKeyType: "CPF",
-      }));
-      return;
-    }
-    if (name === "pixKeyType") {
-      setFormData((prev) => ({ ...prev, [name]: newValue, pixKey: "" }));
-      return;
-    }
+    // Logica especifica de troca de tipo de pagamento ou chave
+    if (name === "paymentMethod") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: newValue,
+        pixKey: "",
+        pixKeyType: "CPF",
+      }));
+      return;
+    }
+    if (name === "pixKeyType") {
+      setFormData((prev) => ({ ...prev, [name]: newValue, pixKey: "" }));
+      return;
+    }
 
-    // Se for o campo titular, limpar o CNPJ ao digitar
-    if (name === "titular") {
-      setFormData((prev) => ({ ...prev, [name]: newValue }));
-      setIsCpfCnpjLocked(false); // Desbloqueia ao digitar
-      return;
-    }
+    // Se for o campo titular, limpar o CNPJ ao digitar
+    if (name === "titular") {
+      setFormData((prev) => ({ ...prev, [name]: newValue }));
+      setIsCpfCnpjLocked(false); // Desbloqueia ao digitar
+      return;
+    }
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
-  };
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
+  };
 
-  // Handler para selecionar um titular da lista de sugestões
-  const handleSelectTitular = (suggestion) => {
-    setFormData((prev) => ({
-      ...prev,
-      titular: suggestion.titular,
-      cpfCnpj: formatCpfCnpj(suggestion.cpf_cnpj),
-    }));
-    setIsCpfCnpjLocked(true); // Bloqueia após seleção
-    setShowSuggestions(false);
-    setTitularSuggestions([]);
-  };
+  // Handler para selecionar um titular da lista de sugestoes
+  const handleSelectTitular = (suggestion) => {
+    setFormData((prev) => ({
+      ...prev,
+      titular: suggestion.titular,
+      cpfCnpj: formatCpfCnpj(suggestion.cpf_cnpj),
+    }));
+    setIsCpfCnpjLocked(true); // Bloqueia apos selecao
+    setShowSuggestions(false);
+    setTitularSuggestions([]);
+  };
 
-  // Handler para navegação com teclado nas sugestões
-  const handleKeyDown = (e) => {
-    if (!showSuggestions || titularSuggestions.length === 0) return;
+  // Handler para navegacao com teclado nas sugestoes
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || titularSuggestions.length === 0) return;
 
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedSuggestionIndex((prev) =>
-          prev < titularSuggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedSuggestionIndex >= 0) {
-          handleSelectTitular(titularSuggestions[selectedSuggestionIndex]);
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        setShowSuggestions(false);
-        break;
-      default:
-        break;
-    }
-  };
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < titularSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0) {
+          handleSelectTitular(titularSuggestions[selectedSuggestionIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setShowSuggestions(false);
+        break;
+      default:
+        break;
+    }
+  };
 
-  // Fechar sugestões ao clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        autocompleteDropdownRef.current &&
-        !autocompleteDropdownRef.current.contains(event.target)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
+  // Fechar sugestoes ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        autocompleteDropdownRef.current &&
+        !autocompleteDropdownRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+      // Fechar dropdown de obra
+      if (
+        obraDropdownRef.current &&
+        !obraDropdownRef.current.contains(event.target)
+      ) {
+        setShowObraDropdown(false);
+      }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handler para selecionar obra do autocomplete
+  const handleSelectObra = (obra) => {
+    setFormData((prev) => ({ ...prev, obra: String(obra.id) }));
+    setObraBusca(obra.nome);
+    setShowObraDropdown(false);
+  };
+
+  // Filtrar obras baseado na busca
+  const obrasFiltradas = obras.filter((obra) =>
+    obra.nome.toLowerCase().includes(obraBusca.toLowerCase())
+  );
+
   const handleFileChange = (e) => {
     if (e.target.files) {
-      // Adiciona os novos arquivos à lista existente
+      // Adiciona os novos arquivos a lista existente
       const newFiles = Array.from(e.target.files);
       setFormData((prev) => ({
         ...prev,
@@ -368,70 +394,70 @@ const TelaSolicitacao = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Edição manual das parcelas (Tabela)
-  const handleScheduleEdit = (index, field, value) => {
-    const newSchedule = [...schedule];
-    let finalValue = value;
+  // Edicao manual das parcelas (Tabela)
+  const handleScheduleEdit = (index, field, value) => {
+    const newSchedule = [...schedule];
+    let finalValue = value;
 
-    if (field === "value") finalValue = formatCurrency(value);
+    if (field === "value") finalValue = formatCurrency(value);
 
-    newSchedule[index] = { ...newSchedule[index], [field]: finalValue };
-    setSchedule(newSchedule);
-  };
+    newSchedule[index] = { ...newSchedule[index], [field]: finalValue };
+    setSchedule(newSchedule);
+  };
 
-  // ENVIO DO FORMULÁRIO
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  // ENVIO DO FORMULARIO
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-    // 🛑 AJUSTE 1: VALIDAÇÃO DO ANEXO OBRIGATÓRIO (CORRIGIDO)
-    const isPaymentMethodRequiringFile = 
-      formData.paymentMethod === "Cheque" || 
-      formData.paymentMethod === "Boleto";    if (isPaymentMethodRequiringFile && formData.anexos.length === 0) {
-      toast.error("Você precisa enviar pelo menos um arquivo para Cheque e Boleto.", { 
+    // ? AJUSTE 1: VALIDACAO DO ANEXO OBRIGATORIO (CORRIGIDO)
+    const isPaymentMethodRequiringFile = 
+      formData.paymentMethod === "Cheque" || 
+      formData.paymentMethod === "Boleto";    if (isPaymentMethodRequiringFile && formData.anexos.length === 0) {
+      toast.error("Voce precisa enviar pelo menos um arquivo para Cheque e Boleto.", { 
           duration: 4000 
       });
-      setIsSubmitting(false); // Reseta o botão de envio
-      return; //  Impede a submissão
-    }
+      setIsSubmitting(false); // Reseta o botao de envio
+      return; //  Impede a submissao
+    }
     // ----------------------------------------------------
 
-    // Validação Básica
-    const required = [
-      "obra",
-      "referente",
-      "valor",
-      "titular",
-      "cpfCnpj",
-      "dataVencimento",
-    ];
-    if (formData.paymentMethod === "PIX") required.push("pixKey");
+    // Validacao Basica
+    const required = [
+      "obra",
+      "referente",
+      "valor",
+      "titular",
+      "cpfCnpj",
+      "dataVencimento",
+    ];
+    if (formData.paymentMethod === "PIX") required.push("pixKey");
 
-    const hasEmptyFields = required.some((field) => !formData[field]);
-    if (hasEmptyFields) {
-      toast.error("Preencha todos os campos obrigatórios.");
-      setIsSubmitting(false);
-      return;
-    }
+    const hasEmptyFields = required.some((field) => !formData[field]);
+    if (hasEmptyFields) {
+      toast.error("Preencha todos os campos obrigatorios.");
+      setIsSubmitting(false);
+      return;
+    }
 
-    // Validação Soma Parcelas
-    if (formData.installmentsCount > 1) {
-      const total = parseCurrencyToFloat(formData.valor);
-      const sumInstallments = schedule.reduce(
-        (acc, item) => acc + parseCurrencyToFloat(item.value),
-        0
-      );
+    // Validacao Soma Parcelas
+    if (formData.installmentsCount > 1) {
+      const total = parseCurrencyToFloat(formData.valor);
+      const sumInstallments = schedule.reduce(
+        (acc, item) => acc + parseCurrencyToFloat(item.value),
+        0
+      );
 
-      // Margem de erro de 1 centavo para arredondamento JS
-      if (Math.abs(total - sumInstallments) > 0.01) {
-        toast.error("A soma das parcelas difere do valor total.");
-        setIsSubmitting(false);
-        return;
-      }
-    }
+      // Margem de erro de 1 centavo para arredondamento JS
+      if (Math.abs(total - sumInstallments) > 0.01) {
+        toast.error("A soma das parcelas difere do valor total.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
-    const usuarioLogado = localStorage.getItem("usuario") || "Usuário";
-    const hoje = new Date().toISOString().split("T")[0];    try {
+    const usuarioLogado = localStorage.getItem("usuario") || "Usuario";
+    const hoje = new Date().toISOString().split("T")[0];    try {
       const requests = [];
       const basePayload = {
         data_lancamento: hoje,
@@ -440,15 +466,15 @@ const TelaSolicitacao = () => {
         obra: formData.obra,
         forma_pagamento: formData.paymentMethod, // Usando o estado atual
         lancado: "N",
-        cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatação
+        cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatacao
         chave_pix: formData.pixKey || "",
-        observacao: formData.observacao || "", // ✅ NOVO: Usar observação do formulário
-        conta: formData.conta ? Number(formData.conta) : null, // ✅ NOVO: Enviar o banco (conta)
-        // O anexo será tratado separadamente ou via outro campo/API, aqui é só o dado
+        observacao: formData.observacao || "", // ? NOVO: Usar observacao do formulario
+        conta: formData.conta ? Number(formData.conta) : null, // ? NOVO: Enviar o banco (conta)
+        // O anexo sera tratado separadamente ou via outro campo/API, aqui e so o dado
       };
 
       if (formData.installmentsCount > 1) {
-        // Múltiplas requisições
+        // Multiplas requisicoes
         schedule.forEach((parcela) => {
           requests.push(
             fetch(`${API_URL}/formulario`, {
@@ -465,7 +491,7 @@ const TelaSolicitacao = () => {
           );
         });
       } else {
-        // Requisição Única
+        // Requisicao Unica
         requests.push(
           fetch(`${API_URL}/formulario`, {
             method: "POST",
@@ -489,7 +515,7 @@ const TelaSolicitacao = () => {
         })
       );
 
-      // Pega o ID do primeiro formulário criado (se múltiplos, usa o primeiro)
+      // Pega o ID do primeiro formulario criado (se multiplos, usa o primeiro)
       const firstFormId = responseData[0]?.id;
 
       // Se houver anexos, fazer upload para Google Drive
@@ -508,14 +534,14 @@ const TelaSolicitacao = () => {
         );
 
         if (!uploadResponse.ok) {
-          console.warn("Aviso: Formulário criado, mas falha ao fazer upload dos arquivos");
+          console.warn("Aviso: Formulario criado, mas falha ao fazer upload dos arquivos");
         } else {
           const uploadData = await uploadResponse.json();
           console.log("Arquivos upados com sucesso:", uploadData);
         }
       }
 
-      toast.success("Solicitação enviada com sucesso!");
+      toast.success("Solicitacao enviada com sucesso!");
 
       // Reset Form
       setFormData({
@@ -530,7 +556,7 @@ const TelaSolicitacao = () => {
         dataVencimento: "",
         installmentsCount: 1,
         anexos: [],
-        observacao: "", // ✅ NOVO: Reset observação
+        observacao: "", // ? NOVO: Reset observacao
       });
       setSchedule([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -540,208 +566,242 @@ const TelaSolicitacao = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  };
 
-  // --- RENDERIZADORES AUXILIARES ---
-  const inputClass =
-    "mt-1 block w-full border border-gray-300 rounded-lg py-2.5 px-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-800 transition";
-  const labelClass =
-    "flex items-center text-sm font-semibold text-gray-700 mb-1.5";
+  // --- RENDERIZADORES AUXILIARES ---
+  const inputClass =
+    "mt-1 block w-full border border-gray-300 rounded-lg py-2.5 px-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-800 transition";
+  const labelClass =
+    "flex items-center text-sm font-semibold text-gray-700 mb-1.5";
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex justify-center py-2 px-2 sm:px-2 lg:px-2 font-sans">
-      <Toaster position="top-right" />
+  return (
+    <div className="min-h-screen bg-gray-50 flex justify-center py-2 px-2 sm:px-2 lg:px-2 font-sans">
+      <Toaster position="top-right" />
 
-      <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-4 md:p-10">
-        {/* HEADER */}
-        <div className="border-b-4 border-blue-500/50 pb-4 mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-900 flex items-center">
-            <DollarSign className="w-8 h-8 mr-3 text-blue-600" />
-            Solicitação de Pagamento
-          </h2>
-          <p className="text-gray-500 mt-1 text-sm">
-            Preencha os dados da despesa para aprovação.
-          </p>
-        </div>
+      <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-4 md:p-10">
+        {/* HEADER */}
+        <div className="border-b-4 border-blue-500/50 pb-4 mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900 flex items-center">
+            <DollarSign className="w-8 h-8 mr-3 text-blue-600" />
+            Solicitacao de Pagamento
+          </h2>
+          <p className="text-gray-500 mt-1 text-sm">
+            Preencha os dados da despesa para aprovacao.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* BLOCO 1: OBRA E DESCRIÇÃO */}
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label htmlFor="obra" className={labelClass}>
-                <Building className="w-4 h-4 mr-2 text-blue-600" /> Obra{" "}
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  name="obra"
-                  value={formData.obra}
-                  onChange={handleChange}
-                  disabled={isLoadingObras}
-                  className={`${inputClass} appearance-none bg-white`}
-                >
-                  <option value="" disabled>
-                    {isLoadingObras
-                      ? "Carregando..."
-                      : "Selecione a obra vinculada"}
-                  </option>
-                  {obras.map((obra) => (
-                    <option key={obra.id} value={obra.id}>
-                      {obra.nome}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              </div>
-              {!isLoadingObras && obras.length === 0 && (
-                <p className="text-sm text-red-500 mt-1 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" /> Nenhuma obra
-                  encontrada para seu usuário.
-                </p>
-              )}
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* BLOCO 1: OBRA E DESCRICAO */}
+          <div className="grid grid-cols-1 gap-6">
+            <div ref={obraDropdownRef} className="relative">
+              <label htmlFor="obra" className={labelClass}>
+                <Building className="w-4 h-4 mr-2 text-blue-600" /> Obra{" "}
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={obraBusca}
+                  onChange={(e) => {
+                    setObraBusca(e.target.value);
+                    setShowObraDropdown(true);
+                    // Limpa a selecao se o usuario digitar algo diferente
+                    if (formData.obra) {
+                      const obraSelecionada = obras.find(o => o.id === Number(formData.obra));
+                      if (obraSelecionada && e.target.value !== obraSelecionada.nome) {
+                        setFormData(prev => ({ ...prev, obra: "" }));
+                      }
+                    }
+                  }}
+                  onFocus={() => setShowObraDropdown(true)}
+                  placeholder={isLoadingObras ? "Carregando..." : "Digite para buscar a obra..."}
+                  disabled={isLoadingObras}
+                  className={`${inputClass} bg-white`}
+                  autoComplete="off"
+                />
+                <ChevronDown 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer" 
+                  onClick={() => setShowObraDropdown(!showObraDropdown)}
+                />
+              </div>
+              
+              {/* Dropdown de Obras */}
+              {showObraDropdown && !isLoadingObras && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {obrasFiltradas.length > 0 ? (
+                    <ul className="divide-y divide-gray-200">
+                      {obrasFiltradas.map((obra) => (
+                        <li
+                          key={obra.id}
+                          onClick={() => handleSelectObra(obra)}
+                          className={`px-4 py-3 cursor-pointer transition hover:bg-blue-50 ${
+                            formData.obra === String(obra.id) ? "bg-blue-100 text-blue-900" : "text-gray-800"
+                          }`}
+                        >
+                          <div className="font-medium text-sm">{obra.nome}</div>
+                          {obra.quem_paga && (
+                            <div className="text-xs text-gray-500 mt-1">{obra.quem_paga}</div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                      Nenhuma obra encontrada
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {!isLoadingObras && obras.length === 0 && (
+                <p className="text-sm text-red-500 mt-1 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" /> Nenhuma obra
+                  encontrada para seu usuario.
+                </p>
+              )}
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="referente" className={labelClass}>
-                  <Tag className="w-4 h-4 mr-2 text-blue-600" /> Referente
-                  (Detalhes) <span className="text-red-500 ml-1">*</span>
-                </label>
-                <textarea
-                  name="referente"
-                  rows="3"
-                  value={formData.referente}
-                  onChange={handleChange}
-                  placeholder="Ex: Compra de cimento..."
-                  className={`${inputClass} resize-none`}
-                />
-              </div>
-              <div>
-                <label htmlFor="valor" className={labelClass}>
-                  <DollarSign className="w-4 h-4 mr-2 text-blue-600" /> Valor
-                  Total <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="valor"
-                  value={formData.valor}
-                  onChange={handleChange}
-                  placeholder="R$ 0,00"
-                  inputMode="numeric"
-                  className={`${inputClass} text-lg font-medium text-gray-900`}
-                />
-              </div>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="referente" className={labelClass}>
+                  <Tag className="w-4 h-4 mr-2 text-blue-600" /> Referente
+                  (Detalhes) <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  name="referente"
+                  rows="3"
+                  value={formData.referente}
+                  onChange={handleChange}
+                  placeholder="Ex: Compra de cimento..."
+                  className={`${inputClass} resize-none`}
+                />
+              </div>
+              <div>
+                <label htmlFor="valor" className={labelClass}>
+                  <DollarSign className="w-4 h-4 mr-2 text-blue-600" /> Valor
+                  Total <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="valor"
+                  value={formData.valor}
+                  onChange={handleChange}
+                  placeholder="R$ 0,00"
+                  inputMode="numeric"
+                  className={`${inputClass} text-lg font-medium text-gray-900`}
+                />
+              </div>
+            </div>
+          </div>
 
-          {/* BLOCO 2: PAGAMENTO */}
-          <div className="border-t pt-6">
-            <label className={labelClass}>
-              <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> Forma de
-              Pagamento
-            </label>
-            <div className="flex flex-wrap gap-3 mt-2">
-              {["PIX", "Boleto", "Cheque"].map((method) => (
-                <label
-                  key={method}
-                  className={`cursor-pointer px-4 py-2 rounded-full border text-sm font-medium transition ${
-                    formData.paymentMethod === method
-                      ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={method}
-                    checked={formData.paymentMethod === method}
-                    onChange={handleChange}
-                    className="hidden"
-                  />
-                  {method}
-                </label>
-              ))}
-            </div>
-          </div>
+          {/* BLOCO 2: PAGAMENTO */}
+          <div className="border-t pt-6">
+            <label className={labelClass}>
+              <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> Forma de
+              Pagamento
+            </label>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {["PIX", "Boleto", "Cheque"].map((method) => (
+                <label
+                  key={method}
+                  className={`cursor-pointer px-4 py-2 rounded-full border text-sm font-medium transition ${
+                    formData.paymentMethod === method
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method}
+                    checked={formData.paymentMethod === method}
+                    onChange={handleChange}
+                    className="hidden"
+                  />
+                  {method}
+                </label>
+              ))}
+            </div>
+          </div>
 
-          {/* BLOCO 3: DETALHES ESPECÍFICOS (PIX e PARCELAS) */}
-          <div className="bg-gray-50 rounded-xl p-2 border border-gray-200 space-y-6">
-            {/* LINHA 1: PIX (Se selecionado) */}
-            {formData.paymentMethod === "PIX" && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fadeIn">
-                <div className="md:col-span-1">
-                  <label className={labelClass}>Tipo Chave</label>
-                  <div className="relative">
-                    <select
-                      name="pixKeyType"
-                      value={formData.pixKeyType}
-                      onChange={handleChange}
-                      className={`${inputClass} appearance-none`}
-                    >
-                      {PIX_KEY_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className={labelClass}>
-                    Chave PIX <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="pixKey"
-                      value={formData.pixKey}
-                      onChange={handleChange}
-                      placeholder="Chave do recebedor"
-                      className={`${inputClass} pl-10`}
-                    />
-                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* BLOCO 3: DETALHES ESPECIFICOS (PIX e PARCELAS) */}
+          <div className="bg-gray-50 rounded-xl p-2 border border-gray-200 space-y-6">
+            {/* LINHA 1: PIX (Se selecionado) */}
+            {formData.paymentMethod === "PIX" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fadeIn">
+                <div className="md:col-span-1">
+                  <label className={labelClass}>Tipo Chave</label>
+                  <div className="relative">
+                    <select
+                      name="pixKeyType"
+                      value={formData.pixKeyType}
+                      onChange={handleChange}
+                      className={`${inputClass} appearance-none`}
+                    >
+                      {PIX_KEY_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className={labelClass}>
+                    Chave PIX <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="pixKey"
+                      value={formData.pixKey}
+                      onChange={handleChange}
+                      placeholder="Chave do recebedor"
+                      className={`${inputClass} pl-10`}
+                    />
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {/* LINHA 2: VENCIMENTO E PARCELAS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className={labelClass}>
-                  <Calendar className="w-4 h-4 mr-2 text-blue-600" /> Data 1º
-                  Vencimento <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="dataVencimento"
-                  value={formData.dataVencimento}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>
-                  <List className="w-4 h-4 mr-2 text-blue-600" /> Parcelamento
-                </label>
-                <div className="relative">
-                  <select
-                    name="installmentsCount"
-                    value={formData.installmentsCount}
-                    onChange={handleChange}
-                    className={`${inputClass} appearance-none`}
-                  >
-                    {INSTALLMENT_OPTIONS.map((i) => (
-                      <option key={i} value={i}>
-                        {i}x {i > 1 ? "(Parcelado)" : "(À vista)"}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                </div>
-              </div>
-            </div>            {/* TABELA DE PARCELAS (Se > 1) */}
+            {/* LINHA 2: VENCIMENTO E PARCELAS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClass}>
+                  <Calendar className="w-4 h-4 mr-2 text-blue-600" /> Data 1o
+                  Vencimento <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="date"
+                  name="dataVencimento"
+                  value={formData.dataVencimento}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  <List className="w-4 h-4 mr-2 text-blue-600" /> Parcelamento
+                </label>
+                <div className="relative">
+                  <select
+                    name="installmentsCount"
+                    value={formData.installmentsCount}
+                    onChange={handleChange}
+                    className={`${inputClass} appearance-none`}
+                  >
+                    {INSTALLMENT_OPTIONS.map((i) => (
+                      <option key={i} value={i}>
+                        {i}x {i > 1 ? "(Parcelado)" : "(A vista)"}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+            </div>            {/* TABELA DE PARCELAS (Se > 1) */}
             {formData.installmentsCount > 1 && schedule.length > 0 && (
               <div className="border border-gray-200 bg-white rounded-lg overflow-x-auto md:overflow-hidden">
                 <table className="w-full divide-y divide-gray-200 md:w-full">
@@ -790,95 +850,87 @@ const TelaSolicitacao = () => {
                 </table>
               </div>
             )}
-          </div>
+          </div>
 
-          {/* BLOCO 4: RECEBEDOR E ANEXO */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
-            <div ref={autocompleteDropdownRef} className="relative">
-              <label className={labelClass}>
-                <User className="w-4 h-4 mr-2 text-blue-600" /> Fornecedor /
-                Titular <span className="text-red-500 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                name="titular"
-                value={formData.titular}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                  if (formData.titular.trim() && titularSuggestions.length > 0) {
-                    setShowSuggestions(true);
-                  }
-                }}
-                placeholder="Digite o nome do fornecedor..."
-                className={inputClass}
-                autoComplete="off"
-              />
+          {/* BLOCO 4: RECEBEDOR E ANEXO */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
+            <div ref={autocompleteDropdownRef} className="relative">
+              <label className={labelClass}>
+                <User className="w-4 h-4 mr-2 text-blue-600" /> Fornecedor /
+                Titular <span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="text"
+                name="titular"
+                value={formData.titular}
+                onChange={(e) => {
+                  handleChange(e);
+                  setTitularJustSelected(false); // Reset flag ao digitar
+                }}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  // So reabre sugestoes se nao acabou de selecionar um titular
+                  if (!titularJustSelected && formData.titular.trim() && titularSuggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                placeholder="Digite o nome do fornecedor..."
+                    <ul className="divide-y divide-gray-200">
+                      {titularSuggestions.map((suggestion, index) => (
+                        <li
+                          key={index}
+                          onClick={() => handleSelectTitular(suggestion)}
+                          className={`px-4 py-3 cursor-pointer transition ${
+                            index === selectedSuggestionIndex
+                              ? "bg-blue-100 text-blue-900"
+                              : "hover:bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          <div className="font-medium text-sm">
+                            {suggestion.titular}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {suggestion.cpf_cnpj}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                      Nenhum fornecedor encontrado. Voce pode cadastrar um novo.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-              {/* Dropdown de Sugestões */}
-              {showSuggestions && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {isLoadingSuggestions ? (
-                    <div className="px-4 py-3 text-center text-gray-500 text-sm">
-                      Carregando...
-                    </div>
-                  ) : titularSuggestions.length > 0 ? (
-                    <ul className="divide-y divide-gray-200">
-                      {titularSuggestions.map((suggestion, index) => (
-                        <li
-                          key={index}
-                          onClick={() => handleSelectTitular(suggestion)}
-                          className={`px-4 py-3 cursor-pointer transition ${
-                            index === selectedSuggestionIndex
-                              ? "bg-blue-100 text-blue-900"
-                              : "hover:bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          <div className="font-medium text-sm">
-                            {suggestion.titular}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {suggestion.cpf_cnpj}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="px-4 py-3 text-center text-gray-500 text-sm">
-                      Nenhum fornecedor encontrado. Você pode cadastrar um novo.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className={labelClass}>
-                <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> CPF / CNPJ{" "}
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                name="cpfCnpj"
-                value={formData.cpfCnpj}
-                onChange={handleChange}
-                placeholder="000.000.000-00"
-                maxLength={18}
-                className={`${inputClass} ${
-                  isCpfCnpjLocked ? "bg-gray-100 cursor-not-allowed" : ""
-                }`}
-                disabled={isCpfCnpjLocked}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className={labelClass}>
-                <Paperclip className="w-4 h-4 mr-2 text-blue-600" /> Anexo
-                (Comprovante/Boleto)
-                {/* 🎯 AJUSTE 2: INDICADOR VISUAL CONDICIONAL */}
+            <div>
+              <label className={labelClass}>
+                <CreditCard className="w-4 h-4 mr-2 text-blue-600" /> CPF / CNPJ{" "}
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="text"
+                name="cpfCnpj"
+                value={formData.cpfCnpj}
+                onChange={handleChange}
+                placeholder="000.000.000-00"
+                maxLength={18}
+                className={`${inputClass} ${
+                  isCpfCnpjLocked ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
+                disabled={isCpfCnpjLocked}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>
+                <Paperclip className="w-4 h-4 mr-2 text-blue-600" /> Anexo
+                (Comprovante/Boleto)
+                {/* ? AJUSTE 2: INDICADOR VISUAL CONDICIONAL */}
                 {(formData.paymentMethod === "Cheque" || formData.paymentMethod === "Boleto") && (
                     <span className="text-red-500 ml-1">*</span>
                 )}
-              </label>              <div className="mt-1 flex flex-col gap-3">
+              </label>              <div className="mt-1 flex flex-col gap-3">
                 <div className="flex items-center">
                   <input
                     type="file"
@@ -916,39 +968,39 @@ const TelaSolicitacao = () => {
                 )}              </div>
             </div>
 
-            {/* BLOCO: OBSERVAÇÕES */}
+            {/* BLOCO: OBSERVACOES */}
             <div>
               <label htmlFor="observacao" className={labelClass}>
-                <AlertCircle className="w-4 h-4 mr-2 text-blue-600" /> Observações (Opcional)
+                <AlertCircle className="w-4 h-4 mr-2 text-blue-600" /> Observacoes (Opcional)
               </label>
               <textarea
                 name="observacao"
                 rows="3"
                 value={formData.observacao}
                 onChange={handleChange}
-                placeholder="Adicione qualquer observação ou detalhe importante sobre esta solicitação..."
+                placeholder="Adicione qualquer observacao ou detalhe importante sobre esta solicitacao..."
                 className={`${inputClass} resize-none`}
               />
             </div>
           </div>
 
           {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={isSubmitting || (obras.length === 0 && !isLoadingObras)}
-            className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            ) : (
-              <Send className="w-6 h-6 mr-2" />
-            )}
-            {isSubmitting ? "Processando..." : "Enviar Solicitação"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+          <button
+            type="submit"
+            disabled={isSubmitting || (obras.length === 0 && !isLoadingObras)}
+            className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            ) : (
+              <Send className="w-6 h-6 mr-2" />
+            )}
+            {isSubmitting ? "Processando..." : "Enviar Solicitacao"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default TelaSolicitacao;
