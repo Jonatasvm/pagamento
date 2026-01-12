@@ -622,6 +622,11 @@ export const Dashboard = () => {
         const obraEncontrada = obrasAtualizada && obrasAtualizada.length > 0
           ? obrasAtualizada.find(o => Number(o.id) === Number(request.obra))
           : null;
+
+        // Buscar banco pelo ID
+        const bancoEncontrado = listaBancos && listaBancos.length > 0
+          ? listaBancos.find(b => Number(b.id) === Number(request.conta))
+          : null;
         
         // Formatar datas para DD/MM/YYYY
         const formatDate = (dateStr) => {
@@ -648,7 +653,7 @@ export const Dashboard = () => {
           "Categoria*": "Sem NF",
           "Forma de Pagamento": request.formaDePagamento || "",
           "Quem Paga*": "empresa",
-          "Conta Bancária*": request.conta || "",
+          "Conta Bancária*": bancoEncontrado?.nome || "",
           "Centro de Custo*": "obra",
           // ✅ CORREÇÃO: Trazer o NOME da obra do endpoint /obras (campo "nome")
           "Obra": obraEncontrada?.nome || "",
