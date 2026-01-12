@@ -69,8 +69,6 @@ export const Dashboard = () => {
     setIsLoadingData(true);
     try {
       const data = await listarFormularios();
-      console.log("📊 DADOS DO BACKEND (solicitações):", data);
-      console.log("🔍 Campo 'conta' das solicitações:", data.map(r => ({ id: r.id, conta: r.conta, obra: r.obra, tipo_conta: typeof r.conta })));
       setRequests(data);
     } catch (error) {
       console.error("Erro ao carregar requisições:", error);
@@ -85,7 +83,6 @@ export const Dashboard = () => {
       const response = await fetch(`${API_URL}/obras`);
       if (!response.ok) throw new Error("Erro ao buscar lista de obras");
       const data = await response.json();
-      console.log("✅ LISTA DE OBRAS CARREGADA:", data);
       setListaObras(data);
     } catch (error) {
       console.error("Erro ao carregar obras:", error);
@@ -108,7 +105,6 @@ export const Dashboard = () => {
       const response = await fetch(`${API_URL}/bancos`);
       if (!response.ok) throw new Error("Erro ao buscar lista de bancos");
       const data = await response.json();
-      console.log("✅ LISTA DE BANCOS CARREGADA:", data);
       setListaBancos(data);
     } catch (error) {
       console.error("Erro ao carregar bancos:", error);
@@ -274,8 +270,6 @@ export const Dashboard = () => {
       return;
     }
     
-    console.log("✏️ EDITANDO SOLICITAÇÃO:", request);
-    console.log("📦 Dados recebidos:", { id: request.id, conta: request.conta, obra: request.obra, quemPaga: request.quemPaga });
     
     // Abre a linha para edição
     setExpandedRows((prev) =>
@@ -295,7 +289,6 @@ export const Dashboard = () => {
     const contaValue = request.conta || request.quemPaga || "";
     const quemPagaValue = request.quemPaga || "";
     
-    console.log("🔄 Sincronizando valores:", { conta: contaValue, quemPaga: quemPagaValue });
     
     const newFormData = {
       ...request,
@@ -310,15 +303,12 @@ export const Dashboard = () => {
 
     // ✅ NOVO: Se não tiver 'conta' mas tiver 'obra', busca o banco vinculado à obra
     if (request.obra && !request.conta) {
-      console.log("🔍 Buscando banco para obra:", request.obra);
       fetch(`${API_URL}/obras/${request.obra}`)
         .then((response) => {
           if (!response.ok) throw new Error("Erro ao buscar obra");
           return response.json();
         })
         .then((obra) => {
-          console.log("📘 Obra encontrada:", obra);
-          console.log("🏦 Banco da obra (banco_id):", obra.banco_id);
           
           // ✅ Usa diretamente o banco_id da obra
           if (obra.banco_id) {
@@ -327,9 +317,7 @@ export const Dashboard = () => {
               quemPaga: obra.quem_paga,
               conta: Number(obra.banco_id),
             }));
-            console.log("💾 Usando banco_id da obra:", obra.banco_id);
           } else {
-            console.log("⚠️ Obra não tem banco_id vinculado");
           }
         })
         .catch((error) => console.error("❌ Erro ao sincronizar banco:", error));
@@ -378,8 +366,6 @@ export const Dashboard = () => {
 
     try {
       const dataToSave = { ...editFormData, valor: rawValue };
-      console.log("💾 SALVANDO DADOS:", dataToSave);
-      console.log("🏦 CAMPO CONTA AO SALVAR:", dataToSave.conta, "| Tipo:", typeof dataToSave.conta);
       await atualizarFormulario(editingId, dataToSave);
       toast.success("Solicitação atualizada com sucesso!");
       setEditingId(null);
@@ -500,7 +486,6 @@ export const Dashboard = () => {
     const fetchQuemPaga = async () => {
       // Se não tiver obra selecionada, não busca
       if (!editFormData.obra) {
-        console.log("⚠️ Nenhuma obra selecionada");
         return;
       }
 
@@ -509,8 +494,6 @@ export const Dashboard = () => {
         if (!response.ok) throw new Error("Erro ao buscar obra");
 
         const obra = await response.json();
-        console.log("📘 Obra encontrada:", obra);
-        console.log("🏦 Banco da obra (banco_id):", obra.banco_id);
         
         // ✅ Usa diretamente o banco_id da obra
         if (obra.banco_id) {
@@ -520,11 +503,9 @@ export const Dashboard = () => {
               quemPaga: obra.quem_paga,
               conta: Number(obra.banco_id),
             };
-            console.log("✅ FormData atualizado com banco:", updated.conta);
             return updated;
           });
         } else {
-          console.log("⚠️ Obra não tem banco_id vinculado");
         }
       } catch (error) {
         console.error("❌ Erro ao buscar quem_paga:", error);

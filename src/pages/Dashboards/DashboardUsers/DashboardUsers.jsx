@@ -44,7 +44,6 @@ export default function DashboardUsers() {
   // --- 2. POST: Adicionar Obra ---
   // Esta é a função que o ObrasManager está reclamando que não existe.
   const handleAddObra = async (nomeObra, quemPaga, bancoId) => {
-    console.log("Tentando adicionar obra:", nomeObra, quemPaga, "banco_id:", bancoId); // Debug
     setLoadingObras(true);
     try {
       const payload = {
@@ -83,7 +82,6 @@ export default function DashboardUsers() {
         banco_id: bancoId ? Number(bancoId) : null,
       };
 
-      console.log("📤 ENVIANDO ATUALIZAÇÃO DE OBRA:", { id, payload });
 
       const response = await fetch(`${API_IP}/obras/${id}`, {
         method: "PUT",
@@ -92,7 +90,6 @@ export default function DashboardUsers() {
       });
 
       const responseData = await response.json();
-      console.log("📥 RESPOSTA DO BACKEND:", responseData);
 
       if (!response.ok) throw new Error("Erro ao atualizar");
 

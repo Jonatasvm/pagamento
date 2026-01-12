@@ -78,20 +78,15 @@ const adapterFrontendToBackend = (data) => {
     observacao: data.observacao,
     conta: data.conta ? Number(data.conta) : null, // ✅ NOVO: Mapeia o campo conta (banco)
   };
-  console.log("📤 PAYLOAD ENVIADO AO BACKEND:", payload);
-  console.log("🏦 CONTA NO PAYLOAD:", payload.conta, "| Tipo:", typeof payload.conta);
   return payload;
 };
 
 // --- CHAMADAS API ---
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
-  console.log("📤 RESPOSTA RAW DO BACKEND:", response.data.slice(0, 5)); // Mostra os 5 primeiros
   const adapted = response.data.map(adapterBackendToFrontend);
-  console.log("📥 DADOS ADAPTADOS (após listar):");
   adapted.forEach((item) => {
     if (item.obra) {
-      console.log(`  ID ${item.id}: obra=${item.obra}, conta=${item.conta} (tipo: ${typeof item.conta})`);
     }
   });
   return adapted;

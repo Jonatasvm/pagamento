@@ -167,7 +167,6 @@ const TelaSolicitacao = () => {
         if (!response.ok) throw new Error("Erro ao buscar bancos");
         const data = await response.json();
         setBancos(data);
-        console.log("? BANCOS CARREGADOS EM SOLICITACAO:", data);
       } catch (error) {
         console.error("Erro ao carregar bancos:", error);
       }
@@ -180,17 +179,14 @@ const TelaSolicitacao = () => {
     if (formData.obra) {
       const obraEncontrada = obras.find((o) => o.id === Number(formData.obra));
       if (obraEncontrada) {
-        console.log("? Sincronizando banco para obra:", obraEncontrada.nome, "| banco_id:", obraEncontrada.banco_id);
         
         // Usa o banco_id diretamente da obra
         if (obraEncontrada.banco_id) {
-          console.log("? Usando banco_id da obra:", obraEncontrada.banco_id);
           setFormData((prev) => ({
             ...prev,
             conta: String(obraEncontrada.banco_id),
           }));
         } else {
-          console.log("? Obra nao tem banco_id vinculado");
           setFormData((prev) => ({
             ...prev,
             conta: "",
@@ -543,7 +539,6 @@ const TelaSolicitacao = () => {
           console.warn("Aviso: Formulario criado, mas falha ao fazer upload dos arquivos");
         } else {
           const uploadData = await uploadResponse.json();
-          console.log("Arquivos upados com sucesso:", uploadData);
         }
       }
 
