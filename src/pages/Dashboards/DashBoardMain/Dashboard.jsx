@@ -213,6 +213,31 @@ export const Dashboard = () => {
     return true;
   });
 
+  // ✅ FUNÇÃO PARA EXTRAIR NÚMERO DE PARCELA DO REFERENTE
+  // Exemplo: "Compra de cimento (2/3)" → 2
+  const extractInstallmentNumber = (referente) => {
+    if (!referente) return 0;
+    const match = referente.match(/\((\d+)\/\d+\)$/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  // ✅ ORDENAR POR DATA, DEPOIS POR NÚMERO DE PARCELA
+  const sortedAndFilteredRequests = [...filteredRequests].sort((a, b) => {
+    // Primeiro, ordena por data de pagamento (crescente)
+    const dateA = new Date(a.dataPagamento || "1900-01-01");
+    const dateB = new Date(b.dataPagamento || "1900-01-01");
+    
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateA.getTime() - dateB.getTime();
+    }
+
+    // Se as datas são iguais, ordena por número de parcela (crescente)
+    const installmentA = extractInstallmentNumber(a.referente);
+    const installmentB = extractInstallmentNumber(b.referente);
+    
+    return installmentA - installmentB;
+  });
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -254,15 +279,15 @@ export const Dashboard = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRequests(filteredRequests.map((req) => req.id));
+      setSelectedRequests(sortedAndFilteredRequests.map((req) => req.id));
     } else {
       setSelectedRequests([]);
     }
   };
 
   const isAllSelected =
-    filteredRequests.length > 0 &&
-    selectedRequests.length === filteredRequests.length;
+    sortedAndFilteredRequests.length > 0 &&
+    selectedRequests.length === sortedAndFilteredRequests.length;
 
   const handleEdit = (request) => {
     if (editingId) {
@@ -958,8 +983,8 @@ export const Dashboard = () => {
             listaUsuarios={listaUsuarios}
             listaBancos={listaBancos}
             
-            // Props de Dados
-            filteredRequests={filteredRequests}
+            // Props de Dados (✅ AGORA USANDO DADOS ORDENADOS)
+            filteredRequests={sortedAndFilteredRequests}
             isAllSelected={isAllSelected}
             selectedRequests={selectedRequests}
             editingId={editingId}

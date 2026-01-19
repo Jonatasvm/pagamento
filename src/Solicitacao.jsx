@@ -53,13 +53,26 @@ const formatCpfCnpj = (value) => {
 };
 
 const addMonths = (dateStr, months) => {
-  const d = new Date(dateStr + "T00:00:00"); // T00:00:00 evita problemas de fuso
+  // Faz parsing da string de data (formato YYYY-MM-DD)
+  const [year, month, day] = dateStr.split("-").map(Number);
+  
+  // Cria a data usando a data local (não UTC)
+  const d = new Date(year, month - 1, day);
   const originalDay = d.getDate();
+  
+  // Adiciona os meses
   d.setMonth(d.getMonth() + months);
+  
+  // Se o dia mudou (ex: 31 jan -> 28 fev), volta para o último dia do mês
   if (d.getDate() !== originalDay) {
-    d.setDate(0); // Ajuste para virada de mes (ex: 31 jan -> 28 fev)
+    d.setDate(0);
   }
-  return d.toISOString().split("T")[0];
+  
+  // Retorna a data no formato YYYY-MM-DD sem problemas de timezone
+  const year2 = d.getFullYear();
+  const month2 = String(d.getMonth() + 1).padStart(2, "0");
+  const day2 = String(d.getDate()).padStart(2, "0");
+  return `${year2}-${month2}-${day2}`;
 };
 
 // Calculo de Parcelas
@@ -517,28 +530,38 @@ const TelaSolicitacao = () => {
         })
       );
 
-      // Pega o ID do primeiro formulario criado (se multiplos, usa o primeiro)
-      const firstFormId = responseData[0]?.id;
+      // Se houver anexos, fazer upload para TODOS os formulários criados
+      if (formData.anexos.length > 0 && responseData.length > 0) {
+        // Faz upload para cada formulário/parcela criado
+        const uploadPromises = responseData.map((formResponse) => {
+          const formId = formResponse?.id;
+          if (!formId) return Promise.resolve();
 
-      // Se houver anexos, fazer upload para Google Drive
-      if (formData.anexos.length > 0 && firstFormId) {
-        const formDataUpload = new FormData();
-        formData.anexos.forEach((file) => {
-          formDataUpload.append("files", file);
+          const formDataUpload = new FormData();
+          formData.anexos.forEach((file) => {
+            formDataUpload.append("files", file);
+          });
+
+          return fetch(
+            `${API_URL}/formulario/${formId}/upload-anexos`,
+            {
+              method: "POST",
+              body: formDataUpload,
+            }
+          ).then((response) => {
+            if (!response.ok) {
+              console.warn(`Aviso: Falha ao fazer upload dos arquivos para o formulário ${formId}`);
+            }
+            return response.json();
+          }).catch((error) => {
+            console.warn(`Erro ao fazer upload para formulário ${formId}:`, error);
+          });
         });
 
-        const uploadResponse = await fetch(
-          `${API_URL}/formulario/${firstFormId}/upload-anexos`,
-          {
-            method: "POST",
-            body: formDataUpload,
-          }
-        );
-
-        if (!uploadResponse.ok) {
-          console.warn("Aviso: Formulario criado, mas falha ao fazer upload dos arquivos");
-        } else {
-          const uploadData = await uploadResponse.json();
+        try {
+          await Promise.all(uploadPromises);
+        } catch (error) {
+          console.warn("Aviso: Alguns anexos não foram enviados, mas os formulários foram criados");
         }
       }
 
