@@ -17,28 +17,14 @@ api.interceptors.request.use(
 );
 
 // --- FUNÇÃO AUXILIAR PARA FORMATAR DATA (CORREÇÃO DO ERRO 1) ---
+// --- FUNÇÃO AUXILIAR PARA FORMATAR DATA (CORREÇÃO DO ERRO 1) ---
 const formatDateToInput = (dateString) => {
   if (!dateString) return "";
   try {
-    // Se já está no formato YYYY-MM-DD, retorna como está
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return dateString;
-    }
-    
-    // Se for um timestamp ISO (com T), extrai apenas a data
-    if (dateString.includes("T")) {
-      return dateString.split("T")[0];
-    }
-    
-    // Fallback: tenta criar um objeto Date
+    // Tenta criar um objeto Date e pegar apenas a parte YYYY-MM-DD
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return ""; // Se for data inválida, retorna vazio
-    
-    // Retorna em formato local sem conversão para UTC
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return date.toISOString().split('T')[0];
   } catch (error) {
     return "";
   }
