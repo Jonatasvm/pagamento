@@ -24,10 +24,24 @@ export const formatCPFCNPJ = (value) => {
   return value;
 };
 
-// ✅ Formatar data em português (DD/MM/YYYY)
+// ✅ Formatar data em português (DD/MM/YYYY) SEM PROBLEMAS DE TIMEZONE
 export const formatDatePT = (dateStr) => {
   if (!dateStr) return "—";
   try {
+    // Se já está no formato YYYY-MM-DD, faz parse manual sem conversão para UTC
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
+    }
+    
+    // Se tiver T (ISO), extrai a data e faz parse manual
+    if (dateStr.includes("T")) {
+      const datePart = dateStr.split("T")[0];
+      const [year, month, day] = datePart.split("-").map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
+    }
+    
+    // Fallback para outros formatos
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return "—";
     return date.toLocaleDateString('pt-BR');
