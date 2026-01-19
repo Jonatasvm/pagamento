@@ -24,37 +24,10 @@ export const formatCPFCNPJ = (value) => {
   return value;
 };
 
-// ✅ Formatar data em português (DD/MM/YYYY) SEM PROBLEMAS DE TIMEZONE
+// ✅ Formatar data em português (DD/MM/YYYY)
 export const formatDatePT = (dateStr) => {
   if (!dateStr) return "—";
   try {
-    // Se já está no formato YYYY-MM-DD, faz parse manual sem conversão para UTC
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      const parts = dateStr.split("-");
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      const day = parseInt(parts[2], 10);
-      // Cria a data usando timezone local
-      const date = new Date(year, month - 1, day);
-      const d = String(date.getDate()).padStart(2, "0");
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const y = date.getFullYear();
-      return `${d}/${m}/${y}`;
-    }
-    
-    // Se tiver T (ISO), extrai a data
-    if (dateStr.includes("T")) {
-      const datePart = dateStr.split("T")[0];
-      const parts = datePart.split("-");
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      const day = parseInt(parts[2], 10);
-      const d = String(day).padStart(2, "0");
-      const m = String(month).padStart(2, "0");
-      return `${d}/${m}/${year}`;
-    }
-    
-    // Fallback para outros formatos
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return "—";
     return date.toLocaleDateString('pt-BR');
