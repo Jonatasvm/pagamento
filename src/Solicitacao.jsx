@@ -364,6 +364,57 @@ const TelaSolicitacao = () => {
     setTitularSuggestions([]);
   };
 
+  // ✅ FUNÇÃO PARA SALVAR FORNECEDOR AUTOMATICAMENTE
+  const salvarFornecedorSeNaoExistir = async () => {
+    if (!formData.titular || !formData.cpfCnpj) {
+      return; // Se não tem titular ou CPF/CNPJ, não salva
+    }
+
+    try {
+      // Primeiro, tenta buscar se o fornecedor já existe
+      const searchResponse = await fetch(
+        `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(formData.titular)}`
+      );
+      
+      if (searchResponse.ok) {
+        const fornecedoresExistentes = await searchResponse.json();
+        
+        // Verifica se já existe um fornecedor com o mesmo CPF/CNPJ
+        const jaExiste = fornecedoresExistentes.some(
+          (f) => cleanDigits(f.cpf_cnpj) === cleanDigits(formData.cpfCnpj)
+        );
+        
+        if (jaExiste) {
+          return; // Fornecedor já existe, não precisa criar
+        }
+      }
+
+      // Se não existe, cria o fornecedor
+      const createResponse = await fetch(`${API_URL}/fornecedor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titular: formData.titular,
+          cpf_cnpj: cleanDigits(formData.cpfCnpj),
+          chave_pix: formData.pixKey || "",
+          banco_padrao: formData.conta ? Number(formData.conta) : null,
+        }),
+      });
+
+      if (createResponse.ok) {
+        console.log("✅ Fornecedor salvo com sucesso");
+      } else if (createResponse.status === 409) {
+        // CPF/CNPJ já cadastrado, ignora o erro
+        console.log("ℹ️ Fornecedor já existe no banco");
+      } else {
+        console.error("Erro ao salvar fornecedor:", createResponse.statusText);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar fornecedor:", error);
+      // Não bloqueia o envio do formulário se houver erro ao salvar fornecedor
+    }
+  };
+
   // Handler para navegacao com teclado nas sugestoes
   const handleKeyDown = (e) => {
     if (!showSuggestions || titularSuggestions.length === 0) return;
@@ -463,6 +514,9 @@ const TelaSolicitacao = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // ✅ SALVAR FORNECEDOR AUTOMATICAMENTE ANTES DE ENVIAR
+    await salvarFornecedorSeNaoExistir();
 
     // ? AJUSTE 1: VALIDACAO DO ANEXO OBRIGATORIO (CORRIGIDO)
     const isPaymentMethodRequiringFile = 
