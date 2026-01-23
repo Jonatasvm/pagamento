@@ -52,6 +52,41 @@ const formatCpfCnpj = (value) => {
     .replace(/(\d{4})(\d)/, "$1-$2");
 };
 
+// ✅ MÁSCARA PARA PIX - Aplica máscara de acordo com o tipo
+const formatPixKey = (value, keyType) => {
+  const clean = cleanDigits(value);
+  
+  if (keyType === "CPF") {
+    // CPF: xxx.xxx.xxx-xx
+    return clean
+      .substring(0, 11)
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+  }
+  
+  if (keyType === "CNPJ") {
+    // CNPJ: xx.xxx.xxx/xxxx-xx
+    return clean
+      .substring(0, 14)
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
+  
+  if (keyType === "Telefone") {
+    // Telefone: (xx) xxxxx-xxxx ou (xx) xxxxxx-xxx conforme requisitado
+    return clean
+      .substring(0, 11)
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2");
+  }
+  
+  // E-mail e Chave Aleatoria não recebem máscara
+  return value;
+};
+
 const addMonths = (dateStr, months) => {
   // Faz parsing da string de data (formato YYYY-MM-DD)
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -281,10 +316,14 @@ const TelaSolicitacao = () => {
     if (name === "valor") newValue = formatCurrency(value);
     if (name === "cpfCnpj") newValue = formatCpfCnpj(value);
     if (name === "pixKey") {
+      // ✅ APLICAR MÁSCARA DE ACORDO COM TIPO DE CHAVE PIX
       const limit = PIX_LIMITS[formData.pixKeyType];
       if (limit.type === "numeric")
         newValue = cleanDigits(value).substring(0, limit.len);
       else newValue = value.substring(0, limit.len);
+      
+      // Aplicar máscara apropriada
+      newValue = formatPixKey(newValue, formData.pixKeyType);
     }
 
     // Logica especifica de troca de tipo de pagamento ou chave
