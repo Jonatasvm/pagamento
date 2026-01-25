@@ -370,6 +370,11 @@ const TelaSolicitacao = () => {
       return; // Se não tem titular ou CPF/CNPJ, não salva
     }
 
+    // Se o usuário selecionou um fornecedor do autocomplete, não salva (porque já existe)
+    if (isCpfCnpjLocked) {
+      return;
+    }
+
     const cpfCnpjLimpo = cleanDigits(formData.cpfCnpj);
 
     try {
