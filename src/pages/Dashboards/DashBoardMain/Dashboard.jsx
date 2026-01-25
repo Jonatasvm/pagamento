@@ -672,7 +672,7 @@ export const Dashboard = () => {
       // Criar workbook e worksheet
       const ws = XLSX.utils.json_to_sheet(dataToExport);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Pagamentos");
+      XLSX.utils.book_append_sheet(wb, ws, "Planilha de Importação");
       
       // Ajustar largura das colunas
       const colWidths = [
@@ -697,7 +697,7 @@ export const Dashboard = () => {
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-      const fileName = `Pagamentos_${dateStr}_${timeStr}.xlsx`;
+      const fileName = `Planilha de Importação_${dateStr}_${timeStr}.xlsx`;
       
       // Fazer download
       XLSX.writeFile(wb, fileName);
