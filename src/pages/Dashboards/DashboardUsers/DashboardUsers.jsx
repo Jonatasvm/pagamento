@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { Building2, Users, Landmark, Home } from "lucide-react";
+import { Building2, Users, Landmark, Home, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
 // IMPORTANTE: Certifique-se que os managers são exportados como 'export const'
 // Se estiver usando 'export default', tire as chaves { } do import abaixo.
 import { ObrasManager } from "./ObrasManager"; 
 import { UserManager } from "./UsersManager";
-import { BanksManager } from "./BanksManager"; 
+import { BanksManager } from "./BanksManager";
+import { FornecedorManager } from "./FornecedorManager"; 
 
 const API_IP = "http://91.98.132.210:5631";
 
 export default function DashboardUsers() {
   // --- ESTADO DE NAVEGAÇÃO ENTRE ABAS ---
-  const [currentTab, setCurrentTab] = useState("menu"); // "menu" | "obras" | "usuarios" | "bancos"
+  const [currentTab, setCurrentTab] = useState("menu"); // "menu" | "obras" | "usuarios" | "bancos" | "fornecedores"
   
   const [obrasList, setObrasList] = useState([]);
   const [loadingObras, setLoadingObras] = useState(false);
 
   const [banksList, setBanksList] = useState([]);
   const [loadingBanks, setLoadingBanks] = useState(false);
+
+  const [fornecedoresList, setFornecedoresList] = useState([]);
+  const [loadingFornecedores, setLoadingFornecedores] = useState(false);
 
   // --- 1. GET: Buscar Obras ---
   const fetchObras = async () => {
@@ -39,6 +43,7 @@ export default function DashboardUsers() {
   useEffect(() => {
     fetchObras();
     fetchBanks(); // ✅ NOVO: Carrega também a lista de bancos ao iniciar
+    fetchFornecedores(); // ✅ NOVO: Carrega também a lista de fornecedores ao iniciar
   }, []);
 
   // --- 2. POST: Adicionar Obra ---
@@ -202,6 +207,84 @@ export default function DashboardUsers() {
     }
   };
 
+  // --- FUNÇÕES PARA FORNECEDORES ---
+  // GET: Buscar Fornecedores
+  const fetchFornecedores = async () => {
+    setLoadingFornecedores(true);
+    try {
+      const response = await fetch(`${API_IP}/fornecedor`);
+      if (!response.ok) throw new Error("Falha ao conectar com servidor");
+      const data = await response.json();
+      setFornecedoresList(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar lista de fornecedores.");
+    } finally {
+      setLoadingFornecedores(false);
+    }
+  };
+
+  // POST: Adicionar Fornecedor
+  const handleAddFornecedor = async (fornecedorData) => {
+    setLoadingFornecedores(true);
+    try {
+      const response = await fetch(`${API_IP}/fornecedor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fornecedorData),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Erro ao salvar no banco");
+      }
+
+      toast.success("Fornecedor criado com sucesso!");
+      await fetchFornecedores();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Não foi possível adicionar o fornecedor.");
+    } finally {
+      setLoadingFornecedores(false);
+    }
+  };
+
+  // PUT: Atualizar Fornecedor
+  const handleUpdateFornecedor = async (id, fornecedorData) => {
+    try {
+      const response = await fetch(`${API_IP}/fornecedor/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fornecedorData),
+      });
+
+      if (!response.ok) throw new Error("Erro ao atualizar");
+
+      toast.success("Fornecedor atualizado!");
+      await fetchFornecedores();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao editar fornecedor.");
+    }
+  };
+
+  // DELETE: Remover Fornecedor
+  const handleDeleteFornecedor = async (id) => {
+    try {
+      const response = await fetch(`${API_IP}/fornecedor/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Erro ao deletar");
+
+      toast.success("Fornecedor removido!");
+      setFornecedoresList((prev) => prev.filter((f) => f.id !== id));
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir fornecedor.");
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen font-sans text-slate-800">
       <Toaster position="top-right" />
@@ -274,6 +357,22 @@ export default function DashboardUsers() {
                   Cadastrar contas bancárias
                 </p>
               </button>
+
+              {/* --- CARD GERENCIAR FORNECEDORES --- */}
+              <button
+                onClick={() => {
+                  setCurrentTab("fornecedores");
+                  fetchFornecedores();
+                  fetchBanks();
+                }}
+                className="h-48 bg-linear-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+              >
+                <Users2 size={48} className="text-orange-100" />
+                <h2 className="text-2xl font-bold">Gerenciar Fornecedores</h2>
+                <p className="text-sm text-orange-100">
+                  Cadastrar e gerenciar fornecedores
+                </p>
+              </button>
             </div>
           </div>
         )}
@@ -335,6 +434,29 @@ export default function DashboardUsers() {
               onAddBank={handleAddBank}
               onUpdateBank={handleUpdateBank}
               onDeleteBank={handleDeleteBank}
+            />
+          </div>
+        )}
+
+        {/* --- ABA GERENCIAR FORNECEDORES --- */}
+        {currentTab === "fornecedores" && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+              >
+                <Home size={20} /> Voltar ao Dashboard
+              </Link>
+            </div>
+            {/* Componente de Fornecedores */}
+            <FornecedorManager
+              fornecedores={fornecedoresList}
+              isLoading={loadingFornecedores}
+              availableBanks={banksList}
+              onAddFornecedor={handleAddFornecedor}
+              onUpdateFornecedor={handleUpdateFornecedor}
+              onDeleteFornecedor={handleDeleteFornecedor}
             />
           </div>
         )}
