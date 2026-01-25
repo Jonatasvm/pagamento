@@ -13,16 +13,12 @@ export const FornecedorManager = ({
   const [newFornecedorData, setNewFornecedorData] = useState({
     titular: "",
     cpf_cnpj: "",
-    chave_pix: "",
-    banco_padrao: "",
   });
 
   const [editingFornecedorId, setEditingFornecedorId] = useState(null);
   const [editedData, setEditedData] = useState({
     titular: "",
     cpf_cnpj: "",
-    chave_pix: "",
-    banco_padrao: "",
   });
 
   // Formatar CPF/CNPJ para exibição
@@ -88,17 +84,11 @@ export const FornecedorManager = ({
     onAddFornecedor({
       titular: titulo,
       cpf_cnpj: cpf,
-      chave_pix: newFornecedorData.chave_pix.trim(),
-      banco_padrao: newFornecedorData.banco_padrao
-        ? Number(newFornecedorData.banco_padrao)
-        : null,
     });
 
     setNewFornecedorData({
       titular: "",
       cpf_cnpj: "",
-      chave_pix: "",
-      banco_padrao: "",
     });
   };
 
@@ -141,10 +131,6 @@ export const FornecedorManager = ({
     onUpdateFornecedor(id, {
       titular: titulo,
       cpf_cnpj: cpf,
-      chave_pix: editedData.chave_pix.trim(),
-      banco_padrao: editedData.banco_padrao
-        ? Number(editedData.banco_padrao)
-        : null,
     });
 
     setEditingFornecedorId(null);
@@ -172,7 +158,7 @@ export const FornecedorManager = ({
 
       {/* --- Inputs de Adicionar --- */}
       <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-inner space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-xs text-gray-500 font-semibold mb-1 block">
               Título / Razão Social
@@ -202,42 +188,6 @@ export const FornecedorManager = ({
               className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 transition"
             />
           </div>
-
-          <div>
-            <label className="text-xs text-gray-500 font-semibold mb-1 block">
-              Chave PIX
-            </label>
-            <input
-              type="text"
-              value={newFornecedorData.chave_pix}
-              onChange={(e) =>
-                handleNewFornecedorChange("chave_pix", e.target.value)
-              }
-              placeholder="Ex: CPF ou e-mail"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 transition"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs text-gray-500 font-semibold mb-1 block">
-              Banco Padrão
-            </label>
-            <select
-              value={newFornecedorData.banco_padrao}
-              onChange={(e) =>
-                handleNewFornecedorChange("banco_padrao", e.target.value)
-              }
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 transition"
-            >
-              <option value="">-- Selecione --</option>
-              {availableBanks &&
-                availableBanks.map((banco) => (
-                  <option key={banco.id} value={banco.id}>
-                    {banco.nome}
-                  </option>
-                ))}
-            </select>
-          </div>
         </div>
 
         <div className="flex justify-end">
@@ -262,12 +212,6 @@ export const FornecedorManager = ({
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">
                 CPF / CNPJ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">
-                Chave PIX
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">
-                Banco Padrão
-              </th>
               <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase">
                 Ações
               </th>
@@ -276,13 +220,13 @@ export const FornecedorManager = ({
           <tbody className="bg-white divide-y divide-gray-100">
             {isLoading && (!fornecedores || fornecedores.length === 0) ? (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-gray-500">
+                <td colSpan="3" className="p-6 text-center text-gray-500">
                   Carregando dados...
                 </td>
               </tr>
             ) : !fornecedores || fornecedores.length === 0 ? (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-gray-500 italic">
+                <td colSpan="3" className="p-6 text-center text-gray-500 italic">
                   Nenhum fornecedor cadastrado. Comece adicionando um novo.
                 </td>
               </tr>
@@ -319,41 +263,6 @@ export const FornecedorManager = ({
                       />
                     ) : (
                       formatarCpfCnpj(fornecedor.cpf_cnpj)
-                    )}
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-700 align-middle">
-                    {editingFornecedorId === fornecedor.id ? (
-                      <input
-                        type="text"
-                        value={editedData.chave_pix}
-                        onChange={(e) =>
-                          handleEditChange("chave_pix", e.target.value)
-                        }
-                        className="border border-orange-400 rounded px-3 py-1 w-full outline-none"
-                      />
-                    ) : (
-                      fornecedor.chave_pix || "-"
-                    )}
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-700 align-middle">
-                    {editingFornecedorId === fornecedor.id ? (
-                      <select
-                        value={editedData.banco_padrao || ""}
-                        onChange={(e) =>
-                          handleEditChange("banco_padrao", e.target.value)
-                        }
-                        className="border border-orange-400 rounded px-3 py-1 w-full outline-none"
-                      >
-                        <option value="">-- Selecione --</option>
-                        {availableBanks &&
-                          availableBanks.map((banco) => (
-                            <option key={banco.id} value={banco.id}>
-                              {banco.nome}
-                            </option>
-                          ))}
-                      </select>
-                    ) : (
-                      getBancoNome(fornecedor.banco_padrao)
                     )}
                   </td>
                   <td className="px-6 py-3 text-right align-middle">
