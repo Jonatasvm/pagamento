@@ -370,8 +370,10 @@ const TelaSolicitacao = () => {
       return; // Se não tem titular ou CPF/CNPJ, não salva
     }
 
+    const cpfCnpjLimpo = cleanDigits(formData.cpfCnpj);
+
     try {
-      // Primeiro, tenta buscar se o fornecedor já existe
+      // Primeiro, verifica se o fornecedor já existe pelo CPF/CNPJ
       const searchResponse = await fetch(
         `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(formData.titular)}`
       );
@@ -381,10 +383,11 @@ const TelaSolicitacao = () => {
         
         // Verifica se já existe um fornecedor com o mesmo CPF/CNPJ
         const jaExiste = fornecedoresExistentes.some(
-          (f) => cleanDigits(f.cpf_cnpj) === cleanDigits(formData.cpfCnpj)
+          (f) => cleanDigits(f.cpf_cnpj) === cpfCnpjLimpo
         );
         
         if (jaExiste) {
+          console.log("ℹ️ Fornecedor já existe no banco");
           return; // Fornecedor já existe, não precisa criar
         }
       }
@@ -394,23 +397,25 @@ const TelaSolicitacao = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          titular: formData.titular,
-          cpf_cnpj: cleanDigits(formData.cpfCnpj),
+          titular: formData.titular.trim(),
+          cpf_cnpj: cpfCnpjLimpo,
           chave_pix: formData.pixKey || "",
           banco_padrao: formData.conta ? Number(formData.conta) : null,
         }),
       });
 
+      const responseData = await createResponse.json();
+
       if (createResponse.ok) {
-        console.log("✅ Fornecedor salvo com sucesso");
+        console.log("✅ Fornecedor criado com sucesso:", responseData);
       } else if (createResponse.status === 409) {
-        // CPF/CNPJ já cadastrado, ignora o erro
-        console.log("ℹ️ Fornecedor já existe no banco");
+        // CPF/CNPJ já cadastrado
+        console.log("ℹ️ Fornecedor já existe no banco (duplicado):", responseData);
       } else {
-        console.error("Erro ao salvar fornecedor:", createResponse.statusText);
+        console.error("❌ Erro ao salvar fornecedor:", createResponse.status, responseData);
       }
     } catch (error) {
-      console.error("Erro ao salvar fornecedor:", error);
+      console.error("❌ Erro ao conectar ao servidor de fornecedor:", error);
       // Não bloqueia o envio do formulário se houver erro ao salvar fornecedor
     }
   };
