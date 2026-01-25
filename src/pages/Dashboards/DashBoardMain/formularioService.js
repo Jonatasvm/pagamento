@@ -68,7 +68,7 @@ const adapterFrontendToBackend = (data) => {
     valor: data.valor ? parseFloat(data.valor) / 100 : 0,
     obra: Number(data.obra), // Garante que obra seja enviada como número
     data_pagamento: data.dataPagamento,
-    forma_pagamento: data.formaDePagamento.toUpperCase(), // <--- FORÇA MAIÚSCULAS
+    forma_pagamento: data.formaDePagamento, // ✅ CORRIGIDO: Sem .toUpperCase() - deixa o frontend enviar normalizado
     
     // ✅ CORREÇÃO CRÍTICA: Mapeia statusLancamento (boolean) para lancado ('Y'/'N')
     lancado: data.statusLancamento ? 'Y' : 'N', 
