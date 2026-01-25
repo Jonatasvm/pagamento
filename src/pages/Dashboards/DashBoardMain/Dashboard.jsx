@@ -660,9 +660,9 @@ export const Dashboard = () => {
           "Número do Documento": request.chavePix || "",
           "Categoria*": "Sem NF",
           "Forma de Pagamento": request.formaDePagamento || "",
-          "Quem Paga*": "empresa",
+          "Quem Paga*": "Empresa",
           "Conta Bancária*": bancoEncontrado?.nome || "",
-          "Centro de Custo*": "obra",
+          "Centro de Custo*": "Obra",
           // ✅ CORREÇÃO: Trazer o NOME da obra do endpoint /obras (campo "nome")
           "Obra": obraEncontrada?.nome || "",
           "Índice Etapa / Item": "",

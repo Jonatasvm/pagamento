@@ -2,9 +2,9 @@ import React from "react";
 
 // --- DADOS DE CONFIGURAÇÃO ---
 export const formaPagamentoOptions = [
-  "PIX",
-  "CHEQUE",
-  "BOLETO",
+  "Pix",
+  "Cheque",
+  "Boleto",
 ];
 
 // --- FUNÇÕES UTILITÁRIAS ---
