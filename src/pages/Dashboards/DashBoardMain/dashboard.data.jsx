@@ -85,10 +85,10 @@ export const getNameById = (list, id) => {
 };
 
 export function formatCurrencyDisplay(value) {
-    if (!value) return "R$ 0,00";
+    if (!value) return "0,00";
     const numericValue = String(value).replace(/\D/g, "");
     const reais = (Number(numericValue) / 100).toFixed(2).replace(".", ",");
-    return `R$ ${reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
+    return reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
 
 export function getStatusClasses(isLancado) {

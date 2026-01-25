@@ -643,11 +643,11 @@ export const Dashboard = () => {
           return date.toLocaleDateString('pt-BR');
         };
 
-        // Formatar valor em R$ com 2 casas decimais
+        // Formatar valor apenas em números, sem R$ ou símbolo de moeda
         const formatCurrency = (value) => {
           if (!value) return "";
           const num = Number(value) / 100;
-          return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
         return {
