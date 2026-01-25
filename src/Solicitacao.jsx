@@ -153,7 +153,7 @@ const TelaSolicitacao = () => {
     obra: "",
     referente: "",
     valor: "",
-    paymentMethod: "PIX",
+    paymentMethod: "Pix",
     pixKeyType: "CPF",
     pixKey: "",
     titular: "",
@@ -549,7 +549,7 @@ const TelaSolicitacao = () => {
       "cpfCnpj",
       "dataVencimento",
     ];
-    if (formData.paymentMethod === "PIX") required.push("pixKey");
+    if (formData.paymentMethod === "Pix") required.push("pixKey");
 
     const hasEmptyFields = required.some((field) => !formData[field]);
     if (hasEmptyFields) {
@@ -675,7 +675,7 @@ const TelaSolicitacao = () => {
         obra: "",
         referente: "",
         valor: "",
-        paymentMethod: "PIX",
+        paymentMethod: "Pix",
         pixKeyType: "CPF",
         pixKey: "",
         titular: "",
@@ -828,7 +828,7 @@ const TelaSolicitacao = () => {
               Pagamento
             </label>
             <div className="flex flex-wrap gap-3 mt-2">
-              {["PIX", "Boleto", "Cheque"].map((method) => (
+              {["Pix", "Boleto", "Cheque"].map((method) => (
                 <label
                   key={method}
                   className={`cursor-pointer px-4 py-2 rounded-full border text-sm font-medium transition ${
@@ -854,7 +854,7 @@ const TelaSolicitacao = () => {
           {/* BLOCO 3: DETALHES ESPECIFICOS (PIX e PARCELAS) */}
           <div className="bg-gray-50 rounded-xl p-2 border border-gray-200 space-y-6">
             {/* LINHA 1: PIX (Se selecionado) */}
-            {formData.paymentMethod === "PIX" && (
+            {formData.paymentMethod === "Pix" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fadeIn">
                 <div className="md:col-span-1">
                   <label className={labelClass}>Tipo Chave</label>
