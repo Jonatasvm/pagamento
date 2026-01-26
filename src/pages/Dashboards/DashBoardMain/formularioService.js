@@ -78,6 +78,7 @@ const adapterFrontendToBackend = (data) => {
     data_competencia: data.dataCompetencia,
     observacao: data.observacao,
     conta: data.conta ? Number(data.conta) : null, // ✅ NOVO: Mapeia o campo conta (banco)
+    categoria: data.categoria ? Number(data.categoria) : null, // ✅ NOVO: Mapeia o campo categoria
   };
   return payload;
 };

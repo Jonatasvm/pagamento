@@ -10,6 +10,7 @@ const PaymentTable = ({
   listaTitulares = [], 
   listaUsuarios = [],
   listaBancos = [],
+  listaCategorias = [],
   columns = [],
   expandedFieldsConfig = [],
 
@@ -102,6 +103,8 @@ const PaymentTable = ({
             selectOptions = listaUsuarios;
         } else if (key === "conta") {
             selectOptions = listaBancos;
+        } else if (key === "categoria") {
+            selectOptions = listaCategorias;
         }
         
         // Verifica se é um select de IDs (Objeto {id, nome})
@@ -310,6 +313,7 @@ const PaymentTable = ({
         else if (key === "titular") list = listaTitulares; 
         else if (key === "solicitante") list = listaUsuarios;
         else if (key === "conta") list = listaBancos;
+        else if (key === "categoria") list = listaCategorias;
 
         // Usa a função auxiliar para traduzir o ID para o Nome
         const name = list ? getNameById(list, value) : (value || "—"); 

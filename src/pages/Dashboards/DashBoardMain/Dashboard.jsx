@@ -31,6 +31,7 @@ export const Dashboard = () => {
   const [listaObras, setListaObras] = useState([]);
   const [listaTitulares, setListaTitulares] = useState([]);
   const [listaBancos, setListaBancos] = useState([]);
+  const [listaCategorias, setListaCategorias] = useState([]);
 
   // --- Estados de Edição e Seleção ---
   const [editingId, setEditingId] = useState(null);
@@ -111,12 +112,24 @@ export const Dashboard = () => {
     }
   };
 
+  const fetchListaCategorias = async () => {
+    try {
+      const response = await fetch(`${API_URL}/categoria`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de categorias");
+      const data = await response.json();
+      setListaCategorias(data);
+    } catch (error) {
+      console.error("Erro ao carregar categorias:", error);
+    }
+  };
+
   // Carrega tudo ao montar o componente
   useEffect(() => {
     fetchRequests();
     fetchListaObras();
     fetchListaTitulares();
     fetchListaBancos();
+    fetchListaCategorias();
     // Se tiver fetchListaUsuarios(), chame aqui
   }, []);
 
@@ -131,8 +144,8 @@ export const Dashboard = () => {
   );
 
   const expandedFieldsConfig = useMemo(
-    () => getExpandedFields(listaUsuarios),
-    [listaUsuarios]
+    () => getExpandedFields(listaUsuarios, listaCategorias),
+    [listaUsuarios, listaCategorias]
   );
 
   // =========================================================================
@@ -984,6 +997,7 @@ export const Dashboard = () => {
             listaTitulares={listaTitulares}
             listaUsuarios={listaUsuarios}
             listaBancos={listaBancos}
+            listaCategorias={listaCategorias}
             
             // Props de Dados (✅ AGORA USANDO DADOS ORDENADOS)
             filteredRequests={sortedAndFilteredRequests}

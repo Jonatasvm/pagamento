@@ -168,7 +168,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
 ];
 
 // --- CONFIGURAÇÃO DE CAMPOS EXPANDIDOS (Detalhes Ocultos) ---
-export const getExpandedFields = (listaUsuarios) => [
+export const getExpandedFields = (listaUsuarios, listaCategorias = []) => [
   {
     key: "dataLancamento",
     label: "Data Lançamento",
@@ -196,6 +196,14 @@ export const getExpandedFields = (listaUsuarios) => [
     key: "chavePix",
     label: "Chave PIX",
     type: "text",
+  },
+  {
+    key: "categoria",
+    label: "Categoria",
+    type: "select",
+    options: listaCategorias,
+    editable: true,
+    format: (value) => getNameById(listaCategorias, value),
   },
   {
     key: "conta",

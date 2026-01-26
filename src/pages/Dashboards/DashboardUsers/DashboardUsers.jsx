@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { Building2, Users, Landmark, Home, Users2 } from "lucide-react";
+import { Building2, Users, Landmark, Home, Users2, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 // IMPORTANTE: Certifique-se que os managers são exportados como 'export const'
 // Se estiver usando 'export default', tire as chaves { } do import abaixo.
@@ -8,6 +8,7 @@ import { ObrasManager } from "./ObrasManager";
 import { UserManager } from "./UsersManager";
 import { BanksManager } from "./BanksManager";
 import { FornecedorManager } from "./FornecedorManager"; 
+import { CategoriaManager } from "./CategoriaManager"; 
 
 const API_IP = "http://91.98.132.210:5631";
 
@@ -23,6 +24,9 @@ export default function DashboardUsers() {
 
   const [fornecedoresList, setFornecedoresList] = useState([]);
   const [loadingFornecedores, setLoadingFornecedores] = useState(false);
+
+  const [categoriasList, setCategoriasList] = useState([]);
+  const [loadingCategorias, setLoadingCategorias] = useState(false);
 
   // --- 1. GET: Buscar Obras ---
   const fetchObras = async () => {
@@ -44,6 +48,7 @@ export default function DashboardUsers() {
     fetchObras();
     fetchBanks(); // ✅ NOVO: Carrega também a lista de bancos ao iniciar
     fetchFornecedores(); // ✅ NOVO: Carrega também a lista de fornecedores ao iniciar
+    fetchCategorias(); // ✅ NOVO: Carrega também a lista de categorias ao iniciar
   }, []);
 
   // --- 2. POST: Adicionar Obra ---
@@ -285,6 +290,84 @@ export default function DashboardUsers() {
     }
   };
 
+  // --- FUNÇÕES PARA CATEGORIAS ---
+  // GET: Buscar Categorias
+  const fetchCategorias = async () => {
+    setLoadingCategorias(true);
+    try {
+      const response = await fetch(`${API_IP}/categoria`);
+      if (!response.ok) throw new Error("Falha ao conectar com servidor");
+      const data = await response.json();
+      setCategoriasList(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar lista de categorias.");
+    } finally {
+      setLoadingCategorias(false);
+    }
+  };
+
+  // POST: Adicionar Categoria
+  const handleAddCategoria = async (categoriaData) => {
+    setLoadingCategorias(true);
+    try {
+      const response = await fetch(`${API_IP}/categoria`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoriaData),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Erro ao salvar no banco");
+      }
+
+      toast.success("Categoria criada com sucesso!");
+      await fetchCategorias();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Não foi possível adicionar a categoria.");
+    } finally {
+      setLoadingCategorias(false);
+    }
+  };
+
+  // PUT: Atualizar Categoria
+  const handleUpdateCategoria = async (id, categoriaData) => {
+    try {
+      const response = await fetch(`${API_IP}/categoria/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoriaData),
+      });
+
+      if (!response.ok) throw new Error("Erro ao atualizar");
+
+      toast.success("Categoria atualizada!");
+      await fetchCategorias();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao editar categoria.");
+    }
+  };
+
+  // DELETE: Remover Categoria
+  const handleDeleteCategoria = async (id) => {
+    try {
+      const response = await fetch(`${API_IP}/categoria/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Erro ao deletar");
+
+      toast.success("Categoria removida!");
+      setCategoriasList((prev) => prev.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir categoria.");
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen font-sans text-slate-800">
       <Toaster position="top-right" />
@@ -371,6 +454,21 @@ export default function DashboardUsers() {
                 <h2 className="text-2xl font-bold">Gerenciar Fornecedores</h2>
                 <p className="text-sm text-orange-100">
                   Cadastrar e gerenciar fornecedores
+                </p>
+              </button>
+
+              {/* --- CARD GERENCIAR CATEGORIAS --- */}
+              <button
+                onClick={() => {
+                  setCurrentTab("categorias");
+                  fetchCategorias();
+                }}
+                className="h-48 bg-linear-to-br from-green-500 to-green-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+              >
+                <Layers size={48} className="text-green-100" />
+                <h2 className="text-2xl font-bold">Gerenciar Categorias</h2>
+                <p className="text-sm text-green-100">
+                  Cadastrar e gerenciar categorias
                 </p>
               </button>
             </div>
@@ -460,6 +558,28 @@ export default function DashboardUsers() {
             />
           </div>
         )}
+
+        {/* --- ABA GERENCIAR CATEGORIAS --- */}
+        {currentTab === "categorias" && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold"
+              >
+                <Home size={20} /> Voltar ao Dashboard
+              </Link>
+            </div>
+            {/* Componente de Categorias */}
+            <CategoriaManager
+              categorias={categoriasList}
+              isLoading={loadingCategorias}
+              onAddCategoria={handleAddCategoria}
+              onUpdateCategoria={handleUpdateCategoria}
+              onDeleteCategoria={handleDeleteCategoria}
+            />
+          </div>
+        }}
         </div>
       </div>
     </div>
