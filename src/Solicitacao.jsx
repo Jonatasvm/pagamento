@@ -171,6 +171,10 @@ const TelaSolicitacao = () => {
   const [bancos, setBancos] = useState([]); // ? NOVO: Lista de bancos
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schedule, setSchedule] = useState([]); // Parcelas calculadas
+  const [customInstallments, setCustomInstallments] = useState(""); // ✅ NOVO: Parcelas personalizadas
+  const [isCustomInstallments, setIsCustomInstallments] = useState(false); // ✅ NOVO: Flag para modo personalizado
+  const [multipleWorks, setMultipleWorks] = useState(false); // ✅ NOVO: Flag para múltiplas obras
+  const [selectedWorks, setSelectedWorks] = useState([]); // ✅ NOVO: Obras selecionadas com valores
 
   // Estados para Autocomplete de Titular
   const [titularSuggestions, setTitularSuggestions] = useState([]);
@@ -588,6 +592,8 @@ const TelaSolicitacao = () => {
         chave_pix: formData.pixKey || "",
         observacao: formData.observacao || "", // ? NOVO: Usar observacao do formulario
         conta: formData.conta ? Number(formData.conta) : null, // ? NOVO: Enviar o banco (conta)
+        multiplos_lancamentos: multipleWorks ? 1 : 0, // ✅ NOVO: Flag para múltiplas obras
+        obras_adicionais: multipleWorks ? selectedWorks : [], // ✅ NOVO: Obras adicionais com valores
         // O anexo sera tratado separadamente ou via outro campo/API, aqui e so o dado
       };
 
@@ -786,6 +792,86 @@ const TelaSolicitacao = () => {
                   encontrada para seu usuario.
                 </p>
               )}
+
+              {/* ✅ NOVO: Checkbox para Múltiplas Obras */}
+              {formData.obra && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <label className="flex items-center cursor-pointer gap-3">
+                    <input
+                      type="checkbox"
+                      checked={multipleWorks}
+                      onChange={(e) => {
+                        setMultipleWorks(e.target.checked);
+                        if (!e.target.checked) {
+                          setSelectedWorks([]); // Limpa obras selecionadas se desabilitar
+                        }
+                      }}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Este lançamento é para múltiplas obras?
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-600 mt-2 ml-8">
+                    Selecione se o valor será dividido entre duas ou mais obras
+                  </p>
+                </div>
+              )}
+
+              {/* ✅ NOVO: Seletor de Obras Adicionais */}
+              {multipleWorks && formData.obra && (
+                <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">
+                    Distribuir valor entre as obras:
+                  </h4>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {obras.map((obra) => {
+                      const obraAtual = Number(formData.obra) === obra.id;
+                      const isSelected = selectedWorks.find(w => w.obra_id === obra.id);
+                      const valor = isSelected ? isSelected.valor : "";
+                      
+                      return (
+                        <div key={obra.id} className="flex items-center gap-3 p-2 bg-white rounded border border-gray-200">
+                          <input
+                            type="checkbox"
+                            checked={obraAtual || !!isSelected}
+                            disabled={obraAtual}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedWorks([...selectedWorks, { obra_id: obra.id, valor: "" }]);
+                              } else {
+                                setSelectedWorks(selectedWorks.filter(w => w.obra_id !== obra.id));
+                              }
+                            }}
+                            className="w-4 h-4 text-purple-600 border-gray-300 rounded"
+                          />
+                          <span className="text-sm font-medium text-gray-700 flex-1">
+                            {obra.nome} {obraAtual && "(Obra Principal)"}
+                          </span>
+                          {(obraAtual || isSelected) && (
+                            <input
+                              type="text"
+                              value={obraAtual ? formData.valor : valor}
+                              disabled={obraAtual}
+                              onChange={(e) => {
+                                const newValue = formatCurrency(e.target.value);
+                                setSelectedWorks(
+                                  selectedWorks.map(w =>
+                                    w.obra_id === obra.id ? { ...w, valor: newValue } : w
+                                  )
+                                );
+                              }}
+                              placeholder="R$ 0,00"
+                              className="w-24 text-sm border border-gray-300 rounded px-2 py-1"
+                              inputMode="numeric"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -915,8 +1001,16 @@ const TelaSolicitacao = () => {
                 <div className="relative">
                   <select
                     name="installmentsCount"
-                    value={formData.installmentsCount}
-                    onChange={handleChange}
+                    value={isCustomInstallments ? "custom" : formData.installmentsCount}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") {
+                        setIsCustomInstallments(true);
+                        setCustomInstallments("");
+                      } else {
+                        setIsCustomInstallments(false);
+                        handleChange({ target: { name: "installmentsCount", value: e.target.value } });
+                      }
+                    }}
                     className={`${inputClass} appearance-none`}
                   >
                     {INSTALLMENT_OPTIONS.map((i) => (
@@ -924,10 +1018,34 @@ const TelaSolicitacao = () => {
                         {i}x {i > 1 ? "(Parcelado)" : "(A vista)"}
                       </option>
                     ))}
+                    <option value="custom">Personalizado</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
               </div>
+
+              {/* ✅ NOVO: Campo de parcelas personalizadas */}
+              {isCustomInstallments && (
+                <div>
+                  <label className={labelClass}>
+                    Número de Parcelas
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="999"
+                    value={customInstallments}
+                    onChange={(e) => {
+                      const valor = Math.max(1, Math.min(999, parseInt(e.target.value) || 1));
+                      setCustomInstallments(valor.toString());
+                      // Atualizar formData com o valor customizado
+                      handleChange({ target: { name: "installmentsCount", value: valor.toString() } });
+                    }}
+                    placeholder="Ex: 14, 20, 30..."
+                    className={inputClass}
+                  />
+                </div>
+              )}
             </div>            {/* TABELA DE PARCELAS (Se > 1) */}
             {formData.installmentsCount > 1 && schedule.length > 0 && (
               <div className="border border-gray-200 bg-white rounded-lg overflow-x-auto md:overflow-hidden">

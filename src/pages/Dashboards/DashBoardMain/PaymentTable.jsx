@@ -378,18 +378,21 @@ const PaymentTable = ({
               const isExpanded = expandedRows.includes(request.id);
               const isSelected = selectedRequests.includes(request.id);
               const currentRowData = isEditing ? editFormData : request;
+              const isMultiple = request.multiplos_lancamentos === 1; // ✅ NOVO: Verificar se é múltiplo
 
               const rowClasses = isEditing
                 ? "bg-yellow-50 ring-2 ring-yellow-400 z-10 relative"
                 : isSelected
                 ? "bg-blue-50"
+                : isMultiple
+                ? "bg-purple-50" // ✅ NOVO: Cor roxo para lançamentos múltiplos
                 : "bg-white";
 
               return (
                 <React.Fragment key={request.id}>
                   <tr
                     id={`row-${request.id}`}
-                    className={`border-b hover:bg-gray-50 transition-colors ${rowClasses}`}
+                    className={`border-b hover:bg-gray-50 transition-colors ${rowClasses} ${isMultiple ? "border-l-4 border-l-purple-600" : ""}`}
                   >
                     {/* Célula de Ações Fixa */}
                     <td

@@ -60,6 +60,7 @@ export const Dashboard = () => {
     solicitante: "",
     referente: "",
     busca: "",
+    multiplayosLancamentos: "", // ✅ NOVO: Filtro para múltiplos lançamentos
   });
 
   // =========================================================================
@@ -221,6 +222,13 @@ export const Dashboard = () => {
                         referente.includes(searchValue);
       
       if (!encontrado) return false;
+    }
+
+    // ✅ NOVO: FILTRO DE MÚLTIPLOS LANÇAMENTOS
+    if (filters.multiplayosLancamentos === "sim") {
+      if (req.multiplos_lancamentos !== 1) return false;
+    } else if (filters.multiplayosLancamentos === "nao") {
+      if (req.multiplos_lancamentos === 1) return false;
     }
 
     return true;
@@ -956,6 +964,23 @@ export const Dashboard = () => {
                 onChange={handleFilterChange}
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               />
+            </div>
+
+            {/* ✅ NOVO: Múltiplos Lançamentos */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Múltiplos Lançamentos
+              </label>
+              <select
+                name="multiplayosLancamentos"
+                value={filters.multiplayosLancamentos}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Todos</option>
+                <option value="sim">Sim (Múltiplos)</option>
+                <option value="nao">Não (Simples)</option>
+              </select>
             </div>
           </div>
 
