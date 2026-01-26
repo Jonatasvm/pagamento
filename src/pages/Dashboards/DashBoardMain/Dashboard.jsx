@@ -676,7 +676,7 @@ export const Dashboard = () => {
           "Pago a (Fornecedor)": request.titular || "",
           "Descrição": request.referente || "",
           "Número do Documento": request.chavePix || "",
-          "Categoria*": categoriaEncontrada?.nome || "Sem Categoria",
+          "Categoria*": categoriaEncontrada?.nome || "",
           "Forma de Pagamento": request.formaDePagamento || "",
           "Quem Paga*": "Empresa",
           "Conta Bancária*": bancoEncontrado?.nome || "",
@@ -691,6 +691,23 @@ export const Dashboard = () => {
       const ws = XLSX.utils.json_to_sheet(dataToExport);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilha de Importação");
+      
+      // ✅ NOVO: Aplicar formato de data às colunas de data
+      // Colunas A, B, C são as datas (Data de competência, Data de vencimento, Data de pagamento)
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        // Coluna A (Data de competência) - índice 0
+        const cellA = XLSX.utils.encode_cell({ r: R, c: 0 });
+        if (ws[cellA]) ws[cellA].z = 'dd/mm/yyyy';
+        
+        // Coluna B (Data de vencimento) - índice 1
+        const cellB = XLSX.utils.encode_cell({ r: R, c: 1 });
+        if (ws[cellB]) ws[cellB].z = 'dd/mm/yyyy';
+        
+        // Coluna C (Data de pagamento) - índice 2
+        const cellC = XLSX.utils.encode_cell({ r: R, c: 2 });
+        if (ws[cellC]) ws[cellC].z = 'dd/mm/yyyy';
+      }
       
       // Ajustar largura das colunas
       const colWidths = [
