@@ -646,6 +646,11 @@ export const Dashboard = () => {
         const bancoEncontrado = listaBancos && listaBancos.length > 0
           ? listaBancos.find(b => Number(b.id) === Number(request.conta))
           : null;
+
+        // Buscar categoria pelo ID
+        const categoriaEncontrada = listaCategorias && listaCategorias.length > 0
+          ? listaCategorias.find(c => Number(c.id) === Number(request.categoria))
+          : null;
         
         // Formatar datas para DD/MM/YYYY
         const formatDate = (dateStr) => {
@@ -671,7 +676,7 @@ export const Dashboard = () => {
           "Pago a (Fornecedor)": request.titular || "",
           "Descrição": request.referente || "",
           "Número do Documento": request.chavePix || "",
-          "Categoria*": "Sem NF",
+          "Categoria*": categoriaEncontrada?.nome || "Sem Categoria",
           "Forma de Pagamento": request.formaDePagamento || "",
           "Quem Paga*": "Empresa",
           "Conta Bancária*": bancoEncontrado?.nome || "",
