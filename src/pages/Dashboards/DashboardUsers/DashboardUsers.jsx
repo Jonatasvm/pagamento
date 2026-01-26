@@ -463,11 +463,11 @@ export default function DashboardUsers() {
                   setCurrentTab("categorias");
                   fetchCategorias();
                 }}
-                className="h-48 bg-linear-to-br from-green-500 to-green-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
+                className="h-48 bg-linear-to-br from-pink-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
               >
-                <Layers size={48} className="text-green-100" />
+                <Layers size={48} className="text-pink-100" />
                 <h2 className="text-2xl font-bold">Gerenciar Categorias</h2>
-                <p className="text-sm text-green-100">
+                <p className="text-sm text-pink-100">
                   Cadastrar e gerenciar categorias
                 </p>
               </button>

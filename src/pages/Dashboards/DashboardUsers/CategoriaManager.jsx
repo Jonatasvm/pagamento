@@ -99,8 +99,8 @@ export const CategoriaManager = ({
 
   return (
     <section>
-      <h1 className="text-3xl font-extrabold text-green-700 mb-8 border-b pb-2 flex items-center gap-2">
-        <Layers size={28} className="text-green-500" /> Gerenciar Categorias
+      <h1 className="text-3xl font-extrabold text-pink-700 mb-8 border-b pb-2 flex items-center gap-2">
+        <Layers size={28} className="text-pink-500" /> Gerenciar Categorias
       </h1>
 
       {/* --- Inputs de Adicionar --- */}
@@ -141,7 +141,7 @@ export const CategoriaManager = ({
           <button
             onClick={handleAddClick}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 px-6 py-2 h-[42px] text-sm font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 transition shadow-md disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-6 py-2 h-[42px] text-sm font-semibold rounded-lg text-white bg-pink-600 hover:bg-pink-700 transition shadow-md disabled:opacity-50"
           >
             <Plus size={18} /> {isLoading ? "..." : "Adicionar"}
           </button>
@@ -151,7 +151,7 @@ export const CategoriaManager = ({
       {/* --- Tabela --- */}
       <div className="overflow-x-auto rounded-xl shadow-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-green-500">
+          <thead className="bg-pink-500">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">
                 Nome
@@ -181,7 +181,7 @@ export const CategoriaManager = ({
               categorias.map((categoria) => (
                 <tr
                   key={categoria.id}
-                  className="hover:bg-green-50 transition duration-150"
+                  className="hover:bg-pink-50 transition duration-150"
                 >
                   <td className="px-6 py-3 text-sm font-medium text-gray-900 align-middle">
                     {editingCategoriaId === categoria.id ? (
@@ -191,7 +191,7 @@ export const CategoriaManager = ({
                         onChange={(e) =>
                           handleEditChange("nome", e.target.value)
                         }
-                        className="border border-green-400 rounded px-3 py-1 w-full outline-none"
+                        className="border border-pink-400 rounded px-3 py-1 w-full outline-none"
                         autoFocus
                       />
                     ) : (
@@ -206,7 +206,7 @@ export const CategoriaManager = ({
                         onChange={(e) =>
                           handleEditChange("descricao", e.target.value)
                         }
-                        className="border border-green-400 rounded px-3 py-1 w-full outline-none"
+                        className="border border-pink-400 rounded px-3 py-1 w-full outline-none"
                       />
                     ) : (
                       categoria.descricao || "-"
@@ -218,7 +218,7 @@ export const CategoriaManager = ({
                         <>
                           <button
                             onClick={() => handleSaveClick(categoria.id)}
-                            className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600"
+                            className="p-2 rounded-full bg-pink-500 text-white hover:bg-pink-600"
                           >
                             <Save size={16} />
                           </button>
@@ -233,7 +233,7 @@ export const CategoriaManager = ({
                         <>
                           <button
                             onClick={() => handleStartEdit(categoria)}
-                            className="p-2 rounded-full text-green-600 hover:bg-green-100"
+                            className="p-2 rounded-full text-pink-600 hover:bg-pink-100"
                           >
                             <Edit size={18} />
                           </button>
