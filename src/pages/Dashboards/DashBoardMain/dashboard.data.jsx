@@ -98,7 +98,7 @@ export function getStatusClasses(isLancado) {
 }
 
 // --- CONFIGURAÇÃO DE COLUNAS DA TABELA (Colunas Visíveis) ---
-export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, listaBancos = []) => [
+export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, listaBancos = [], listaCategorias = []) => [
   {
     key: "statusLancamento",
     label: "Status",
@@ -128,7 +128,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "titular",
     label: "Titular / Favorecido",
     type: "text",
-    minWidth: "200px",
+    minWidth: "250px",
     // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
     format: (value) => String(value), 
   },
@@ -136,14 +136,23 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "referente",
     label: "Referente",
     type: "text",
-    minWidth: "300px",
+    minWidth: "320px",
+  },
+  {
+    key: "categoria",
+    label: "Categoria",
+    type: "select",
+    options: listaCategorias,
+    editable: true,
+    minWidth: "180px",
+    format: (value) => getNameById(listaCategorias, value),
   },
   {
     key: "obra",
     label: "Obra",
     type: "select",
     options: listaObras,
-    minWidth: "150px",
+    minWidth: "180px",
     format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {
@@ -151,7 +160,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Banco",
     type: "select",
     options: listaBancos,
-    minWidth: "150px",
+    minWidth: "160px",
     editable: true,
     format: (value) => getNameById(listaBancos, value),
   },
@@ -160,7 +169,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Solicitante",
     type: "select",
     options: listaUsuarios,
-    minWidth: "150px",
+    minWidth: "180px",
     editable: false,
     // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
     format: (value) => String(value),
@@ -196,14 +205,6 @@ export const getExpandedFields = (listaUsuarios, listaCategorias = []) => [
     key: "chavePix",
     label: "Chave PIX",
     type: "text",
-  },
-  {
-    key: "categoria",
-    label: "Categoria",
-    type: "select",
-    options: listaCategorias,
-    editable: true,
-    format: (value) => getNameById(listaCategorias, value),
   },
   {
     key: "conta",

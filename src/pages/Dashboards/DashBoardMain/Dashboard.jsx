@@ -139,8 +139,8 @@ export const Dashboard = () => {
   
   // O useMemo garante que as colunas sejam recriadas quando listaObras for carregada via API.
   const columns = useMemo(
-    () => getTableColumns(listaUsuarios, listaObras, listaTitulares, listaBancos),
-    [listaUsuarios, listaObras, listaTitulares, listaBancos]
+    () => getTableColumns(listaUsuarios, listaObras, listaTitulares, listaBancos, listaCategorias),
+    [listaUsuarios, listaObras, listaTitulares, listaBancos, listaCategorias]
   );
 
   const expandedFieldsConfig = useMemo(
