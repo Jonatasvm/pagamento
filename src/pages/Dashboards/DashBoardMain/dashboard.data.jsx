@@ -128,7 +128,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "titular",
     label: "Titular / Favorecido",
     type: "text",
-    minWidth: "150px",
+    minWidth: "130px",
     // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
     format: (value) => String(value), 
   },
@@ -136,7 +136,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "referente",
     label: "Referente",
     type: "text",
-    minWidth: "80px",
+    minWidth: "60px",
   },
   {
     key: "categoria",
@@ -144,7 +144,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     type: "select",
     options: listaCategorias,
     editable: true,
-    minWidth: "75px",
+    minWidth: "70px",
     format: (value) => getNameById(listaCategorias, value),
   },
   {
@@ -152,7 +152,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Obra",
     type: "select",
     options: listaObras,
-    minWidth: "125px",
+    minWidth: "110px",
     format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {
@@ -160,7 +160,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Banco",
     type: "select",
     options: listaBancos,
-    minWidth: "95px",
+    minWidth: "90px",
     editable: true,
     format: (value) => getNameById(listaBancos, value),
   },
@@ -169,7 +169,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Solicitante",
     type: "select",
     options: listaUsuarios,
-    minWidth: "220px",
+    minWidth: "270px",
     editable: false,
     // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
     format: (value) => String(value),
