@@ -579,7 +579,7 @@ export default function DashboardUsers() {
               onDeleteCategoria={handleDeleteCategoria}
             />
           </div>
-        }}
+        )}
         </div>
       </div>
     </div>
