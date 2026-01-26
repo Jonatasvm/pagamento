@@ -344,7 +344,8 @@ const PaymentTable = ({
           Nenhum registro encontrado.
         </div>
       ) : (
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto">
+        <table className="w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-20">
             <tr>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
@@ -519,6 +520,7 @@ const PaymentTable = ({
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
