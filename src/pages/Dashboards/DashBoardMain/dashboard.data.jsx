@@ -136,7 +136,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "referente",
     label: "Referente",
     type: "text",
-    minWidth: "130px",
+    minWidth: "80px",
   },
   {
     key: "categoria",
