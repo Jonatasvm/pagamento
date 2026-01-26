@@ -108,13 +108,13 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
         {value ? "LANÇADO" : "PENDENTE"}
       </span>
     ),
-    minWidth: "80px",
+    minWidth: "70px",
   },
   {
     key: "dataPagamento",
     label: "Data Pagto",
     type: "date",
-    minWidth: "100px",
+    minWidth: "90px",
     format: (value) => formatDatePT(value),
   },
   {
@@ -122,13 +122,13 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Valor",
     type: "currency",
     format: formatCurrencyDisplay,
-    minWidth: "100px",
+    minWidth: "90px",
   },
   {
     key: "titular",
     label: "Titular / Favorecido",
     type: "text",
-    minWidth: "130px",
+    minWidth: "100px",
     // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
     format: (value) => String(value), 
   },
@@ -136,7 +136,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "referente",
     label: "Referente",
     type: "text",
-    minWidth: "60px",
+    minWidth: "50px",
   },
   {
     key: "categoria",
@@ -144,7 +144,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     type: "select",
     options: listaCategorias,
     editable: true,
-    minWidth: "70px",
+    minWidth: "60px",
     format: (value) => getNameById(listaCategorias, value),
   },
   {
@@ -152,7 +152,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Obra",
     type: "select",
     options: listaObras,
-    minWidth: "110px",
+    minWidth: "100px",
     format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {
@@ -160,7 +160,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Banco",
     type: "select",
     options: listaBancos,
-    minWidth: "90px",
+    minWidth: "80px",
     editable: true,
     format: (value) => getNameById(listaBancos, value),
   },
@@ -169,7 +169,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Solicitante",
     type: "select",
     options: listaUsuarios,
-    minWidth: "270px",
+    minWidth: "350px",
     editable: false,
     // ✅ CORREÇÃO: Força o retorno do valor bruto (name string)
     format: (value) => String(value),
