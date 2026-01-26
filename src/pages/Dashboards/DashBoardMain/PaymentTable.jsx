@@ -338,14 +338,14 @@ const PaymentTable = ({
 
   // --- RENDERIZAÇÃO PRINCIPAL ---
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-md border border-gray-100">
       {filteredRequests.length === 0 ? (
         <div className="p-12 text-center text-gray-500">
           Nenhum registro encontrado.
         </div>
       ) : (
-        <div className="overflow-x-auto">
-        <table className="w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto rounded-2xl">
+        <table className="w-full divide-y divide-gray-200 whitespace-nowrap">
           <thead className="bg-gray-50 sticky top-0 z-20">
             <tr>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
