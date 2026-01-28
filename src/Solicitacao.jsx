@@ -804,6 +804,13 @@ const TelaSolicitacao = () => {
                         setMultipleWorks(e.target.checked);
                         if (!e.target.checked) {
                           setSelectedWorks([]); // Limpa obras selecionadas se desabilitar
+                        } else {
+                          // Quando habilita múltiplas obras, pré-preenche o valor da obra principal
+                          // com o valor total (se houver)
+                          if (!formData.valor) {
+                            toast.error("Por favor, informe o valor total primeiro", { duration: 3000 });
+                            return;
+                          }
                         }
                       }}
                       className="w-5 h-5 text-blue-600 border-gray-300 rounded"
@@ -824,6 +831,9 @@ const TelaSolicitacao = () => {
                   <h4 className="text-sm font-semibold text-gray-800 mb-3">
                     Distribuir valor entre as obras:
                   </h4>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Edite os valores livremente para distribuir entre as obras
+                  </p>
                   <div className="space-y-3 max-h-60 overflow-y-auto">
                     {obras.map((obra) => {
                       const obraAtual = Number(formData.obra) === obra.id;
@@ -838,7 +848,11 @@ const TelaSolicitacao = () => {
                             disabled={obraAtual}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedWorks([...selectedWorks, { obra_id: obra.id, valor: "" }]);
+                                // Quando marca uma nova obra, sugere o valor total
+                                setSelectedWorks([...selectedWorks, { 
+                                  obra_id: obra.id, 
+                                  valor: formData.valor || "" 
+                                }]);
                               } else {
                                 setSelectedWorks(selectedWorks.filter(w => w.obra_id !== obra.id));
                               }
@@ -867,7 +881,7 @@ const TelaSolicitacao = () => {
                                 }
                               }}
                               placeholder="R$ 0,00"
-                              className="w-32 text-sm border border-gray-300 rounded px-2 py-1 font-semibold"
+                              className="w-40 text-sm border border-gray-300 rounded px-3 py-1.5 font-semibold focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                               inputMode="numeric"
                             />
                           )}
@@ -875,6 +889,31 @@ const TelaSolicitacao = () => {
                       );
                     })}
                   </div>
+                  
+                  {/* Mostrar soma total dos valores */}
+                  {selectedWorks.length > 0 && (
+                    <div className="mt-4 p-3 bg-white rounded border-2 border-purple-300">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold text-gray-700">
+                          Soma Total Distribuída:
+                        </span>
+                        <span className="text-lg font-bold text-purple-700">
+                          {(() => {
+                            const valorObraPrincipal = parseCurrencyToFloat(formData.valor);
+                            const somaAdicionais = selectedWorks.reduce(
+                              (acc, w) => acc + parseCurrencyToFloat(w.valor),
+                              0
+                            );
+                            const total = valorObraPrincipal + somaAdicionais;
+                            return formatCurrency((total * 100).toFixed(0));
+                          })()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Confira se a soma corresponde ao valor desejado
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
