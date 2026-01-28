@@ -848,13 +848,69 @@ const TelaSolicitacao = () => {
                             disabled={obraAtual}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                // Quando marca uma nova obra, sugere o valor total
-                                setSelectedWorks([...selectedWorks, { 
+                                // Calcular o valor total atual
+                                const valorTotalAtual = parseCurrencyToFloat(formData.valor);
+                                
+                                // Número de obras após adicionar esta (incluindo a obra principal)
+                                const numObras = selectedWorks.length + 2; // +1 da nova obra, +1 da obra principal
+                                
+                                // Dividir o valor igualmente
+                                const valorPorObra = valorTotalAtual / numObras;
+                                const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
+                                
+                                // Atualizar o valor da obra principal
+                                setFormData(prev => ({ ...prev, valor: valorFormatado }));
+                                
+                                // Atualizar valores das obras já selecionadas
+                                const obrasAtualizadas = selectedWorks.map(w => ({
+                                  ...w,
+                                  valor: valorFormatado
+                                }));
+                                
+                                // Adicionar a nova obra com o valor dividido
+                                setSelectedWorks([...obrasAtualizadas, { 
                                   obra_id: obra.id, 
-                                  valor: formData.valor || "" 
+                                  valor: valorFormatado
                                 }]);
                               } else {
-                                setSelectedWorks(selectedWorks.filter(w => w.obra_id !== obra.id));
+                                // Ao desmarcar, redistribuir o valor entre as obras restantes
+                                const obraRemovida = selectedWorks.find(w => w.obra_id === obra.id);
+                                const obrasRestantes = selectedWorks.filter(w => w.obra_id !== obra.id);
+                                
+                                if (obrasRestantes.length > 0) {
+                                  // Somar todos os valores atuais
+                                  const valorObraPrincipal = parseCurrencyToFloat(formData.valor);
+                                  const valorRemovida = parseCurrencyToFloat(obraRemovida?.valor || "0");
+                                  const somaOutras = obrasRestantes.reduce(
+                                    (acc, w) => acc + parseCurrencyToFloat(w.valor),
+                                    0
+                                  );
+                                  const valorTotal = valorObraPrincipal + valorRemovida + somaOutras;
+                                  
+                                  // Redistribuir entre as obras restantes + principal
+                                  const numObrasRestantes = obrasRestantes.length + 1; // +1 da principal
+                                  const valorPorObra = valorTotal / numObrasRestantes;
+                                  const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
+                                  
+                                  // Atualizar valores
+                                  setFormData(prev => ({ ...prev, valor: valorFormatado }));
+                                  setSelectedWorks(obrasRestantes.map(w => ({
+                                    ...w,
+                                    valor: valorFormatado
+                                  })));
+                                } else {
+                                  // Se não sobrou nenhuma obra adicional, restaura o valor original
+                                  const valorObraPrincipal = parseCurrencyToFloat(formData.valor);
+                                  const somaTotal = selectedWorks.reduce(
+                                    (acc, w) => acc + parseCurrencyToFloat(w.valor),
+                                    valorObraPrincipal
+                                  );
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    valor: formatCurrency((somaTotal * 100).toFixed(0))
+                                  }));
+                                  setSelectedWorks([]);
+                                }
                               }
                             }}
                             className="w-4 h-4 text-purple-600 border-gray-300 rounded"
