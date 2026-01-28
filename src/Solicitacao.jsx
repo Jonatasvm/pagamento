@@ -270,6 +270,22 @@ const TelaSolicitacao = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.valor, formData.installmentsCount, formData.dataVencimento]);
 
+  // ✅ NOVO: Distribuir valores automaticamente entre obras quando o número de obras mudar
+  useEffect(() => {
+    if (multipleWorks && selectedWorks.length > 0 && formData.valor) {
+      const valorTotal = parseCurrencyToFloat(formData.valor);
+      const numObras = selectedWorks.length + 1; // +1 da obra principal
+      const valorPorObra = valorTotal / numObras;
+      const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
+      
+      // Atualizar valores de todas as obras adicionais
+      setSelectedWorks(prev => 
+        prev.map(w => ({ ...w, valor: valorFormatado }))
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWorks.length, multipleWorks]);
+
   // 3. Buscar Titulares para Autocomplete
   useEffect(() => {
     // Se acabou de selecionar um titular, nao buscar novamente
@@ -848,69 +864,13 @@ const TelaSolicitacao = () => {
                             disabled={obraAtual}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                // Calcular o valor total atual
-                                const valorTotalAtual = parseCurrencyToFloat(formData.valor);
-                                
-                                // Número de obras após adicionar esta (incluindo a obra principal)
-                                const numObras = selectedWorks.length + 2; // +1 da nova obra, +1 da obra principal
-                                
-                                // Dividir o valor igualmente
-                                const valorPorObra = valorTotalAtual / numObras;
-                                const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
-                                
-                                // Atualizar o valor da obra principal
-                                setFormData(prev => ({ ...prev, valor: valorFormatado }));
-                                
-                                // Atualizar valores das obras já selecionadas
-                                const obrasAtualizadas = selectedWorks.map(w => ({
-                                  ...w,
-                                  valor: valorFormatado
-                                }));
-                                
-                                // Adicionar a nova obra com o valor dividido
-                                setSelectedWorks([...obrasAtualizadas, { 
+                                // Quando marca uma nova obra, divide o valor total entre todas as obras
+                                setSelectedWorks([...selectedWorks, { 
                                   obra_id: obra.id, 
-                                  valor: valorFormatado
+                                  valor: "" 
                                 }]);
                               } else {
-                                // Ao desmarcar, redistribuir o valor entre as obras restantes
-                                const obraRemovida = selectedWorks.find(w => w.obra_id === obra.id);
-                                const obrasRestantes = selectedWorks.filter(w => w.obra_id !== obra.id);
-                                
-                                if (obrasRestantes.length > 0) {
-                                  // Somar todos os valores atuais
-                                  const valorObraPrincipal = parseCurrencyToFloat(formData.valor);
-                                  const valorRemovida = parseCurrencyToFloat(obraRemovida?.valor || "0");
-                                  const somaOutras = obrasRestantes.reduce(
-                                    (acc, w) => acc + parseCurrencyToFloat(w.valor),
-                                    0
-                                  );
-                                  const valorTotal = valorObraPrincipal + valorRemovida + somaOutras;
-                                  
-                                  // Redistribuir entre as obras restantes + principal
-                                  const numObrasRestantes = obrasRestantes.length + 1; // +1 da principal
-                                  const valorPorObra = valorTotal / numObrasRestantes;
-                                  const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
-                                  
-                                  // Atualizar valores
-                                  setFormData(prev => ({ ...prev, valor: valorFormatado }));
-                                  setSelectedWorks(obrasRestantes.map(w => ({
-                                    ...w,
-                                    valor: valorFormatado
-                                  })));
-                                } else {
-                                  // Se não sobrou nenhuma obra adicional, restaura o valor original
-                                  const valorObraPrincipal = parseCurrencyToFloat(formData.valor);
-                                  const somaTotal = selectedWorks.reduce(
-                                    (acc, w) => acc + parseCurrencyToFloat(w.valor),
-                                    valorObraPrincipal
-                                  );
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    valor: formatCurrency((somaTotal * 100).toFixed(0))
-                                  }));
-                                  setSelectedWorks([]);
-                                }
+                                setSelectedWorks(selectedWorks.filter(w => w.obra_id !== obra.id));
                               }
                             }}
                             className="w-4 h-4 text-purple-600 border-gray-300 rounded"
@@ -921,12 +881,22 @@ const TelaSolicitacao = () => {
                           {(obraAtual || isSelected) && (
                             <input
                               type="text"
-                              value={obraAtual ? formData.valor : valor}
+                              value={obraAtual ? (() => {
+                                // Calcular o valor sugerido para a obra principal
+                                if (selectedWorks.length > 0) {
+                                  const valorTotal = parseCurrencyToFloat(formData.valor);
+                                  const numObras = selectedWorks.length + 1;
+                                  const valorPorObra = valorTotal / numObras;
+                                  return formatCurrency((valorPorObra * 100).toFixed(0));
+                                }
+                                return formData.valor;
+                              })() : valor}
                               onChange={(e) => {
                                 const newValue = formatCurrency(e.target.value);
                                 if (obraAtual) {
-                                  // Se for a obra principal, atualiza o formData.valor
-                                  setFormData(prev => ({ ...prev, valor: newValue }));
+                                  // Não permite editar a obra principal quando há múltiplas obras
+                                  // O valor da obra principal é calculado automaticamente
+                                  return;
                                 } else {
                                   // Se for obra adicional, atualiza selectedWorks
                                   setSelectedWorks(
@@ -937,8 +907,12 @@ const TelaSolicitacao = () => {
                                 }
                               }}
                               placeholder="R$ 0,00"
-                              className="w-40 text-sm border border-gray-300 rounded px-3 py-1.5 font-semibold focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                              className={`w-40 text-sm border border-gray-300 rounded px-3 py-1.5 font-semibold focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                                obraAtual && selectedWorks.length > 0 ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
                               inputMode="numeric"
+                              disabled={obraAtual && selectedWorks.length > 0}
+                              title={obraAtual && selectedWorks.length > 0 ? "Valor calculado automaticamente" : ""}
                             />
                           )}
                         </div>
@@ -951,22 +925,38 @@ const TelaSolicitacao = () => {
                     <div className="mt-4 p-3 bg-white rounded border-2 border-purple-300">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-semibold text-gray-700">
-                          Soma Total Distribuída:
+                          Valor Total (fixo):
                         </span>
-                        <span className="text-lg font-bold text-purple-700">
-                          {(() => {
-                            const valorObraPrincipal = parseCurrencyToFloat(formData.valor);
-                            const somaAdicionais = selectedWorks.reduce(
-                              (acc, w) => acc + parseCurrencyToFloat(w.valor),
-                              0
-                            );
-                            const total = valorObraPrincipal + somaAdicionais;
-                            return formatCurrency((total * 100).toFixed(0));
-                          })()}
+                        <span className="text-lg font-bold text-green-700">
+                          {formData.valor}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Confira se a soma corresponde ao valor desejado
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <div className="text-xs text-gray-600 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Obra Principal:</span>
+                            <span className="font-semibold">
+                              {(() => {
+                                const valorTotal = parseCurrencyToFloat(formData.valor);
+                                const numObras = selectedWorks.length + 1;
+                                const valorPorObra = valorTotal / numObras;
+                                return formatCurrency((valorPorObra * 100).toFixed(0));
+                              })()}
+                            </span>
+                          </div>
+                          {selectedWorks.map((w, idx) => {
+                            const obraInfo = obras.find(o => o.id === w.obra_id);
+                            return (
+                              <div key={idx} className="flex justify-between">
+                                <span>{obraInfo?.nome || `Obra ${idx + 2}`}:</span>
+                                <span className="font-semibold">{w.valor || "R$ 0,00"}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 O valor total permanece fixo e é dividido entre as obras
                       </p>
                     </div>
                   )}
