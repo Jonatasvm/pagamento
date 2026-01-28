@@ -852,17 +852,22 @@ const TelaSolicitacao = () => {
                             <input
                               type="text"
                               value={obraAtual ? formData.valor : valor}
-                              disabled={obraAtual}
                               onChange={(e) => {
                                 const newValue = formatCurrency(e.target.value);
-                                setSelectedWorks(
-                                  selectedWorks.map(w =>
-                                    w.obra_id === obra.id ? { ...w, valor: newValue } : w
-                                  )
-                                );
+                                if (obraAtual) {
+                                  // Se for a obra principal, atualiza o formData.valor
+                                  setFormData(prev => ({ ...prev, valor: newValue }));
+                                } else {
+                                  // Se for obra adicional, atualiza selectedWorks
+                                  setSelectedWorks(
+                                    selectedWorks.map(w =>
+                                      w.obra_id === obra.id ? { ...w, valor: newValue } : w
+                                    )
+                                  );
+                                }
                               }}
                               placeholder="R$ 0,00"
-                              className="w-24 text-sm border border-gray-300 rounded px-2 py-1"
+                              className="w-32 text-sm border border-gray-300 rounded px-2 py-1 font-semibold"
                               inputMode="numeric"
                             />
                           )}
