@@ -175,6 +175,7 @@ const TelaSolicitacao = () => {
   const [isCustomInstallments, setIsCustomInstallments] = useState(false); // ✅ NOVO: Flag para modo personalizado
   const [multipleWorks, setMultipleWorks] = useState(false); // ✅ NOVO: Flag para múltiplas obras
   const [selectedWorks, setSelectedWorks] = useState([]); // ✅ NOVO: Obras selecionadas com valores
+  const [valorObraPrincipal, setValorObraPrincipal] = useState(""); // ✅ NOVO: Valor editável da obra principal quando há múltiplas obras
 
   // Estados para Autocomplete de Titular
   const [titularSuggestions, setTitularSuggestions] = useState([]);
@@ -278,10 +279,16 @@ const TelaSolicitacao = () => {
       const valorPorObra = valorTotal / numObras;
       const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
       
+      // Atualizar valor da obra principal
+      setValorObraPrincipal(valorFormatado);
+      
       // Atualizar valores de todas as obras adicionais
       setSelectedWorks(prev => 
         prev.map(w => ({ ...w, valor: valorFormatado }))
       );
+    } else {
+      // Se não há múltiplas obras, limpa o valor da obra principal
+      setValorObraPrincipal("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWorks.length, multipleWorks]);
@@ -639,7 +646,9 @@ const TelaSolicitacao = () => {
             body: JSON.stringify({
               ...basePayload,
               referente: formData.referente,
-              valor: parseCurrencyToFloat(formData.valor),
+              valor: multipleWorks && valorObraPrincipal 
+                ? parseCurrencyToFloat(valorObraPrincipal) 
+                : parseCurrencyToFloat(formData.valor),
               data_pagamento: formData.dataVencimento,
               data_competencia: formData.dataVencimento,
             }),
@@ -881,28 +890,20 @@ const TelaSolicitacao = () => {
                           {(obraAtual || isSelected) && (
                             <input
                               type="text"
-                              value={obraAtual ? (() => {
-                                // Calcular o valor sugerido para a obra principal
-                                if (selectedWorks.length > 0) {
-                                  const valorTotal = parseCurrencyToFloat(formData.valor);
-                                  const numObras = selectedWorks.length + 1;
-                                  const valorPorObra = valorTotal / numObras;
-                                  return formatCurrency((valorPorObra * 100).toFixed(0));
-                                }
-                                return formData.valor;
-                              })() : valor}
+                              value={obraAtual ? valorObraPrincipal || formData.valor : valor}
                               onChange={(e) => {
                                 const newValue = formatCurrency(e.target.value);
-                                // Permite editar todos os campos livremente
-                                if (!obraAtual) {
+                                if (obraAtual) {
+                                  // Atualiza o valor da obra principal
+                                  setValorObraPrincipal(newValue);
+                                } else {
+                                  // Atualiza obra adicional
                                   setSelectedWorks(
                                     selectedWorks.map(w =>
                                       w.obra_id === obra.id ? { ...w, valor: newValue } : w
                                     )
                                   );
                                 }
-                                // Nota: O campo da obra principal mostra o valor calculado,
-                                // mas não é editável diretamente - edite o "Valor Total" acima
                               }}
                               placeholder="R$ 0,00"
                               className="w-40 text-sm border border-gray-300 rounded px-3 py-1.5 font-semibold focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -930,12 +931,7 @@ const TelaSolicitacao = () => {
                           <div className="flex justify-between">
                             <span>Obra Principal:</span>
                             <span className="font-semibold">
-                              {(() => {
-                                const valorTotal = parseCurrencyToFloat(formData.valor);
-                                const numObras = selectedWorks.length + 1;
-                                const valorPorObra = valorTotal / numObras;
-                                return formatCurrency((valorPorObra * 100).toFixed(0));
-                              })()}
+                              {valorObraPrincipal || formData.valor}
                             </span>
                           </div>
                           {selectedWorks.map((w, idx) => {
