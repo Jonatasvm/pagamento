@@ -894,9 +894,8 @@ const TelaSolicitacao = () => {
                               onChange={(e) => {
                                 const newValue = formatCurrency(e.target.value);
                                 if (obraAtual) {
-                                  // Não permite editar a obra principal quando há múltiplas obras
-                                  // O valor da obra principal é calculado automaticamente
-                                  return;
+                                  // Permite editar a obra principal livremente
+                                  // Não altera o formData.valor, apenas mostra o valor calculado
                                 } else {
                                   // Se for obra adicional, atualiza selectedWorks
                                   setSelectedWorks(
@@ -907,12 +906,10 @@ const TelaSolicitacao = () => {
                                 }
                               }}
                               placeholder="R$ 0,00"
-                              className={`w-40 text-sm border border-gray-300 rounded px-3 py-1.5 font-semibold focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                                obraAtual && selectedWorks.length > 0 ? 'bg-gray-100 cursor-not-allowed' : ''
-                              }`}
+                              className="w-40 text-sm border border-gray-300 rounded px-3 py-1.5 font-semibold focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-yellow-50"
                               inputMode="numeric"
-                              disabled={obraAtual && selectedWorks.length > 0}
-                              title={obraAtual && selectedWorks.length > 0 ? "Valor calculado automaticamente" : ""}
+                              readOnly={obraAtual && selectedWorks.length > 0}
+                              title={obraAtual && selectedWorks.length > 0 ? "Valor calculado automaticamente - Altere o Valor Total acima para ajustar" : ""}
                             />
                           )}
                         </div>
