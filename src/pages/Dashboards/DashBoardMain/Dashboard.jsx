@@ -224,11 +224,13 @@ export const Dashboard = () => {
       if (!encontrado) return false;
     }
 
-    // ✅ NOVO: FILTRO DE MÚLTIPLOS LANÇAMENTOS
+    // ✅ NOVO: FILTRO DE MÚLTIPLOS LANÇAMENTOS (usando grupo_lancamento ao invés de multiplos_lancamentos)
     if (filters.multiplayosLancamentos === "sim") {
-      if (req.multiplos_lancamentos !== 1) return false;
+      // Mostra apenas lançamentos que têm grupo_lancamento (múltiplos)
+      if (!req.grupo_lancamento) return false;
     } else if (filters.multiplayosLancamentos === "nao") {
-      if (req.multiplos_lancamentos === 1) return false;
+      // Mostra apenas lançamentos que NÃO têm grupo_lancamento (simples)
+      if (req.grupo_lancamento) return false;
     }
 
     return true;
@@ -244,30 +246,31 @@ export const Dashboard = () => {
 
   // ✅ NOVO: Agrupar lançamentos por grupo_lancamento (para múltiplos lançamentos)
   const groupLancamentosByGroup = (lancamentos) => {
-    const grouped = {};
-    const primaryLancamentos = [];
+    const grupos = {};
+    const individuais = [];
 
     lancamentos.forEach((lancamento) => {
       if (lancamento.grupo_lancamento) {
-        // Se tem grupo_lancamento, adiciona ao grupo
-        if (!grouped[lancamento.grupo_lancamento]) {
-          grouped[lancamento.grupo_lancamento] = [];
+        // Se tem grupo_lancamento
+        if (!grupos[lancamento.grupo_lancamento]) {
+          // Primeiro do grupo - será o principal exibido
+          grupos[lancamento.grupo_lancamento] = lancamento;
+        } else {
+          // Adicionar aos relacionados
+          if (!grupos[lancamento.grupo_lancamento].obras_relacionadas) {
+            grupos[lancamento.grupo_lancamento].obras_relacionadas = [];
+          }
+          grupos[lancamento.grupo_lancamento].obras_relacionadas.push(lancamento);
         }
-        grouped[lancamento.grupo_lancamento].push(lancamento);
       } else {
-        // Se não tem grupo, mantém como lançamento individual
-        primaryLancamentos.push(lancamento);
+        // Se não tem grupo, é individual
+        individuais.push(lancamento);
       }
     });
 
-    // Retorna os lançamentos primários (principal de cada grupo) e os individuais
-    const result = [];
-    Object.keys(grouped).forEach((grupo) => {
-      // Usa o primeiro lançamento do grupo como principal
-      result.push(grouped[grupo][0]);
-    });
-    result.push(...primaryLancamentos);
-    return result;
+    // Retorna: um lançamento por grupo + lançamentos individuais
+    const resultado = Object.values(grupos).concat(individuais);
+    return resultado;
   };
 
   // ✅ ORDENAR POR DATA, DEPOIS POR NÚMERO DE PARCELA

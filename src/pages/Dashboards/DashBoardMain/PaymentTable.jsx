@@ -378,7 +378,7 @@ const PaymentTable = ({
               const isExpanded = expandedRows.includes(request.id);
               const isSelected = selectedRequests.includes(request.id);
               const currentRowData = isEditing ? editFormData : request;
-              const isMultiple = request.multiplos_lancamentos === 1; // ✅ NOVO: Verificar se é múltiplo
+              const isMultiple = request.grupo_lancamento && request.obras_relacionadas?.length > 0; // ✅ CORRIGIDO: Verificar se tem grupo_lancamento e obras_relacionadas
 
               const rowClasses = isEditing
                 ? "bg-yellow-50 ring-2 ring-yellow-400 z-10 relative"
