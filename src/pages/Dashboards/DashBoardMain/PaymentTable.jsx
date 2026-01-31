@@ -333,6 +333,21 @@ const PaymentTable = ({
       );
     }
 
+    // ✅ NOVO: Se for campo de valor e tiver múltiplos lançamentos, mostrar o total
+    if (key === "valor" && request?.obras_relacionadas?.length > 0) {
+      const valorTotal = (request.valor_total !== undefined) 
+        ? request.valor_total 
+        : (parseFloat(request.valor || 0) + 
+           (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
+      
+      return (
+        <div className="flex flex-col">
+          <span className="font-bold text-green-700">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
+          <span className="text-xs text-gray-500">(total: {request.obras_relacionadas.length + 1} obras)</span>
+        </div>
+      );
+    }
+
     return value || "—";
   };
 
@@ -499,38 +514,41 @@ const PaymentTable = ({
                         
                         {/* ✅ NOVO: Mostrar obras relacionadas se existirem */}
                         {request.obras_relacionadas && request.obras_relacionadas.length > 0 && (
-                          <div className="mb-6 p-3 bg-purple-100 rounded-lg border border-purple-300">
-                            <h5 className="font-semibold text-purple-900 mb-3 text-sm">
-                              📋 Obras Vinculadas ao Lançamento
+                          <div className="mb-6 p-4 bg-purple-100 rounded-lg border-2 border-purple-400">
+                            <h5 className="font-bold text-purple-900 mb-4 text-base">
+                              📋 Lançamento Múltiplo - Distribuição por Obra
                             </h5>
                             <div className="space-y-2">
                               {/* Obra Principal */}
-                              <div className="flex justify-between items-center bg-white p-2 rounded">
-                                <span className="text-sm font-medium text-gray-700">
-                                  {getNameById(request.obra, listaObras) || `Obra ${request.obra}`} (Principal)
+                              <div className="flex justify-between items-center bg-white p-3 rounded border-l-4 border-l-green-500">
+                                <span className="text-sm font-semibold text-gray-800">
+                                  {getNameById(request.obra, listaObras) || `Obra ${request.obra}`}
                                 </span>
-                                <span className="text-sm font-semibold text-green-600">
-                                  R$ {request.valor?.toFixed(2).replace(".", ",") || "0,00"}
+                                <span className="text-sm font-bold text-green-600">
+                                  R$ {parseFloat(request.valor_principal || request.valor || 0).toFixed(2).replace(".", ",")}
                                 </span>
                               </div>
+                              
                               {/* Obras Relacionadas */}
-                              {request.obras_relacionadas.map((obra) => (
-                                <div key={obra.id} className="flex justify-between items-center bg-white p-2 rounded">
-                                  <span className="text-sm font-medium text-gray-700">
+                              {request.obras_relacionadas.map((obra, idx) => (
+                                <div key={obra.id} className="flex justify-between items-center bg-white p-3 rounded border-l-4 border-l-blue-500">
+                                  <span className="text-sm font-semibold text-gray-800">
                                     {getNameById(obra.obra, listaObras) || `Obra ${obra.obra}`}
                                   </span>
-                                  <span className="text-sm font-semibold text-blue-600">
-                                    R$ {obra.valor?.toFixed(2).replace(".", ",") || "0,00"}
+                                  <span className="text-sm font-bold text-blue-600">
+                                    R$ {parseFloat(obra.valor || 0).toFixed(2).replace(".", ",")}
                                   </span>
                                 </div>
                               ))}
+                              
                               {/* Total */}
-                              <div className="flex justify-between items-center bg-gray-200 p-2 rounded font-bold">
-                                <span className="text-sm text-gray-700">Total do Lançamento</span>
-                                <span className="text-sm text-gray-900">
-                                  R$ {(
-                                    (request.valor || 0) +
-                                    (request.obras_relacionadas?.reduce((acc, o) => acc + (o.valor || 0), 0) || 0)
+                              <div className="flex justify-between items-center bg-gradient-to-r from-purple-300 to-purple-400 p-3 rounded font-bold border-2 border-purple-600">
+                                <span className="text-sm text-purple-900">💰 Total do Lançamento</span>
+                                <span className="text-base text-purple-900">
+                                  R$ {(request.valor_total !== undefined 
+                                    ? request.valor_total 
+                                    : (parseFloat(request.valor_principal || request.valor || 0) + 
+                                       request.obras_relacionadas.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0))
                                   ).toFixed(2).replace(".", ",")}
                                 </span>
                               </div>
