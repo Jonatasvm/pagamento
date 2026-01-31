@@ -242,6 +242,34 @@ export const Dashboard = () => {
     return match ? parseInt(match[1], 10) : 0;
   };
 
+  // ✅ NOVO: Agrupar lançamentos por grupo_lancamento (para múltiplos lançamentos)
+  const groupLancamentosByGroup = (lancamentos) => {
+    const grouped = {};
+    const primaryLancamentos = [];
+
+    lancamentos.forEach((lancamento) => {
+      if (lancamento.grupo_lancamento) {
+        // Se tem grupo_lancamento, adiciona ao grupo
+        if (!grouped[lancamento.grupo_lancamento]) {
+          grouped[lancamento.grupo_lancamento] = [];
+        }
+        grouped[lancamento.grupo_lancamento].push(lancamento);
+      } else {
+        // Se não tem grupo, mantém como lançamento individual
+        primaryLancamentos.push(lancamento);
+      }
+    });
+
+    // Retorna os lançamentos primários (principal de cada grupo) e os individuais
+    const result = [];
+    Object.keys(grouped).forEach((grupo) => {
+      // Usa o primeiro lançamento do grupo como principal
+      result.push(grouped[grupo][0]);
+    });
+    result.push(...primaryLancamentos);
+    return result;
+  };
+
   // ✅ ORDENAR POR DATA, DEPOIS POR NÚMERO DE PARCELA
   const sortedAndFilteredRequests = [...filteredRequests].sort((a, b) => {
     // Primeiro, ordena por data de pagamento (crescente)
@@ -258,6 +286,9 @@ export const Dashboard = () => {
     
     return installmentA - installmentB;
   });
+
+  // ✅ NOVO: Agrupar lançamentos por grupo_lancamento
+  const groupedAndSortedRequests = groupLancamentosByGroup(sortedAndFilteredRequests);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -300,7 +331,7 @@ export const Dashboard = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRequests(sortedAndFilteredRequests.map((req) => req.id));
+      setSelectedRequests(groupedAndSortedRequests.map((req) => req.id));
     } else {
       setSelectedRequests([]);
     }
@@ -308,7 +339,7 @@ export const Dashboard = () => {
 
   const isAllSelected =
     sortedAndFilteredRequests.length > 0 &&
-    selectedRequests.length === sortedAndFilteredRequests.length;
+    selectedRequests.length === groupedAndSortedRequests.length;
 
   const handleEdit = (request) => {
     if (editingId) {
@@ -1046,8 +1077,8 @@ export const Dashboard = () => {
             listaBancos={listaBancos}
             listaCategorias={listaCategorias}
             
-            // Props de Dados (✅ AGORA USANDO DADOS ORDENADOS)
-            filteredRequests={sortedAndFilteredRequests}
+            // Props de Dados (✅ USANDO DADOS AGRUPADOS POR GRUPO_LANCAMENTO)
+            filteredRequests={groupedAndSortedRequests}
             isAllSelected={isAllSelected}
             selectedRequests={selectedRequests}
             editingId={editingId}

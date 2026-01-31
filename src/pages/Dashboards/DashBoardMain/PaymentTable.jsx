@@ -496,6 +496,48 @@ const PaymentTable = ({
                           <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
                           Detalhes Adicionais
                         </h4>
+                        
+                        {/* ✅ NOVO: Mostrar obras relacionadas se existirem */}
+                        {request.obras_relacionadas && request.obras_relacionadas.length > 0 && (
+                          <div className="mb-6 p-3 bg-purple-100 rounded-lg border border-purple-300">
+                            <h5 className="font-semibold text-purple-900 mb-3 text-sm">
+                              📋 Obras Vinculadas ao Lançamento
+                            </h5>
+                            <div className="space-y-2">
+                              {/* Obra Principal */}
+                              <div className="flex justify-between items-center bg-white p-2 rounded">
+                                <span className="text-sm font-medium text-gray-700">
+                                  {getNameById(request.obra, listaObras) || `Obra ${request.obra}`} (Principal)
+                                </span>
+                                <span className="text-sm font-semibold text-green-600">
+                                  R$ {request.valor?.toFixed(2).replace(".", ",") || "0,00"}
+                                </span>
+                              </div>
+                              {/* Obras Relacionadas */}
+                              {request.obras_relacionadas.map((obra) => (
+                                <div key={obra.id} className="flex justify-between items-center bg-white p-2 rounded">
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {getNameById(obra.obra, listaObras) || `Obra ${obra.obra}`}
+                                  </span>
+                                  <span className="text-sm font-semibold text-blue-600">
+                                    R$ {obra.valor?.toFixed(2).replace(".", ",") || "0,00"}
+                                  </span>
+                                </div>
+                              ))}
+                              {/* Total */}
+                              <div className="flex justify-between items-center bg-gray-200 p-2 rounded font-bold">
+                                <span className="text-sm text-gray-700">Total do Lançamento</span>
+                                <span className="text-sm text-gray-900">
+                                  R$ {(
+                                    (request.valor || 0) +
+                                    (request.obras_relacionadas?.reduce((acc, o) => acc + (o.valor || 0), 0) || 0)
+                                  ).toFixed(2).replace(".", ",")}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
                           {/* Usa expandedFieldsConfig recebido via props */}
                           {expandedFieldsConfig.map((field) => (
