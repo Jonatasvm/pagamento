@@ -646,9 +646,7 @@ const TelaSolicitacao = () => {
             body: JSON.stringify({
               ...basePayload,
               referente: formData.referente,
-              valor: multipleWorks && valorObraPrincipal 
-                ? parseCurrencyToFloat(valorObraPrincipal) 
-                : parseCurrencyToFloat(formData.valor),
+              valor: parseCurrencyToFloat(formData.valor), // ✅ SEMPRE enviar valor TOTAL
               data_pagamento: formData.dataVencimento,
               data_competencia: formData.dataVencimento,
             }),
