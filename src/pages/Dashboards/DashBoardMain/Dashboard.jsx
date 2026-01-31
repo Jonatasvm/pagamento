@@ -245,32 +245,11 @@ export const Dashboard = () => {
   };
 
   // ✅ NOVO: Agrupar lançamentos por grupo_lancamento (para múltiplos lançamentos)
+  // NOTA: O backend já retorna apenas 1 por grupo, então essa função não precisa fazer muito
   const groupLancamentosByGroup = (lancamentos) => {
-    const grupos = {};
-    const individuais = [];
-
-    lancamentos.forEach((lancamento) => {
-      if (lancamento.grupo_lancamento) {
-        // Se tem grupo_lancamento
-        if (!grupos[lancamento.grupo_lancamento]) {
-          // Primeiro do grupo - será o principal exibido
-          grupos[lancamento.grupo_lancamento] = lancamento;
-        } else {
-          // Adicionar aos relacionados
-          if (!grupos[lancamento.grupo_lancamento].obras_relacionadas) {
-            grupos[lancamento.grupo_lancamento].obras_relacionadas = [];
-          }
-          grupos[lancamento.grupo_lancamento].obras_relacionadas.push(lancamento);
-        }
-      } else {
-        // Se não tem grupo, é individual
-        individuais.push(lancamento);
-      }
-    });
-
-    // Retorna: um lançamento por grupo + lançamentos individuais
-    const resultado = Object.values(grupos).concat(individuais);
-    return resultado;
+    // O backend já retorna apenas o primeiro de cada grupo
+    // Apenas retorna os dados como estão
+    return lancamentos;
   };
 
   // ✅ ORDENAR POR DATA, DEPOIS POR NÚMERO DE PARCELA
