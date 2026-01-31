@@ -601,9 +601,40 @@ const TelaSolicitacao = () => {
       }
     }
 
+    // ✅ NOVO: Validação para múltiplas obras
+    if (multipleWorks && selectedWorks.length > 0) {
+      const valorTotal = parseCurrencyToFloat(formData.valor);
+      const valorObra1 = parseCurrencyToFloat(valorObraPrincipal || formData.valor);
+      const sumObras = valorObra1 + selectedWorks.reduce(
+        (acc, obra) => acc + parseCurrencyToFloat(obra.valor || "0"),
+        0
+      );
+
+      // Margem de erro de 1 centavo para arredondamento JS
+      if (Math.abs(valorTotal - sumObras) > 0.01) {
+        toast.error(`A soma das obras (R$ ${sumObras.toFixed(2).replace(".", ",")}) difere do valor total (R$ ${valorTotal.toFixed(2).replace(".", ",")})`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const usuarioLogado = localStorage.getItem("usuario") || "Usuario";
     const hoje = new Date().toISOString().split("T")[0];    try {
       const requests = [];
+      
+      // ✅ NOVO: Se for múltiplos lançamentos, incluir a obra principal no array de obras
+      let obrasParaLancar = [];
+      if (multipleWorks && selectedWorks.length > 0) {
+        // Adicionar obra principal com seu valor
+        obrasParaLancar = [
+          { 
+            obra_id: formData.obra, 
+            valor: valorObraPrincipal || formData.valor // Usar valor editado ou total
+          },
+          ...selectedWorks  // Adicionar todas as adicionais
+        ];
+      }
+      
       const basePayload = {
         data_lancamento: hoje,
         solicitante: usuarioLogado,
@@ -616,7 +647,7 @@ const TelaSolicitacao = () => {
         observacao: formData.observacao || "", // ? NOVO: Usar observacao do formulario
         conta: formData.conta ? Number(formData.conta) : null, // ? NOVO: Enviar o banco (conta)
         multiplos_lancamentos: multipleWorks ? 1 : 0, // ✅ NOVO: Flag para múltiplas obras
-        obras_adicionais: multipleWorks ? selectedWorks : [], // ✅ NOVO: Obras adicionais com valores
+        obras_adicionais: obrasParaLancar, // ✅ Agora inclui a obra principal + adicionais
         // O anexo sera tratado separadamente ou via outro campo/API, aqui e so o dado
       };
 
