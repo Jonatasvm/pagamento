@@ -110,6 +110,7 @@ const PaymentTable = ({
       
       // --- CURRENCY ---
       if (fieldConfig.type === "currency") {
+        console.log(`✅ RENDERIZANDO INPUT CURRENCY para ${key}`);
         const formatValueToInput = (rawValue) => {
             if (!rawValue) return "";
             const numericString = String(rawValue).replace(/\D/g, "");
@@ -119,7 +120,7 @@ const PaymentTable = ({
             });
         };
 
-        return (
+        const inputElement = (
           <input
             type="text"
             name={key}
@@ -129,10 +130,14 @@ const PaymentTable = ({
               handleEditChange(e);
             }}
             onInput={(e) => console.log(`📝 INPUT EVENT: ${e.target.value}`)}
+            onClick={(e) => console.log(`🖱️ INPUT CLICADO`)}
             placeholder="0,00"
+            style={{position: "relative", zIndex: 100}}
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
           />
         );
+        console.log(`✅ INPUT CRIADO:`, inputElement);
+        return inputElement;
       }
       
       // --- SELECT ---
