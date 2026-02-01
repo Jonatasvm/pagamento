@@ -318,7 +318,8 @@ const PaymentTable = ({
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
     // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS PRIMEIRO (antes de qualquer format!)
-    if (key === "valor" && request?.obras_relacionadas?.length > 0) {
+    // Mas apenas se NÃO está em modo de edição
+    if (key === "valor" && request?.obras_relacionadas?.length > 0 && !isEditing) {
       const valorTotal = (request.valor_total !== undefined) 
         ? request.valor_total 
         : (parseFloat(request.valor || 0) + 
@@ -419,7 +420,12 @@ const PaymentTable = ({
               const isExpanded = expandedRows.includes(request.id);
               const isSelected = selectedRequests.includes(request.id);
               const currentRowData = isEditing ? editFormData : request;
-              const isMultiple = request.grupo_lancamento && request.obras_relacionadas?.length > 0; // ✅ CORRIGIDO: Verificar se tem grupo_lancamento e obras_relacionadas
+              const isMultiple = request.grupo_lancamento && request.obras_relacionadas?.length > 0;
+              
+              // ✅ DEBUG: Log múltiplos
+              if (isMultiple) {
+                console.log(`🟢 MÚLTIPLO ID ${request.id}:`, { grupo_lancamento: request.grupo_lancamento, obras_relacionadas_length: request.obras_relacionadas?.length });
+              }
 
               const rowClasses = isEditing
                 ? "bg-yellow-50 ring-2 ring-yellow-400 z-10 relative"
@@ -513,7 +519,7 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 whitespace-nowrap text-sm ${rowClasses}`}
+                        className={`px-3 py-3 whitespace-nowrap text-sm font-medium ${rowClasses}`}
                       >
                         {renderField(
                           col.key,
