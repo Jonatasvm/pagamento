@@ -593,7 +593,8 @@ const PaymentTable = ({
                                   currentRowData,
                                   isEditing,
                                   field,
-                                  request
+                                  request,
+                                  handleEditChange
                                 )}
                               </div>
                             </div>
