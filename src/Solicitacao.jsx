@@ -628,10 +628,13 @@ const TelaSolicitacao = () => {
         // Adicionar obra principal com seu valor
         obrasParaLancar = [
           { 
-            obra_id: formData.obra, 
-            valor: valorObraPrincipal || formData.valor // Usar valor editado ou total
+            obra_id: parseInt(formData.obra), 
+            valor: parseCurrencyToFloat(valorObraPrincipal || formData.valor) // Converter para float
           },
-          ...selectedWorks  // Adicionar todas as adicionais
+          ...selectedWorks.map(w => ({
+            obra_id: parseInt(w.obra_id),
+            valor: parseCurrencyToFloat(w.valor || "0") // Converter para float
+          }))
         ];
       }
       
