@@ -77,7 +77,7 @@ const PaymentTable = ({
   };
   
   // --- Lógica de Renderização de Campos ---
-  const renderField = (key, data, isEditing, colConfig = {}, request) => {
+  const renderField = (key, data, isEditing, colConfig = {}, request, handleEditChange) => {
     const fieldConfig =
       columns.find((c) => c.key === key) ||
       expandedFieldsConfig.find((c) => c.key === key) ||
@@ -516,7 +516,8 @@ const PaymentTable = ({
                           currentRowData,
                           isEditing,
                           col,
-                          request
+                          request,
+                          handleEditChange
                         )}
                       </td>
                     ))}
