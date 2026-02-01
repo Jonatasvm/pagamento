@@ -130,10 +130,14 @@ const PaymentTable = ({
               handleEditChange(e);
             }}
             onInput={(e) => console.log(`📝 INPUT EVENT: ${e.target.value}`)}
-            onClick={(e) => console.log(`🖱️ INPUT CLICADO`)}
+            onClick={(e) => {
+              console.log(`🖱️ INPUT CLICADO`);
+              e.stopPropagation();
+            }}
             placeholder="0,00"
-            style={{position: "relative", zIndex: 100}}
+            style={{position: "relative", zIndex: 1000, pointerEvents: 'auto'}}
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
+            autoFocus
           />
         );
         console.log(`✅ INPUT CRIADO:`, inputElement);
@@ -390,7 +394,7 @@ const PaymentTable = ({
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl">
-        <table className="w-full divide-y divide-gray-200 whitespace-nowrap">
+        <table className="w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-20">
             <tr>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
@@ -518,7 +522,8 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 whitespace-nowrap text-sm ${rowClasses}`}
+                        className={`px-3 py-3 ${isEditing ? '' : 'whitespace-nowrap'} text-sm ${rowClasses}`}
+                        style={isEditing ? { pointerEvents: 'auto' } : {}}
                       >
                         {renderField(
                           col.key,
