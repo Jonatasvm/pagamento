@@ -525,7 +525,7 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 whitespace-nowrap text-sm ${isMultiple ? "bg-green-100" : rowClasses}`}
+                        className={`px-3 py-3 whitespace-nowrap text-sm ${rowClasses}`}
                       >
                         {renderField(
                           col.key,
