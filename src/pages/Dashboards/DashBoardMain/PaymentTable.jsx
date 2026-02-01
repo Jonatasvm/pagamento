@@ -354,8 +354,10 @@ const PaymentTable = ({
       console.log("🟢 MÚLTIPLO LANÇAMENTO DETECTADO:", {
         id: request.id,
         valor: request.valor,
+        valor_total_raw: request.valor_total,
         obras_relacionadas: request.obras_relacionadas,
-        valorTotal
+        valorTotalCalculado: valorTotal,
+        valorTotalFixado: valorTotal.toFixed(2)
       });
       
       return (
