@@ -57,6 +57,7 @@ const adapterBackendToFrontend = (data) => {
     link_anexo: data.link_anexo || "",
     categoria: data.categoria || "Outros",
     // ✅ NOVO: Campos para múltiplos lançamentos
+    grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: data.obras_relacionadas || [],
     valor_total: data.valor_total || data.valor,
   };
