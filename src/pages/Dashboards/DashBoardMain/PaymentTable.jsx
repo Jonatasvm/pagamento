@@ -543,7 +543,6 @@ const PaymentTable = ({
                             <h5 className="font-bold text-purple-900 mb-4 text-base">
                               📋 Lançamento Múltiplo - Distribuição por Obra
                             </h5>
-                            {console.log("DEBUG: request.obra type:", typeof request.obra, "value:", request.obra)}
                             <div className="space-y-2">
                               {/* Obra Principal */}
                               <div className="flex justify-between items-center bg-white p-3 rounded border-l-4 border-l-green-500">
@@ -551,7 +550,7 @@ const PaymentTable = ({
                                   {getNameById(listaObras, request.obra) || `Obra ${request.obra}`}
                                 </span>
                                 <span className="text-sm font-bold text-green-600">
-                                  R$ {parseFloat(request.valor_principal || request.valor || 0).toFixed(2).replace(".", ",")}
+                                  R$ {(parseFloat(request.valor_principal || request.valor || 0) / 100).toFixed(2).replace(".", ",")}
                                 </span>
                               </div>
                               
@@ -559,7 +558,7 @@ const PaymentTable = ({
                               {request.obras_relacionadas.map((obra, idx) => (
                                 <div key={obra.id} className="flex justify-between items-center bg-white p-3 rounded border-l-4 border-l-blue-500">
                                   <span className="text-sm font-semibold text-gray-800">
-                                    {getNameById(obra.obra, listaObras) || `Obra ${obra.obra}`}
+                                    {getNameById(listaObras, obra.obra) || `Obra ${obra.obra}`}
                                   </span>
                                   <span className="text-sm font-bold text-blue-600">
                                     R$ {parseFloat(obra.valor || 0).toFixed(2).replace(".", ",")}
