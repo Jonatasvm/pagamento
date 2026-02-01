@@ -91,15 +91,9 @@ const PaymentTable = ({
     const value = data[key];
     const editable = fieldConfig.editable !== false;
     
-    // ✅ DEBUG
-    if (key === "valor" && request?.id) {
-      console.log("🔍 renderField - valor:", {
-        key,
-        id: request?.id,
-        valor: request?.valor,
-        obras_relacionadas: request?.obras_relacionadas,
-        obras_relacionadas_length: request?.obras_relacionadas?.length
-      });
+    // ✅ DEBUG COMPLETO
+    if ((key === "valor" || key === "obra") && isEditing) {
+      console.log(`🔧 renderField EDIT MODE - ${key}:`, { isEditing, editable, type: fieldConfig.type, value });
     }
 
     // --- MODO DE EDIÇÃO ---
@@ -432,7 +426,7 @@ const PaymentTable = ({
                 : isSelected
                 ? "bg-blue-50"
                 : isMultiple
-                ? "bg-green-100" // ✅ CORRIGIDO: Verde mais forte para destacar lançamentos múltiplos
+                ? "bg-green-200 border-l-4 border-l-green-600" // ✅ VERDE MAIS FORTE
                 : "bg-white";
 
               return (
@@ -449,16 +443,10 @@ const PaymentTable = ({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => {
-                            if (isMultiple) {
-                              console.error("❌ Tentou marcar múltiplo - bloqueado!");
-                              return;
-                            }
-                            handleSelectOne(request.id);
-                          }}
+                          onChange={() => handleSelectOne(request.id)}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={editingId !== null || isMultiple === true}
-                          title={isMultiple ? "Lançamentos múltiplos não podem ser exportados" : ""}
+                          disabled={editingId !== null || (request.grupo_lancamento && request.obras_relacionadas?.length > 0)}
+                          title={isMultiple ? "Lançamentos múltiplos não podem ser exportados" : "Marcar para exportação"}
                         />
                         {isEditing ? (
                           <>
