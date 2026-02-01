@@ -417,6 +417,7 @@ export const Dashboard = () => {
 
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
+    console.log(`📝 handleEditChange chamado - name: ${name}, value: ${value}, type: ${type}`);
     let newValue = value;
 
     if (name === "valor") newValue = value.replace(/\D/g, "");
