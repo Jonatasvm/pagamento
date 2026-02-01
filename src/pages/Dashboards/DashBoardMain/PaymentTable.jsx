@@ -409,12 +409,12 @@ const PaymentTable = ({
               const isMultiple = request.grupo_lancamento && request.obras_relacionadas?.length > 0;
 
               const rowClasses = isEditing
-                ? "bg-yellow-50 ring-2 ring-yellow-400 z-10 relative"
+                ? "!bg-yellow-50 ring-2 ring-yellow-400 z-10 relative"
                 : isSelected
-                ? "bg-blue-50"
+                ? "!bg-blue-50"
                 : isMultiple
-                ? "bg-green-200" // ✅ VERDE PARA MÚLTIPLOS
-                : "bg-white";
+                ? "!bg-green-300" // ✅ VERDE PARA MÚLTIPLOS (mais forte e com !)
+                : "!bg-white";
 
               return (
                 <React.Fragment key={request.id}>
