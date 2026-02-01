@@ -124,7 +124,11 @@ const PaymentTable = ({
             type="text"
             name={key}
             value={formatValueToInput(value)} 
-            onChange={handleEditChange}
+            onChange={(e) => {
+              console.log(`📝 INPUT CURRENCY MUDOU: ${e.target.value}`);
+              handleEditChange(e);
+            }}
+            onInput={(e) => console.log(`📝 INPUT EVENT: ${e.target.value}`)}
             placeholder="0,00"
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
           />
