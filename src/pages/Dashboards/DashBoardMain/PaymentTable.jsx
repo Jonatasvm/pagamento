@@ -317,9 +317,9 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
-    // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS PRIMEIRO (antes de qualquer format!)
-    // Mas apenas se NÃO está em modo de edição
-    if (key === "valor" && request?.obras_relacionadas?.length > 0 && !isEditing) {
+    // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS - mas apenas em VISUALIZAÇÃO
+    // Em modo de edição, segue normalmente para permitir editar
+    if (!isEditing && key === "valor" && request?.obras_relacionadas?.length > 0) {
       const valorTotal = (request.valor_total !== undefined) 
         ? request.valor_total 
         : (parseFloat(request.valor || 0) + 
@@ -449,9 +449,15 @@ const PaymentTable = ({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => handleSelectOne(request.id)}
+                          onChange={() => {
+                            if (isMultiple) {
+                              console.error("❌ Tentou marcar múltiplo - bloqueado!");
+                              return;
+                            }
+                            handleSelectOne(request.id);
+                          }}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={editingId !== null || isMultiple}
+                          disabled={editingId !== null || isMultiple === true}
                           title={isMultiple ? "Lançamentos múltiplos não podem ser exportados" : ""}
                         />
                         {isEditing ? (
@@ -519,7 +525,7 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 whitespace-nowrap text-sm font-medium ${rowClasses}`}
+                        className={`px-3 py-3 whitespace-nowrap text-sm ${isMultiple ? "bg-green-100" : rowClasses}`}
                       >
                         {renderField(
                           col.key,
