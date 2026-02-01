@@ -307,9 +307,17 @@ export const Dashboard = () => {
   const handleSelectOne = (id) => {
     // ✅ NOVO: Bloqueia seleção de múltiplos
     const request = groupedAndSortedRequests.find(r => r.id === id);
-    console.warn(`⚠️ handleSelectOne - ID ${id}, isMultiple: ${request?.grupo_lancamento && request?.obras_relacionadas?.length > 0}`);
+    const isMultiple = request?.grupo_lancamento && request?.obras_relacionadas?.length > 0;
     
-    if (request?.grupo_lancamento && request?.obras_relacionadas?.length > 0) {
+    console.warn(`⚠️ handleSelectOne - ID ${id}`);
+    console.warn(`   request encontrado:`, !!request);
+    if (request) {
+      console.warn(`   grupo_lancamento:`, request.grupo_lancamento);
+      console.warn(`   obras_relacionadas:`, request.obras_relacionadas?.length);
+    }
+    console.warn(`   isMultiple:`, isMultiple);
+    
+    if (isMultiple) {
       console.error(`❌ BLOQUEADO: Tentou marcar múltiplo ID ${id}`);
       toast.error("Lançamentos múltiplos não podem ser exportados para CSV");
       return;
