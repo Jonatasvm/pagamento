@@ -85,6 +85,17 @@ const PaymentTable = ({
 
     const value = data[key];
     const editable = fieldConfig.editable !== false;
+    
+    // ✅ DEBUG
+    if (key === "valor" && request?.id) {
+      console.log("🔍 renderField - valor:", {
+        key,
+        id: request?.id,
+        valor: request?.valor,
+        obras_relacionadas: request?.obras_relacionadas,
+        obras_relacionadas_length: request?.obras_relacionadas?.length
+      });
+    }
 
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
