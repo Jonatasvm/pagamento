@@ -543,11 +543,12 @@ const PaymentTable = ({
                             <h5 className="font-bold text-purple-900 mb-4 text-base">
                               📋 Lançamento Múltiplo - Distribuição por Obra
                             </h5>
+                            {console.log("DEBUG: request.obra type:", typeof request.obra, "value:", request.obra)}
                             <div className="space-y-2">
                               {/* Obra Principal */}
                               <div className="flex justify-between items-center bg-white p-3 rounded border-l-4 border-l-green-500">
                                 <span className="text-sm font-semibold text-gray-800">
-                                  {getNameById(request.obra, listaObras) || `Obra ${request.obra}`}
+                                  {getNameById(listaObras, request.obra) || `Obra ${request.obra}`}
                                 </span>
                                 <span className="text-sm font-bold text-green-600">
                                   R$ {parseFloat(request.valor_principal || request.valor || 0).toFixed(2).replace(".", ",")}
