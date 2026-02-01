@@ -513,7 +513,7 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className="px-3 py-3 whitespace-nowrap text-sm"
+                        className={`px-3 py-3 whitespace-nowrap text-sm ${rowClasses}`}
                       >
                         {renderField(
                           col.key,
@@ -529,7 +529,7 @@ const PaymentTable = ({
                   {/* Linha Expandida */}
                   {isExpanded && (
                     <tr
-                      className={`bg-gray-100 border-b ${
+                      className={`${isMultiple ? "bg-green-50" : "bg-gray-100"} border-b ${
                         isEditing ? "border-yellow-400" : "border-gray-200"
                       }`}
                     >

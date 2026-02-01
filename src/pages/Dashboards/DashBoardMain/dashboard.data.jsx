@@ -123,6 +123,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     type: "currency",
     format: formatCurrencyDisplay,
     minWidth: "95px",
+    editable: true, // ✅ NOVO: Permite editar valor
   },
   {
     key: "titular",
@@ -153,6 +154,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     type: "select",
     options: listaObras,
     minWidth: "140px",
+    editable: true, // ✅ NOVO: Permite editar obra
     format: (value) => getNameById(listaObras, value), // Este mantém, pois é um ID numérico
   },
   {

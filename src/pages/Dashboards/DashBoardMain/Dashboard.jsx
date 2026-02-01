@@ -305,6 +305,13 @@ export const Dashboard = () => {
   };
 
   const handleSelectOne = (id) => {
+    // ✅ NOVO: Bloqueia seleção de múltiplos
+    const request = groupedAndSortedRequests.find(r => r.id === id);
+    if (request?.grupo_lancamento && request?.obras_relacionadas?.length > 0) {
+      toast.error("Lançamentos múltiplos não podem ser exportados para CSV");
+      return;
+    }
+    
     setSelectedRequests((prevSelected) =>
       prevSelected.includes(id)
         ? prevSelected.filter((reqId) => reqId !== id)
@@ -430,7 +437,35 @@ export const Dashboard = () => {
 
     try {
       const dataToSave = { ...editFormData, valor: rawValue };
-      await atualizarFormulario(editingId, dataToSave);
+      
+      // ✅ NOVO: Se é múltiplo e alterou o valor, distribui entre as obras
+      const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
+      if (requestAtual?.grupo_lancamento && requestAtual?.obras_relacionadas?.length > 0) {
+        // Calcula novo valor total
+        const novoValorTotal = parseInt(rawValue);
+        const numObras = (requestAtual.obras_relacionadas?.length || 0) + 1;
+        const valorPorObra = Math.floor(novoValorTotal / numObras);
+        const resto = novoValorTotal % numObras;
+        
+        // A primeira obra (principal) fica com o resto
+        const valorPrincipal = valorPorObra + resto;
+        
+        dataToSave.valor = String(valorPrincipal);
+        
+        // Salva a principal
+        await atualizarFormulario(editingId, dataToSave);
+        
+        // Atualiza as obras relacionadas com valor igual
+        if (requestAtual.obras_relacionadas?.length > 0) {
+          for (const obra of requestAtual.obras_relacionadas) {
+            await atualizarFormulario(obra.id, { valor: String(valorPorObra) });
+          }
+        }
+      } else {
+        // Lançamento simples, salva normalmente
+        await atualizarFormulario(editingId, dataToSave);
+      }
+      
       toast.success("Solicitação atualizada com sucesso!");
       setEditingId(null);
       setEditFormData({});
