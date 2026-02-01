@@ -652,7 +652,7 @@ const TelaSolicitacao = () => {
         data_lancamento: hoje,
         solicitante: usuarioLogado,
         titular: formData.titular,
-        obra: formData.obra,
+        obra: parseInt(formData.obra),  // ✅ Converter para número
         forma_pagamento: formData.paymentMethod, // Usando o estado atual
         lancado: "N",
         cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatacao
