@@ -312,6 +312,30 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
+    // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS PRIMEIRO (antes de qualquer format!)
+    if (key === "valor" && request?.obras_relacionadas?.length > 0) {
+      const valorTotal = (request.valor_total !== undefined) 
+        ? request.valor_total 
+        : (parseFloat(request.valor || 0) + 
+           (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
+      
+      console.log("🟢 MÚLTIPLO LANÇAMENTO DETECTADO:", {
+        id: request.id,
+        valor: request.valor,
+        valor_total_raw: request.valor_total,
+        obras_relacionadas: request.obras_relacionadas,
+        valorTotalCalculado: valorTotal,
+        valorTotalFixado: valorTotal.toFixed(2)
+      });
+      
+      return (
+        <div className="flex flex-col">
+          <span className="font-bold text-green-700">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
+          <span className="text-xs text-gray-500">(total: {request.obras_relacionadas.length + 1} obras)</span>
+        </div>
+      );
+    }
+    
     // ✅ CORREÇÃO 1: Prioriza o format definido na coluna (como o de 'obra' em dashboard.data.jsx)
     if (fieldConfig.format) {
       return fieldConfig.format(value);
@@ -341,30 +365,6 @@ const PaymentTable = ({
         >
           📎 Baixar
         </button>
-      );
-    }
-
-    // ✅ NOVO: Se for campo de valor e tiver múltiplos lançamentos, mostrar o total
-    if (key === "valor" && request?.obras_relacionadas?.length > 0) {
-      const valorTotal = (request.valor_total !== undefined) 
-        ? request.valor_total 
-        : (parseFloat(request.valor || 0) + 
-           (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
-      
-      console.log("🟢 MÚLTIPLO LANÇAMENTO DETECTADO:", {
-        id: request.id,
-        valor: request.valor,
-        valor_total_raw: request.valor_total,
-        obras_relacionadas: request.obras_relacionadas,
-        valorTotalCalculado: valorTotal,
-        valorTotalFixado: valorTotal.toFixed(2)
-      });
-      
-      return (
-        <div className="flex flex-col">
-          <span className="font-bold text-green-700">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
-          <span className="text-xs text-gray-500">(total: {request.obras_relacionadas.length + 1} obras)</span>
-        </div>
       );
     }
 
