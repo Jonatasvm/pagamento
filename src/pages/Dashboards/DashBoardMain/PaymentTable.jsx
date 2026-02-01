@@ -96,21 +96,11 @@ const PaymentTable = ({
       console.error(`❌ ERRO: Não encontrou configuração para campo '${key}' em modo de edição`);
     }
     
-    // ✅ LOG: Rastreando entrada/edição de valor
-    if (key === "valor" && isEditing) {
-      console.warn(`⚠️ EDITANDO VALOR - fieldConfig:`, fieldConfig?.type, `editable:`, editable, `value:`, value, `data:`, data);
-    }
-    
-    if (key === "obra" && isEditing) {
-      console.warn(`⚠️ EDITANDO OBRA - fieldConfig:`, fieldConfig?.type, `editable:`, editable, `value:`, value, `data:`, data);
-    }
-
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
       
       // --- CURRENCY ---
       if (fieldConfig.type === "currency") {
-        console.log(`✅ RENDERIZANDO INPUT CURRENCY para ${key}`);
         const formatValueToInput = (rawValue) => {
             if (!rawValue) return "";
             const numericString = String(rawValue).replace(/\D/g, "");
@@ -120,18 +110,15 @@ const PaymentTable = ({
             });
         };
 
-        const inputElement = (
+        return (
           <input
             type="text"
             name={key}
             value={formatValueToInput(value)} 
             onChange={(e) => {
-              console.log(`📝 INPUT CURRENCY MUDOU: ${e.target.value}`);
               handleEditChange(e);
             }}
-            onInput={(e) => console.log(`📝 INPUT EVENT: ${e.target.value}`)}
             onClick={(e) => {
-              console.log(`🖱️ INPUT CLICADO`);
               e.stopPropagation();
             }}
             placeholder="0,00"
@@ -140,8 +127,6 @@ const PaymentTable = ({
             autoFocus
           />
         );
-        console.log(`✅ INPUT CRIADO:`, inputElement);
-        return inputElement;
       }
       
       // --- SELECT ---

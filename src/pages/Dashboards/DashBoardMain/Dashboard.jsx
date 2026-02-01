@@ -347,8 +347,6 @@ export const Dashboard = () => {
     selectedRequests.length === groupedAndSortedRequests.length;
 
   const handleEdit = (request) => {
-    console.warn(`⚠️ handleEdit CLICADO - ID ${request.id}, isMultiple: ${request.grupo_lancamento && request.obras_relacionadas?.length > 0}`);
-    
     if (editingId) {
       toast.error("Finalize a edição atual antes de iniciar outra.");
       return;
@@ -417,7 +415,6 @@ export const Dashboard = () => {
 
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
-    console.log(`📝 handleEditChange chamado - name: ${name}, value: ${value}, type: ${type}`);
     let newValue = value;
 
     if (name === "valor") newValue = value.replace(/\D/g, "");
