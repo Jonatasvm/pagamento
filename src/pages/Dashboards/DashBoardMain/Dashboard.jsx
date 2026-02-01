@@ -60,7 +60,7 @@ export const Dashboard = () => {
     solicitante: "",
     referente: "",
     busca: "",
-    multiplayosLancamentos: "", // ✅ NOVO: Filtro para múltiplos lançamentos
+    multiplayosLancamentos: "todos", // ✅ NOVO: Filtro para múltiplos lançamentos - padrão é "todos"
   });
 
   // =========================================================================
@@ -232,6 +232,7 @@ export const Dashboard = () => {
       // Mostra apenas lançamentos que NÃO têm grupo_lancamento (simples)
       if (req.grupo_lancamento) return false;
     }
+    // Se "todos", não filtra nada
 
     return true;
   });
@@ -990,7 +991,7 @@ export const Dashboard = () => {
                 onChange={handleFilterChange}
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
-                <option value="">Todos</option>
+                <option value="todos">Todos</option>
                 <option value="sim">Sim (Múltiplos)</option>
                 <option value="nao">Não (Simples)</option>
               </select>

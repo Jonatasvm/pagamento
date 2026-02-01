@@ -293,6 +293,76 @@ const TelaSolicitacao = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWorks.length, multipleWorks]);
 
+  // ✅ NOVO: Função inteligente para redistribuir valores quando edita uma obra
+  const handleWorkValueChange = (obraId, newValue) => {
+    const valorTotal = parseCurrencyToFloat(formData.valor);
+    const numObras = selectedWorks.length + 1; // +1 da obra principal
+    
+    // Calcula quanto já foi alocado nas outras obras
+    let valorAlocado = 0;
+    selectedWorks.forEach(w => {
+      if (w.obra_id !== obraId) {
+        valorAlocado += parseCurrencyToFloat(w.valor);
+      }
+    });
+    
+    // Se houver obra principal, também conta
+    const valorObraPrincipalFloat = valorObraPrincipal ? parseCurrencyToFloat(valorObraPrincipal) : 0;
+    
+    // Atualiza a obra que foi editada
+    const newSelectedWorks = selectedWorks.map(w => {
+      if (w.obra_id === obraId) {
+        return { ...w, valor: newValue };
+      }
+      return w;
+    });
+    
+    // Calcula quanto falta distribuir
+    const valorEditado = parseCurrencyToFloat(newValue);
+    const valorRestante = valorTotal - valorEditado - valorObraPrincipalFloat;
+    const outrasObras = newSelectedWorks.filter(w => w.obra_id !== obraId).length;
+    
+    // Se há outras obras, distribui o restante igualmente
+    if (outrasObras > 0) {
+      const valorPorObra = Math.max(0, valorRestante / outrasObras);
+      const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
+      
+      setSelectedWorks(
+        newSelectedWorks.map(w => 
+          w.obra_id !== obraId ? { ...w, valor: valorFormatado } : w
+        )
+      );
+    } else {
+      // Se é a única obra adicional, só atualiza ela mesma
+      setSelectedWorks(newSelectedWorks);
+    }
+  };
+
+  // ✅ NOVO: Similar para obra principal
+  const handleMainWorkValueChange = (newValue) => {
+    const valorTotal = parseCurrencyToFloat(formData.valor);
+    const numObras = selectedWorks.length + 1;
+    
+    setValorObraPrincipal(newValue);
+    
+    // Calcula quanto falta distribuir entre as obras adicionais
+    const valorEditado = parseCurrencyToFloat(newValue);
+    const valorRestante = valorTotal - valorEditado;
+    const numOutrasObras = selectedWorks.length;
+    
+    if (numOutrasObras > 0) {
+      const valorPorObra = Math.max(0, valorRestante / numOutrasObras);
+      const valorFormatado = formatCurrency((valorPorObra * 100).toFixed(0));
+      
+      setSelectedWorks(prev => 
+        prev.map(w => ({ ...w, valor: valorFormatado }))
+      );
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWorks.length, multipleWorks]);
+
   // 3. Buscar Titulares para Autocomplete
   useEffect(() => {
     // Se acabou de selecionar um titular, nao buscar novamente
@@ -939,15 +1009,11 @@ const TelaSolicitacao = () => {
                               onChange={(e) => {
                                 const newValue = formatCurrency(e.target.value);
                                 if (obraAtual) {
-                                  // Atualiza o valor da obra principal
-                                  setValorObraPrincipal(newValue);
+                                  // Atualiza o valor da obra principal com redistribuição
+                                  handleMainWorkValueChange(newValue);
                                 } else {
-                                  // Atualiza obra adicional
-                                  setSelectedWorks(
-                                    selectedWorks.map(w =>
-                                      w.obra_id === obra.id ? { ...w, valor: newValue } : w
-                                    )
-                                  );
+                                  // Atualiza obra adicional com redistribuição
+                                  handleWorkValueChange(obra.id, newValue);
                                 }
                               }}
                               placeholder="R$ 0,00"

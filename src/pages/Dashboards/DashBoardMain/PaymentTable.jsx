@@ -425,14 +425,14 @@ const PaymentTable = ({
                 : isSelected
                 ? "bg-blue-50"
                 : isMultiple
-                ? "bg-purple-50" // ✅ NOVO: Cor roxo para lançamentos múltiplos
+                ? "bg-green-100" // ✅ CORRIGIDO: Verde mais forte para destacar lançamentos múltiplos
                 : "bg-white";
 
               return (
                 <React.Fragment key={request.id}>
                   <tr
                     id={`row-${request.id}`}
-                    className={`border-b hover:bg-gray-50 transition-colors ${rowClasses} ${isMultiple ? "border-l-4 border-l-purple-600" : ""}`}
+                    className={`border-b hover:bg-gray-50 transition-colors ${rowClasses} ${isMultiple ? "border-l-4 border-l-green-600 shadow-md" : ""}`}
                   >
                     {/* Célula de Ações Fixa */}
                     <td
