@@ -83,6 +83,11 @@ const PaymentTable = ({
       expandedFieldsConfig.find((c) => c.key === key) ||
       colConfig;
 
+    // ✅ NOVO: Ignora campos que não devem ser renderizados na tabela
+    if (["obras_relacionadas", "valor_total", "grupo_lancamento", "multiplos_lancamentos", "valor_principal", "rn"].includes(key)) {
+      return null;
+    }
+
     const value = data[key];
     const editable = fieldConfig.editable !== false;
     
