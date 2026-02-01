@@ -340,6 +340,13 @@ const PaymentTable = ({
         : (parseFloat(request.valor || 0) + 
            (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
       
+      console.log("🟢 MÚLTIPLO LANÇAMENTO DETECTADO:", {
+        id: request.id,
+        valor: request.valor,
+        obras_relacionadas: request.obras_relacionadas,
+        valorTotal
+      });
+      
       return (
         <div className="flex flex-col">
           <span className="font-bold text-green-700">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
