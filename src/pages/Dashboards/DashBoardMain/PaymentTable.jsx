@@ -99,6 +99,29 @@ const PaymentTable = ({
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
       
+      // --- CURRENCY ---
+      if (fieldConfig.type === "currency") {
+        const formatValueToInput = (rawValue) => {
+            if (!rawValue) return "";
+            const numericString = String(rawValue).replace(/\D/g, "");
+            return (Number(numericString) / 100).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+        };
+
+        return (
+          <input
+            type="text"
+            name={key}
+            value={formatValueToInput(value)} 
+            onChange={handleEditChange}
+            placeholder="0,00"
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
+          />
+        );
+      }
+      
       // --- SELECT ---
       if (fieldConfig.type === "select") {
         // ✅ AJUSTE: Garante que a lista de opções correta seja usada
@@ -156,79 +179,6 @@ const PaymentTable = ({
               return null; // Ignora outros formatos
             })}
           </select>
-        );
-      }
-
-      // --- BOOLEAN (CHECKBOX) ---
-      if (fieldConfig.type === "boolean") {
-        return (
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name={key}
-              checked={!!value}
-              onChange={handleEditChange}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="text-sm text-gray-700">
-              {key === "statusLancamento"
-                ? value
-                  ? "LANÇADO"
-                  : "NÃO LANÇADO"
-                : value
-                ? "Marcado"
-                : "Desmarcado"}
-            </span>
-          </div>
-        );
-      }
-
-      // --- DATE ---
-      if (fieldConfig.type === "date") {
-        return (
-          <input
-            type="date"
-            name={key}
-            value={value || ""}
-            onChange={handleEditChange}
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-          />
-        );
-      }
-
-      // --- CURRENCY ---
-      if (fieldConfig.type === "currency") {
-        const formatValueToInput = (rawValue) => {
-            if (!rawValue) return "";
-            const numericString = String(rawValue).replace(/\D/g, "");
-            return (Number(numericString) / 100).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            });
-        };
-
-        return (
-          <input
-            type="text"
-            name={key}
-            value={formatValueToInput(value)} 
-            onChange={handleEditChange}
-            placeholder="0,00"
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
-          />
-        );
-      }
-
-      // --- TEXTAREA ---
-      if (fieldConfig.type === "textarea") {
-        return (
-          <textarea
-            name={key}
-            value={value || ""}
-            onChange={handleEditChange}
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
-            rows="3"
-          />
         );
       }
 
