@@ -247,6 +247,56 @@ const PaymentTable = ({
         );
       }
 
+      // --- BOOLEAN (CHECKBOX) ---
+      if (fieldConfig.type === "boolean") {
+        return (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name={key}
+              checked={!!value}
+              onChange={handleEditChange}
+              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            />
+            <span className="text-sm text-gray-700">
+              {key === "statusLancamento"
+                ? value
+                  ? "LANÇADO"
+                  : "NÃO LANÇADO"
+                : value
+                ? "Marcado"
+                : "Desmarcado"}
+            </span>
+          </div>
+        );
+      }
+
+      // --- DATE ---
+      if (fieldConfig.type === "date") {
+        return (
+          <input
+            type="date"
+            name={key}
+            value={value || ""}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          />
+        );
+      }
+
+      // --- TEXTAREA ---
+      if (fieldConfig.type === "textarea") {
+        return (
+          <textarea
+            name={key}
+            value={value || ""}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+            rows="3"
+          />
+        );
+      }
+
       // --- INPUT DE TEXTO PADRÃO ---
       return (
         <input
