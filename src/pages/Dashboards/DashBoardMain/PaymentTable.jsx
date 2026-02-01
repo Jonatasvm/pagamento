@@ -98,11 +98,11 @@ const PaymentTable = ({
     
     // ✅ LOG: Rastreando entrada/edição de valor
     if (key === "valor" && isEditing) {
-      console.warn(`⚠️ EDITANDO VALOR - fieldConfig:`, fieldConfig?.type, `editable:`, editable);
+      console.warn(`⚠️ EDITANDO VALOR - fieldConfig:`, fieldConfig?.type, `editable:`, editable, `value:`, value, `data:`, data);
     }
     
     if (key === "obra" && isEditing) {
-      console.warn(`⚠️ EDITANDO OBRA - fieldConfig:`, fieldConfig?.type, `editable:`, editable);
+      console.warn(`⚠️ EDITANDO OBRA - fieldConfig:`, fieldConfig?.type, `editable:`, editable, `value:`, value, `data:`, data);
     }
 
     // --- MODO DE EDIÇÃO ---
@@ -126,7 +126,7 @@ const PaymentTable = ({
             value={formatValueToInput(value)} 
             onChange={handleEditChange}
             placeholder="0,00"
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
+            className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
           />
         );
       }
@@ -162,7 +162,7 @@ const PaymentTable = ({
             // 🥇 SOLUÇÃO: Converte o ID de edição para string para garantir o match no <select>
             value={value != null ? String(value) : ""}
             onChange={handleEditChange}
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            className="min-w-[140px] max-w-[180px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione...</option>
             {selectOptions.map((opt) => {
