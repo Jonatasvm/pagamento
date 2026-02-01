@@ -95,6 +95,15 @@ const PaymentTable = ({
     if (isEditing && !fieldConfig) {
       console.error(`❌ ERRO: Não encontrou configuração para campo '${key}' em modo de edição`);
     }
+    
+    // ✅ LOG: Rastreando entrada/edição de valor
+    if (key === "valor" && isEditing) {
+      console.warn(`⚠️ EDITANDO VALOR - fieldConfig:`, fieldConfig?.type, `editable:`, editable);
+    }
+    
+    if (key === "obra" && isEditing) {
+      console.warn(`⚠️ EDITANDO OBRA - fieldConfig:`, fieldConfig?.type, `editable:`, editable);
+    }
 
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {

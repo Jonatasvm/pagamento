@@ -307,7 +307,10 @@ export const Dashboard = () => {
   const handleSelectOne = (id) => {
     // ✅ NOVO: Bloqueia seleção de múltiplos
     const request = groupedAndSortedRequests.find(r => r.id === id);
+    console.warn(`⚠️ handleSelectOne - ID ${id}, isMultiple: ${request?.grupo_lancamento && request?.obras_relacionadas?.length > 0}`);
+    
     if (request?.grupo_lancamento && request?.obras_relacionadas?.length > 0) {
+      console.error(`❌ BLOQUEADO: Tentou marcar múltiplo ID ${id}`);
       toast.error("Lançamentos múltiplos não podem ser exportados para CSV");
       return;
     }
@@ -336,6 +339,8 @@ export const Dashboard = () => {
     selectedRequests.length === groupedAndSortedRequests.length;
 
   const handleEdit = (request) => {
+    console.warn(`⚠️ handleEdit CLICADO - ID ${request.id}, isMultiple: ${request.grupo_lancamento && request.obras_relacionadas?.length > 0}`);
+    
     if (editingId) {
       toast.error("Finalize a edição atual antes de iniciar outra.");
       return;
