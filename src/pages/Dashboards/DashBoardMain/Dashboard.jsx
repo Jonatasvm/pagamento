@@ -440,7 +440,6 @@ export const Dashboard = () => {
       
       // ✅ NOVO: Se é múltiplo e alterou o valor, distribui entre as obras
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
-      console.log("🔍 handleSave - requestAtual:", { id: editingId, grupo_lancamento: requestAtual?.grupo_lancamento, obras_relacionadas_length: requestAtual?.obras_relacionadas?.length });
       
       if (requestAtual?.grupo_lancamento && requestAtual?.obras_relacionadas?.length > 0) {
         // Calcula novo valor total

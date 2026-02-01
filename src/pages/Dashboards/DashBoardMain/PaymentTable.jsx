@@ -90,11 +90,6 @@ const PaymentTable = ({
 
     const value = data[key];
     const editable = fieldConfig.editable !== false;
-    
-    // ✅ DEBUG COMPLETO
-    if ((key === "valor" || key === "obra") && isEditing) {
-      console.log(`🔧 renderField EDIT MODE - ${key}:`, { isEditing, editable, type: fieldConfig.type, value });
-    }
 
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
@@ -319,15 +314,6 @@ const PaymentTable = ({
         : (parseFloat(request.valor || 0) + 
            (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
       
-      console.log("🟢 MÚLTIPLO LANÇAMENTO DETECTADO:", {
-        id: request.id,
-        valor: request.valor,
-        valor_total_raw: request.valor_total,
-        obras_relacionadas: request.obras_relacionadas,
-        valorTotalCalculado: valorTotal,
-        valorTotalFixado: valorTotal.toFixed(2)
-      });
-      
       return (
         <div className="flex flex-col">
           <span className="font-bold text-green-700">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
@@ -415,18 +401,13 @@ const PaymentTable = ({
               const isSelected = selectedRequests.includes(request.id);
               const currentRowData = isEditing ? editFormData : request;
               const isMultiple = request.grupo_lancamento && request.obras_relacionadas?.length > 0;
-              
-              // ✅ DEBUG: Log múltiplos
-              if (isMultiple) {
-                console.log(`🟢 MÚLTIPLO ID ${request.id}:`, { grupo_lancamento: request.grupo_lancamento, obras_relacionadas_length: request.obras_relacionadas?.length });
-              }
 
               const rowClasses = isEditing
                 ? "bg-yellow-50 ring-2 ring-yellow-400 z-10 relative"
                 : isSelected
                 ? "bg-blue-50"
                 : isMultiple
-                ? "bg-green-200 border-l-4 border-l-green-600" // ✅ VERDE MAIS FORTE
+                ? "bg-green-200" // ✅ VERDE PARA MÚLTIPLOS
                 : "bg-white";
 
               return (
