@@ -56,6 +56,9 @@ const adapterBackendToFrontend = (data) => {
     quemPaga: data.quem_paga ? Number(data.quem_paga) : null,
     link_anexo: data.link_anexo || "",
     categoria: data.categoria || "Outros",
+    // ✅ NOVO: Campos para múltiplos lançamentos
+    obras_relacionadas: data.obras_relacionadas || [],
+    valor_total: data.valor_total || data.valor,
   };
 };
 
