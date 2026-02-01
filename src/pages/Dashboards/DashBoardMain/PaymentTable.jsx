@@ -396,6 +396,7 @@ const PaymentTable = ({
                     onChange={handleSelectAll}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded"
                     disabled={editingId !== null}
+                    title="Marca apenas lançamentos simples (múltiplos são automaticamente excluídos)"
                   />
                   Ações
                 </div>
@@ -443,8 +444,9 @@ const PaymentTable = ({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleSelectOne(request.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          disabled={editingId !== null}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={editingId !== null || isMultiple}
+                          title={isMultiple ? "Lançamentos múltiplos não podem ser exportados" : ""}
                         />
                         {isEditing ? (
                           <>

@@ -314,7 +314,11 @@ export const Dashboard = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRequests(groupedAndSortedRequests.map((req) => req.id));
+      // ✅ NOVO: Seleciona apenas lançamentos simples (não múltiplos)
+      const simpleLaunches = groupedAndSortedRequests.filter(
+        req => !req.grupo_lancamento || req.obras_relacionadas?.length === 0
+      );
+      setSelectedRequests(simpleLaunches.map((req) => req.id));
     } else {
       setSelectedRequests([]);
     }

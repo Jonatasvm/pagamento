@@ -360,9 +360,6 @@ const TelaSolicitacao = () => {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedWorks.length, multipleWorks]);
-
   // 3. Buscar Titulares para Autocomplete
   useEffect(() => {
     // Se acabou de selecionar um titular, nao buscar novamente
