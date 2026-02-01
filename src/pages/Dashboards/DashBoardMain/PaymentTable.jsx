@@ -90,6 +90,11 @@ const PaymentTable = ({
 
     const value = data[key];
     const editable = fieldConfig.editable !== false;
+    
+    // ✅ ALERTA: Se está em edição mas não encontrou fieldConfig
+    if (isEditing && !fieldConfig) {
+      console.error(`❌ ERRO: Não encontrou configuração para campo '${key}' em modo de edição`);
+    }
 
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
@@ -307,7 +312,7 @@ const PaymentTable = ({
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
     // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS - mas apenas em VISUALIZAÇÃO
-    // Em modo de edição, segue normalmente para permitir editar
+    // Quando é múltiplo e NÃO está em modo de edição, mostra o total
     if (!isEditing && key === "valor" && request?.obras_relacionadas?.length > 0) {
       const valorTotal = (request.valor_total !== undefined) 
         ? request.valor_total 
@@ -315,10 +320,11 @@ const PaymentTable = ({
            (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
       
       return (
-        <div className="flex flex-col">
-          <span className="font-bold text-green-700">R$ {valorTotal.toFixed(2).replace(".", ",")}</span>
-          <span className="text-xs text-gray-500">(total: {request.obras_relacionadas.length + 1} obras)</span>
-        </div>
+        <span className="font-bold text-green-700">
+          R$ {valorTotal.toFixed(2).replace(".", ",")} 
+          <br />
+          <span className="text-xs text-gray-500">({request.obras_relacionadas.length + 1} obras)</span>
+        </span>
       );
     }
     
