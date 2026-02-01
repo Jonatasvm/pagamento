@@ -638,6 +638,16 @@ const TelaSolicitacao = () => {
         ];
       }
       
+      // ✅ DEBUG: Log do payload
+      console.log("📤 Enviando para backend:", {
+        multipleWorks,
+        multipleWorks_flag: multipleWorks ? 1 : 0,
+        selectedWorks,
+        obrasParaLancar,
+        valorObraPrincipal,
+        formData_valor: formData.valor
+      });
+      
       const basePayload = {
         data_lancamento: hoje,
         solicitante: usuarioLogado,
@@ -653,6 +663,9 @@ const TelaSolicitacao = () => {
         obras_adicionais: obrasParaLancar, // ✅ Agora inclui a obra principal + adicionais
         // O anexo sera tratado separadamente ou via outro campo/API, aqui e so o dado
       };
+
+      // ✅ DEBUG: Log do basePayload
+      console.log("📦 basePayload:", basePayload);
 
       if (formData.installmentsCount > 1) {
         // Multiplas requisicoes
