@@ -377,6 +377,8 @@ export const Dashboard = () => {
       obra: request.obra ? String(request.obra) : "",
       conta: contaValue ? String(contaValue) : "",
       quemPaga: quemPagaValue ? String(quemPagaValue) : "",
+      // ✅ NOVO: Copiar obras_relacionadas para edição
+      obras_relacionadas: request.obras_relacionadas || [],
     };
     
     setEditFormData(newFormData);
@@ -430,6 +432,28 @@ export const Dashboard = () => {
     }
 
     setEditFormData((prevData) => ({ ...prevData, [name]: newValue }));
+  };
+
+  // ✅ NOVO: Handler para editar obras relacionadas
+  const handleEditObraRelacionada = (index, field, value) => {
+    setEditFormData((prevData) => {
+      const novasObras = [...(prevData.obras_relacionadas || [])];
+      if (!novasObras[index]) {
+        novasObras[index] = { obra: prevData.obras_relacionadas?.[index]?.obra || 0 };
+      }
+      
+      if (field === "valor") {
+        // Remove caracteres não numéricos do valor digitado
+        const numericValue = value.replace(/\D/g, "");
+        // Armazena em centavos
+        novasObras[index][field] = numericValue ? parseInt(numericValue, 10) : 0;
+      } else {
+        // Para 'obra', converte para número
+        novasObras[index][field] = Number(value);
+      }
+      
+      return { ...prevData, obras_relacionadas: novasObras };
+    });
   };
 
   const handleSave = async () => {
@@ -1129,8 +1153,8 @@ export const Dashboard = () => {
             handleRemove={handleRemove}
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
-            handleToggleLancamento={handleToggleLancamento} 
-            //{/* ✅ NOVO: Passando o handler de status */}
+            handleEditObraRelacionada={handleEditObraRelacionada} // ✅ NOVO
+            handleToggleLancamento={handleToggleLancamento}
 
             // Props de Autocomplete
             titularSuggestions={titularSuggestions}

@@ -31,7 +31,8 @@ const PaymentTable = ({
   handleCancelEdit,
   handleRemove,
   toggleRowExpansion,
-  handleEditChange, 
+  handleEditChange,
+  handleEditObraRelacionada, // ✅ NOVO: Para editar obras relacionadas 
 
   // Props para autocomplete de titular
   titularSuggestions = [],
@@ -554,13 +555,46 @@ const PaymentTable = ({
                               
                               {/* Obras Relacionadas */}
                               {request.obras_relacionadas.map((obra, idx) => (
-                                <div key={obra.id} className="flex justify-between items-center bg-white p-3 rounded border-l-4 border-l-blue-500">
-                                  <span className="text-sm font-semibold text-gray-800">
-                                    {getNameById(listaObras, obra.obra) || `Obra ${obra.obra}`}
-                                  </span>
-                                  <span className="text-sm font-bold text-blue-600">
-                                    R$ {parseFloat(obra.valor || 0).toFixed(2).replace(".", ",")}
-                                  </span>
+                                <div key={obra.id} className={`flex gap-2 items-center bg-white p-3 rounded border-l-4 border-l-blue-500 ${isEditing ? "flex-col" : "justify-between"}`}>
+                                  {isEditing ? (
+                                    <>
+                                      {/* Modo edição: Selecione a obra e edite o valor */}
+                                      <select
+                                        value={editFormData.obras_relacionadas?.[idx]?.obra || obra.obra || ""}
+                                        onChange={(e) => handleEditObraRelacionada(idx, "obra", e.target.value)}
+                                        className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                                      >
+                                        <option value="">Selecione uma obra...</option>
+                                        {listaObras.map((opt) => (
+                                          <option key={opt.id} value={opt.id}>
+                                            {opt.nome} (ID: {opt.id})
+                                          </option>
+                                        ))}
+                                      </select>
+                                      
+                                      <input
+                                        type="text"
+                                        value={(editFormData.obras_relacionadas?.[idx]?.valor || obra.valor || 0) >= 1 
+                                          ? ((editFormData.obras_relacionadas?.[idx]?.valor || obra.valor || 0) / 100).toLocaleString("pt-BR", {
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                            })
+                                          : "0,00"}
+                                        onChange={(e) => handleEditObraRelacionada(idx, "valor", e.target.value)}
+                                        placeholder="0,00"
+                                        className="w-full px-2 py-1 border border-green-400 rounded-md text-sm focus:ring-2 focus:ring-green-500"
+                                      />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-sm font-semibold text-gray-800">
+                                        {getNameById(listaObras, obra.obra) || `Obra ${obra.obra}`}
+                                      </span>
+                                      <span className="text-sm font-bold text-blue-600">
+                                        R$ {parseFloat(obra.valor || 0).toFixed(2).replace(".", ",")}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               ))}
                               
