@@ -102,27 +102,18 @@ const PaymentTable = ({
       
       // --- CURRENCY ---
       if (fieldConfig.type === "currency") {
-        const formatValueToInput = (rawValue) => {
-            if (!rawValue) return "";
-            const numericString = String(rawValue).replace(/\D/g, "");
-            return (Number(numericString) / 100).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            });
-        };
-
         return (
           <input
             type="text"
             name={key}
-            value={formatValueToInput(value)} 
+            value={String(value || "")} 
             onChange={(e) => {
               handleEditChange(e);
             }}
             onClick={(e) => {
               e.stopPropagation();
             }}
-            placeholder="0,00"
+            placeholder="0"
             style={{position: "relative", zIndex: 1000, pointerEvents: 'auto'}}
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
             autoFocus
