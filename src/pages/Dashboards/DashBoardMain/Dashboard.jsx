@@ -459,11 +459,6 @@ export const Dashboard = () => {
   const handleSave = async () => {
     setIsSaving(true);
     const rawValue = String(editFormData.valor).replace(/\D/g, "");
-    console.log("💾 handleSave START:", { 
-      editFormDataValor: editFormData.valor, 
-      rawValue: rawValue,
-      editingId: editingId
-    });
     if (rawValue.length === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
@@ -479,14 +474,7 @@ export const Dashboard = () => {
       const dataToSave = { ...editFormData, valor: rawValue };
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
-      console.log("🔍 requestAtual:", { 
-        id: requestAtual?.id,
-        grupo_lancamento: requestAtual?.grupo_lancamento,
-        obras_count: requestAtual?.obras_relacionadas?.length
-      });
-      
       if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {
-        console.log("📤 MÚLTIPLAS OBRAS - Salvando principal:", { valor: rawValue });
         // Salva a obra principal
         await atualizarFormulario(editingId, dataToSave);
         
@@ -494,17 +482,15 @@ export const Dashboard = () => {
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            console.log(`📤 Salvando obra ${obra.id}:`, { valor_str: obraValor });
             const obraDataToSave = {
               ...obra,
-              valor: obraValor, // Não multiplica aqui - o adaptador vai fazer
+              valor: obraValor,
               data_pagamento: editFormData.dataPagamento,
             };
             await atualizarFormulario(obra.id, obraDataToSave);
           }
         }
       } else {
-        console.log("📤 LANÇAMENTO SIMPLES - Salvando:", { valor: rawValue });
         await atualizarFormulario(editingId, dataToSave);
       }
       

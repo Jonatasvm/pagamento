@@ -63,15 +63,12 @@ const adapterBackendToFrontend = (data) => {
 };
 
 const adapterFrontendToBackend = (data) => {
-  const convertedValor = data.valor ? Math.round(Number(data.valor) * 100) : 0;
-  console.log("📤 adapterFrontendToBackend:", { input_valor: data.valor, converted_centavos: convertedValor });
-  
   const payload = {
     data_lancamento: data.dataLancamento,
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: convertedValor,
+    valor: data.valor ? Math.round(Number(data.valor) * 100) : 0,
     obra: Number(data.obra),
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento,
