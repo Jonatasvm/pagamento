@@ -39,28 +39,26 @@ const adapterBackendToFrontend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? String(Number(data.valor)) : "",
-    obra: data.obra ? Number(data.obra) : null, // ✅ CONVERTENDO para número
+    valor: data.valor ? String(Math.round(Number(data.valor) / 100)) : "",
+    obra: data.obra ? Number(data.obra) : null,
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
-    // Converte '1', 'S', 'Y' para true, e o resto para false.
     statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
     dataCompetencia: formatDateToInput(data.data_competencia),
     observacao: data.observacao,
     carimboDataHora: data.carimbo,
-    conta: data.conta ? Number(data.conta) : null, // ✅ Convertendo para número também
+    conta: data.conta ? Number(data.conta) : null,
     quemPaga: data.quem_paga ? Number(data.quem_paga) : null,
     link_anexo: data.link_anexo || "",
     categoria: data.categoria || "Outros",
-    // ✅ NOVO: Campos para múltiplos lançamentos - converter valores das obras relacionadas também
     grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
-      valor: obra.valor ? String(Number(obra.valor)) : "",
+      valor: obra.valor ? String(Math.round(Number(obra.valor) / 100)) : "",
     })),
-    valor_total: data.valor_total || data.valor,
+    valor_total: data.valor_total ? Math.round(Number(data.valor_total) / 100) : data.valor,
   };
 };
 
@@ -70,7 +68,7 @@ const adapterFrontendToBackend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? parseFloat(String(data.valor)) : 0,
+    valor: data.valor ? Math.round(Number(data.valor) * 100) : 0,
     obra: Number(data.obra),
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento,

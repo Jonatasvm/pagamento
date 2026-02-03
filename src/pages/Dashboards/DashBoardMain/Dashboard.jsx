@@ -487,7 +487,7 @@ export const Dashboard = () => {
             // Envia dados completos, não apenas o valor
             const obraDataToSave = {
               ...obra,
-              valor: obraValor,
+              valor: Math.round(Number(obraValor) * 100), // Multiplica por 100 para centavos
               data_pagamento: editFormData.dataPagamento,
             };
             await atualizarFormulario(obra.id, obraDataToSave);
