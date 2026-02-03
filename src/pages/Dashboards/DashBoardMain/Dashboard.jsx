@@ -451,10 +451,9 @@ export const Dashboard = () => {
       }
       
       if (field === "valor") {
-        // Remove caracteres não numéricos do valor digitado
+        // Remove caracteres não numéricos e mantém como string de número
         const numericValue = value.replace(/\D/g, "");
-        // Armazena em centavos
-        novasObras[index][field] = numericValue ? parseInt(numericValue, 10) : 0;
+        novasObras[index][field] = numericValue || "0";
         console.log(`📝 handleEditObraRelacionada[${index}] - VALOR:`, { inputValue: value, after_replace: numericValue, stored: novasObras[index][field] });
       } else {
         // Para 'obra', converte para número

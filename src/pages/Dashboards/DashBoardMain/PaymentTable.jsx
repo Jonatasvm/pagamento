@@ -565,14 +565,9 @@ const PaymentTable = ({
                                       
                                       <input
                                         type="text"
-                                        value={(editFormData.obras_relacionadas?.[idx]?.valor || obra.valor || 0) >= 1 
-                                          ? ((editFormData.obras_relacionadas?.[idx]?.valor || obra.valor || 0) / 100).toLocaleString("pt-BR", {
-                                              minimumFractionDigits: 2,
-                                              maximumFractionDigits: 2,
-                                            })
-                                          : "0,00"}
+                                        value={String(editFormData.obras_relacionadas?.[idx]?.valor || obra.valor || "")}
                                         onChange={(e) => handleEditObraRelacionada(idx, "valor", e.target.value)}
-                                        placeholder="0,00"
+                                        placeholder="0"
                                         className="w-full px-2 py-1 border border-green-400 rounded-md text-sm focus:ring-2 focus:ring-green-500"
                                       />
                                     </>
