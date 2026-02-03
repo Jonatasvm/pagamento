@@ -65,27 +65,22 @@ const adapterBackendToFrontend = (data) => {
 };
 
 const adapterFrontendToBackend = (data) => {
-  console.log("📤 adapterFrontendToBackend - VALOR:", { input: data.valor });
-  
   const payload = {
     data_lancamento: data.dataLancamento,
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
     valor: data.valor ? parseFloat(String(data.valor)) : 0,
-    obra: Number(data.obra), // Garante que obra seja enviada como número
+    obra: Number(data.obra),
     data_pagamento: data.dataPagamento,
-    forma_pagamento: data.formaDePagamento, // ✅ CORRIGIDO: Sem .toUpperCase() - deixa o frontend enviar normalizado
-    
-    // ✅ CORREÇÃO CRÍTICA: Mapeia statusLancamento (boolean) para lancado ('Y'/'N')
+    forma_pagamento: data.formaDePagamento,
     lancado: data.statusLancamento ? 'Y' : 'N', 
-    
     cpf_cnpj: data.cpfCnpjTitularConta,
     chave_pix: data.chavePix,
     data_competencia: data.dataCompetencia,
     observacao: data.observacao,
-    conta: data.conta ? Number(data.conta) : null, // ✅ NOVO: Mapeia o campo conta (banco)
-    categoria: data.categoria ? Number(data.categoria) : null, // ✅ NOVO: Mapeia o campo categoria
+    conta: data.conta ? Number(data.conta) : null,
+    categoria: data.categoria ? Number(data.categoria) : null,
   };
   return payload;
 };
