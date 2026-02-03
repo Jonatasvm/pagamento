@@ -381,8 +381,14 @@ export const Dashboard = () => {
       obras_relacionadas: request.obras_relacionadas || [],
     };
     
-    setEditFormData(newFormData);
+    console.log(`🔍 handleEdit - Carregando para edição:`, { 
+      requestId: request.id, 
+      valor: newFormData.valor, 
+      obraCount: newFormData.obras_relacionadas?.length,
+      obras_relacionadas: newFormData.obras_relacionadas
+    });
 
+    setEditFormData(newFormData);
     setIsTitularLocked(false);
 
     // ✅ NOVO: Se não tiver 'conta' mas tiver 'obra', busca o banco vinculado à obra
@@ -449,6 +455,7 @@ export const Dashboard = () => {
         const numericValue = value.replace(/\D/g, "");
         // Armazena em centavos
         novasObras[index][field] = numericValue ? parseInt(numericValue, 10) : 0;
+        console.log(`📝 handleEditObraRelacionada[${index}] - VALOR:`, { inputValue: value, after_replace: numericValue, stored: novasObras[index][field] });
       } else {
         // Para 'obra', converte para número
         novasObras[index][field] = Number(value);
