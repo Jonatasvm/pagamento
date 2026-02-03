@@ -32,6 +32,9 @@ const formatDateToInput = (dateString) => {
 
 // --- ADAPTADORES ---
 const adapterBackendToFrontend = (data) => {
+  const convertedValor = data.valor ? String(Math.round(Number(data.valor) * 100)) : "";
+  console.log("📥 adapterBackendToFrontend - VALOR:", { backendValor: data.valor, convertedValor: convertedValor });
+  
   return {
     id: data.id,
     // Aplica a formatação em todos os campos de data
@@ -39,7 +42,7 @@ const adapterBackendToFrontend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? String(Math.round(Number(data.valor) * 100)) : "",
+    valor: convertedValor,
     obra: data.obra ? Number(data.obra) : null, // ✅ CONVERTENDO para número
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
@@ -62,12 +65,15 @@ const adapterBackendToFrontend = (data) => {
 };
 
 const adapterFrontendToBackend = (data) => {
+  const convertedValor = data.valor ? parseFloat((Math.round(Number(data.valor)) / 100).toFixed(2)) : 0;
+  console.log("📤 adapterFrontendToBackend - VALOR:", { frontendValor: data.valor, convertedValor: convertedValor });
+  
   const payload = {
     data_lancamento: data.dataLancamento,
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? parseFloat((Math.round(Number(data.valor)) / 100).toFixed(2)) : 0,
+    valor: convertedValor,
     obra: Number(data.obra), // Garante que obra seja enviada como número
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento, // ✅ CORRIGIDO: Sem .toUpperCase() - deixa o frontend enviar normalizado
