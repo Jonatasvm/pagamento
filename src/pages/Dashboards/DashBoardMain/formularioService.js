@@ -54,9 +54,12 @@ const adapterBackendToFrontend = (data) => {
     quemPaga: data.quem_paga ? Number(data.quem_paga) : null,
     link_anexo: data.link_anexo || "",
     categoria: data.categoria || "Outros",
-    // ✅ NOVO: Campos para múltiplos lançamentos
+    // ✅ NOVO: Campos para múltiplos lançamentos - converter valores das obras relacionadas também
     grupo_lancamento: data.grupo_lancamento || null,
-    obras_relacionadas: data.obras_relacionadas || [],
+    obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
+      ...obra,
+      valor: obra.valor ? String(Number(obra.valor)) : "",
+    })),
     valor_total: data.valor_total || data.valor,
   };
 };
