@@ -102,24 +102,18 @@ const PaymentTable = ({
       
       // --- CURRENCY ---
       if (fieldConfig.type === "currency") {
-        const formatCurrencyForInput = (val) => {
-          if (!val) return "0.00";
-          const numValue = Number(val);
-          return numValue.toFixed(2);
-        };
-
         return (
           <input
             type="text"
             name={key}
-            value={formatCurrencyForInput(value)} 
+            value={String(value || "")} 
             onChange={(e) => {
               handleEditChange(e);
             }}
             onClick={(e) => {
               e.stopPropagation();
             }}
-            placeholder="0.00"
+            placeholder="0"
             style={{position: "relative", zIndex: 1000, pointerEvents: 'auto'}}
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
             autoFocus
