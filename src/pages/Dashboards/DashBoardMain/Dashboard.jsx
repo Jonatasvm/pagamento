@@ -489,7 +489,9 @@ export const Dashboard = () => {
         
         // Salva a obra principal com seu valor
         console.log(`📤 Salvando obra principal ${editingId} com valor ${rawValue}`);
-        await atualizarFormulario(editingId, dataToSave);
+        const dataPrincipal = { ...dataToSave, valor: rawValue };
+        console.log(`   Enviando para backend:`, dataPrincipal);
+        await atualizarFormulario(editingId, dataPrincipal);
         
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
@@ -502,13 +504,16 @@ export const Dashboard = () => {
               valor: obraValor,
               data_pagamento: editFormData.dataPagamento,
             };
+            console.log(`   Enviando para backend:`, obraDataToSave);
             await atualizarFormulario(obra.id, obraDataToSave);
           }
         }
       } else {
         // Lançamento simples, salva normalmente
         console.log("💾 handleSave - Lançamento simples:", { valor: rawValue });
-        await atualizarFormulario(editingId, dataToSave);
+        const dataSimples = { ...dataToSave, valor: rawValue };
+        console.log(`   Enviando para backend:`, dataSimples);
+        await atualizarFormulario(editingId, dataSimples);
       }
       
       toast.success("Solicitação atualizada com sucesso!");
