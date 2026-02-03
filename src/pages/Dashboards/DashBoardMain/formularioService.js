@@ -39,7 +39,7 @@ const adapterBackendToFrontend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? String(Math.round(Number(data.valor) * 100)) : ""
+    valor: data.valor ? String(Number(data.valor).toFixed(2)).replace(".", ",") : "",
     obra: data.obra ? Number(data.obra) : null, // ✅ CONVERTENDO para número
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
@@ -67,7 +67,7 @@ const adapterFrontendToBackend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? parseFloat((Number(data.valor) / 100).toFixed(2)) : 0,
+    valor: data.valor ? parseFloat(String(data.valor).replace(",", ".")) : 0,
     obra: Number(data.obra), // Garante que obra seja enviada como número
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento, // ✅ CORRIGIDO: Sem .toUpperCase() - deixa o frontend enviar normalizado

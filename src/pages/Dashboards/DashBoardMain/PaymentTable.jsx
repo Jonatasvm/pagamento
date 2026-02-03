@@ -106,14 +106,14 @@ const PaymentTable = ({
           <input
             type="text"
             name={key}
-            value={String(value || "")} 
+            value={String(value || "").replace(",", ".")} 
             onChange={(e) => {
               handleEditChange(e);
             }}
             onClick={(e) => {
               e.stopPropagation();
             }}
-            placeholder="0"
+            placeholder="0.00"
             style={{position: "relative", zIndex: 1000, pointerEvents: 'auto'}}
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
             autoFocus
