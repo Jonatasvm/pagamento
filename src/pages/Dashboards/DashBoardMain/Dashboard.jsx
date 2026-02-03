@@ -459,11 +459,6 @@ export const Dashboard = () => {
   const handleSave = async () => {
     setIsSaving(true);
     const rawValue = String(editFormData.valor).replace(/\D/g, "");
-    console.log("💾 handleSave - VALOR:", { 
-      editFormDataValor: editFormData.valor, 
-      afterReplace: rawValue,
-      tipo: typeof editFormData.valor
-    });
     if (rawValue.length === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
@@ -482,38 +477,25 @@ export const Dashboard = () => {
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
       if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {
-        console.log("💾 handleSave - Múltiplas obras:", { 
-          valor_principal: rawValue, 
-          obras_relacionadas: editFormData.obras_relacionadas 
-        });
-        
         // Salva a obra principal com seu valor
-        console.log(`📤 Salvando obra principal ${editingId} com valor ${rawValue}`);
-        const dataPrincipal = { ...dataToSave, valor: rawValue };
-        console.log(`   Enviando para backend:`, dataPrincipal);
-        await atualizarFormulario(editingId, dataPrincipal);
+        await atualizarFormulario(editingId, dataToSave);
         
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            console.log(`📤 Salvando obra relacionada ${obra.id} com valor ${obraValor}`);
             // Envia dados completos, não apenas o valor
             const obraDataToSave = {
               ...obra,
               valor: obraValor,
               data_pagamento: editFormData.dataPagamento,
             };
-            console.log(`   Enviando para backend:`, obraDataToSave);
             await atualizarFormulario(obra.id, obraDataToSave);
           }
         }
       } else {
         // Lançamento simples, salva normalmente
-        console.log("💾 handleSave - Lançamento simples:", { valor: rawValue });
-        const dataSimples = { ...dataToSave, valor: rawValue };
-        console.log(`   Enviando para backend:`, dataSimples);
-        await atualizarFormulario(editingId, dataSimples);
+        await atualizarFormulario(editingId, dataToSave);
       }
       
       toast.success("Solicitação atualizada com sucesso!");

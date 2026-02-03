@@ -65,11 +65,8 @@ const adapterBackendToFrontend = (data) => {
 };
 
 const adapterFrontendToBackend = (data) => {
-  const convertedValor = data.valor ? parseFloat(Number(data.valor).toFixed(2)) : 0;
-  console.log("📤 adapterFrontendToBackend - VALOR:", { 
-    input: data.valor, 
-    converted: convertedValor 
-  });
+  const convertedValor = data.valor ? Math.round(Number(data.valor) * 100) : 0;
+  console.log("📤 adapterFrontendToBackend - VALOR:", { input: data.valor, converted: convertedValor });
   
   const payload = {
     data_lancamento: data.dataLancamento,
