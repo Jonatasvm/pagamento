@@ -494,10 +494,10 @@ export const Dashboard = () => {
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            console.log(`📤 Salvando obra ${obra.id}:`, { valor_str: obraValor, multiplicado: Math.round(Number(obraValor) * 100) });
+            console.log(`📤 Salvando obra ${obra.id}:`, { valor_str: obraValor });
             const obraDataToSave = {
               ...obra,
-              valor: Math.round(Number(obraValor) * 100), // Multiplica por 100 para centavos
+              valor: obraValor, // Não multiplica aqui - o adaptador vai fazer
               data_pagamento: editFormData.dataPagamento,
             };
             await atualizarFormulario(obra.id, obraDataToSave);
