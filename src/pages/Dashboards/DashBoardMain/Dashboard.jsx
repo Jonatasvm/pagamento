@@ -421,7 +421,6 @@ export const Dashboard = () => {
 
     if (name === "valor") {
       newValue = value.replace(/\D/g, "");
-      console.log("🎯 handleEditChange - VALOR:", { inputValue: value, afterRemovingNonNumeric: newValue });
     }
     if (type === "checkbox") newValue = checked;
     if (["quemPaga", "obra", "conta", "titular"].includes(name)) {
@@ -434,7 +433,6 @@ export const Dashboard = () => {
       }
     }
 
-    console.log(`📝 handleEditChange - ${name}:`, newValue);
     setEditFormData((prevData) => ({ ...prevData, [name]: newValue }));
   };
 
@@ -463,7 +461,6 @@ export const Dashboard = () => {
   const handleSave = async () => {
     setIsSaving(true);
     const rawValue = String(editFormData.valor).replace(/\D/g, "");
-    console.log("💾 handleSave - VALOR:", { editFormDataValor: editFormData.valor, rawValue: rawValue });
     if (rawValue.length === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
