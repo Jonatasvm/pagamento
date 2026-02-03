@@ -459,6 +459,11 @@ export const Dashboard = () => {
   const handleSave = async () => {
     setIsSaving(true);
     const rawValue = String(editFormData.valor).replace(/\D/g, "");
+    console.log("💾 handleSave START:", { 
+      editFormDataValor: editFormData.valor, 
+      rawValue: rawValue,
+      editingId: editingId
+    });
     if (rawValue.length === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
@@ -472,19 +477,24 @@ export const Dashboard = () => {
 
     try {
       const dataToSave = { ...editFormData, valor: rawValue };
-      
-      // ✅ NOVO: Se é múltiplo, salva as obras relacionadas com valores editados
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
+      console.log("🔍 requestAtual:", { 
+        id: requestAtual?.id,
+        grupo_lancamento: requestAtual?.grupo_lancamento,
+        obras_count: requestAtual?.obras_relacionadas?.length
+      });
+      
       if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {
-        // Salva a obra principal com seu valor
+        console.log("📤 MÚLTIPLAS OBRAS - Salvando principal:", { valor: rawValue });
+        // Salva a obra principal
         await atualizarFormulario(editingId, dataToSave);
         
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            // Envia dados completos, não apenas o valor
+            console.log(`📤 Salvando obra ${obra.id}:`, { valor_str: obraValor, multiplicado: Math.round(Number(obraValor) * 100) });
             const obraDataToSave = {
               ...obra,
               valor: Math.round(Number(obraValor) * 100), // Multiplica por 100 para centavos
@@ -494,7 +504,7 @@ export const Dashboard = () => {
           }
         }
       } else {
-        // Lançamento simples, salva normalmente
+        console.log("📤 LANÇAMENTO SIMPLES - Salvando:", { valor: rawValue });
         await atualizarFormulario(editingId, dataToSave);
       }
       
@@ -502,11 +512,9 @@ export const Dashboard = () => {
       setEditingId(null);
       setEditFormData({});
       setIsTitularLocked(false);
-      
-      // Recarrega os dados para atualizar a tabela
       await fetchRequests();
     } catch (error) {
-      console.error(error);
+      console.error("❌ ERRO ao salvar:", error);
       toast.error("Erro ao salvar alterações.");
     } finally {
       setIsSaving(false);
