@@ -381,13 +381,6 @@ export const Dashboard = () => {
       obras_relacionadas: request.obras_relacionadas || [],
     };
     
-    console.log(`🔍 handleEdit - Carregando para edição:`, { 
-      requestId: request.id, 
-      valor: newFormData.valor, 
-      obraCount: newFormData.obras_relacionadas?.length,
-      obras_relacionadas: newFormData.obras_relacionadas
-    });
-
     setEditFormData(newFormData);
     setIsTitularLocked(false);
 
@@ -454,7 +447,6 @@ export const Dashboard = () => {
         // Remove caracteres não numéricos e mantém como string de número
         const numericValue = value.replace(/\D/g, "");
         novasObras[index][field] = numericValue || "0";
-        console.log(`📝 handleEditObraRelacionada[${index}] - VALOR:`, { inputValue: value, after_replace: numericValue, stored: novasObras[index][field] });
       } else {
         // Para 'obra', converte para número
         novasObras[index][field] = Number(value);
@@ -491,14 +483,21 @@ export const Dashboard = () => {
         });
         
         // Salva a obra principal com seu valor
+        console.log(`📤 Salvando obra principal ${editingId} com valor ${rawValue}`);
         await atualizarFormulario(editingId, dataToSave);
         
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            console.log(`  Salvando obra ${obra.id} com valor ${obraValor}`);
-            await atualizarFormulario(obra.id, { valor: obraValor });
+            console.log(`📤 Salvando obra relacionada ${obra.id} com valor ${obraValor}`);
+            // Envia dados completos, não apenas o valor
+            const obraDataToSave = {
+              ...obra,
+              valor: obraValor,
+              data_pagamento: editFormData.dataPagamento,
+            };
+            await atualizarFormulario(obra.id, obraDataToSave);
           }
         }
       } else {

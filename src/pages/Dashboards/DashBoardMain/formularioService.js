@@ -56,13 +56,10 @@ const adapterBackendToFrontend = (data) => {
     categoria: data.categoria || "Outros",
     // ✅ NOVO: Campos para múltiplos lançamentos - converter valores das obras relacionadas também
     grupo_lancamento: data.grupo_lancamento || null,
-    obras_relacionadas: (data.obras_relacionadas || []).map(obra => {
-      console.log(`📥 Obra relacionada - Backend:`, { id: obra.id, valorBackend: obra.valor, valorConverted: String(Number(obra.valor)) });
-      return {
-        ...obra,
-        valor: obra.valor ? String(Number(obra.valor)) : "",
-      };
-    }),
+    obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
+      ...obra,
+      valor: obra.valor ? String(Number(obra.valor)) : "",
+    }))
     valor_total: data.valor_total || data.valor,
   };
 };
