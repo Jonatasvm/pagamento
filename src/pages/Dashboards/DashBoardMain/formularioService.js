@@ -59,7 +59,7 @@ const adapterBackendToFrontend = (data) => {
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
       valor: obra.valor ? String(Number(obra.valor)) : "",
-    }))
+    })),
     valor_total: data.valor_total || data.valor,
   };
 };
