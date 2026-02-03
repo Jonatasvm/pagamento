@@ -65,12 +65,18 @@ const adapterBackendToFrontend = (data) => {
 };
 
 const adapterFrontendToBackend = (data) => {
+  const convertedValor = data.valor ? parseFloat(Number(data.valor).toFixed(2)) : 0;
+  console.log("📤 adapterFrontendToBackend - VALOR:", { 
+    input: data.valor, 
+    converted: convertedValor 
+  });
+  
   const payload = {
     data_lancamento: data.dataLancamento,
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? parseFloat(Number(data.valor).toFixed(2)) : 0,
+    valor: convertedValor,
     obra: Number(data.obra), // Garante que obra seja enviada como número
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento, // ✅ CORRIGIDO: Sem .toUpperCase() - deixa o frontend enviar normalizado

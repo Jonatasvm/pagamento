@@ -459,6 +459,11 @@ export const Dashboard = () => {
   const handleSave = async () => {
     setIsSaving(true);
     const rawValue = String(editFormData.valor).replace(/\D/g, "");
+    console.log("💾 handleSave - VALOR:", { 
+      editFormDataValor: editFormData.valor, 
+      afterReplace: rawValue,
+      tipo: typeof editFormData.valor
+    });
     if (rawValue.length === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
