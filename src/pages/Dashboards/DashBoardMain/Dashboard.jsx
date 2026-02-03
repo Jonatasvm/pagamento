@@ -481,32 +481,29 @@ export const Dashboard = () => {
     try {
       const dataToSave = { ...editFormData, valor: rawValue };
       
-      // ✅ NOVO: Se é múltiplo e alterou o valor, distribui entre as obras
+      // ✅ NOVO: Se é múltiplo, salva as obras relacionadas com valores editados
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
-      if (requestAtual?.grupo_lancamento && requestAtual?.obras_relacionadas?.length > 0) {
-        // Calcula novo valor total
-        const novoValorTotal = parseInt(rawValue);
-        const numObras = (requestAtual.obras_relacionadas?.length || 0) + 1;
-        const valorPorObra = Math.floor(novoValorTotal / numObras);
-        const resto = novoValorTotal % numObras;
+      if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {
+        console.log("💾 handleSave - Múltiplas obras:", { 
+          valor_principal: rawValue, 
+          obras_relacionadas: editFormData.obras_relacionadas 
+        });
         
-        // A primeira obra (principal) fica com o resto
-        const valorPrincipal = valorPorObra + resto;
-        
-        dataToSave.valor = String(valorPrincipal);
-        
-        // Salva a principal
+        // Salva a obra principal com seu valor
         await atualizarFormulario(editingId, dataToSave);
         
-        // Atualiza as obras relacionadas com valor igual
-        if (requestAtual.obras_relacionadas?.length > 0) {
-          for (const obra of requestAtual.obras_relacionadas) {
-            await atualizarFormulario(obra.id, { valor: String(valorPorObra) });
+        // Salva cada obra relacionada com seu valor editado
+        if (editFormData.obras_relacionadas?.length > 0) {
+          for (const obra of editFormData.obras_relacionadas) {
+            const obraValor = String(obra.valor || 0).replace(/\D/g, "");
+            console.log(`  Salvando obra ${obra.id} com valor ${obraValor}`);
+            await atualizarFormulario(obra.id, { valor: obraValor });
           }
         }
       } else {
         // Lançamento simples, salva normalmente
+        console.log("💾 handleSave - Lançamento simples:", { valor: rawValue });
         await atualizarFormulario(editingId, dataToSave);
       }
       
