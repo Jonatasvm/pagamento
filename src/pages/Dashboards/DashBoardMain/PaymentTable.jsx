@@ -310,22 +310,7 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
-    // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS - mas apenas em VISUALIZAÇÃO
-    // Quando é múltiplo e NÃO está em modo de edição, mostra o total
-    if (!isEditing && key === "valor" && request?.obras_relacionadas?.length > 0) {
-      const valorTotal = (request.valor_total !== undefined) 
-        ? request.valor_total 
-        : (parseFloat(request.valor || 0) + 
-           (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
-      
-      return (
-        <span className="font-bold text-green-700">
-          R$ {valorTotal.toFixed(2).replace(".", ",")} 
-          <br />
-          <span className="text-xs text-gray-500">({request.obras_relacionadas.length + 1} obras)</span>
-        </span>
-      );
-    }
+
     
     // ✅ CORREÇÃO 1: Prioriza o format definido na coluna (como o de 'obra' em dashboard.data.jsx)
     if (fieldConfig.format) {
