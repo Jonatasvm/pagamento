@@ -525,7 +525,7 @@ const PaymentTable = ({
                                   {getNameById(listaObras, request.obra) || `Obra ${request.obra}`}
                                 </span>
                                 <span className="text-sm font-bold text-green-600">
-                                  R$ {parseFloat(request.valor_principal || request.valor || 0).toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}
+                                  R$ {formatCurrencyDisplay(request.valor_principal || request.valor || 0)}
                                 </span>
                               </div>
                               
@@ -562,22 +562,14 @@ const PaymentTable = ({
                                         {getNameById(listaObras, obra.obra) || `Obra ${obra.obra}`}
                                       </span>
                                       <span className="text-sm font-bold text-blue-600">
-                                        R$ {parseFloat(obra.valor || 0).toFixed(2).replace(".", ",")}
+                                        R$ {formatCurrencyDisplay(obra.valor || 0)}
                                       </span>
                                     </>
                                   )}
-                                </div>
-                              ))}
-                              
-                              {/* Total */}
                               <div className="flex justify-between items-center bg-gradient-to-r from-purple-300 to-purple-400 p-3 rounded font-bold border-2 border-purple-600">
                                 <span className="text-sm text-purple-900">💰 Total do Lançamento</span>
                                 <span className="text-base text-purple-900">
-                                  R$ {(request.valor_total !== undefined 
-                                    ? request.valor_total 
-                                    : (parseFloat(request.valor_principal || request.valor || 0) + 
-                                       request.obras_relacionadas.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0))
-                                  ).toFixed(2).replace(".", ",")}
+                                  R$ {formatCurrencyDisplay(request.valor_total || request.valor || 0)}
                                 </span>
                               </div>
                             </div>
