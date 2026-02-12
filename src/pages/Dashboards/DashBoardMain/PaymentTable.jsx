@@ -343,7 +343,7 @@ const PaymentTable = ({
         </button>
       );
     }
-
+ 
     return value || "—";
   };
 
