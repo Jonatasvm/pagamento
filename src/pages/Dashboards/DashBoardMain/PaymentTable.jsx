@@ -540,7 +540,7 @@ const PaymentTable = ({
                                   {getNameById(listaObras, request.obra) || `Obra ${request.obra}`}
                                 </span>
                                 <span className="text-sm font-bold text-green-600">
-                                  R$ {(parseFloat(request.valor_principal || request.valor || 0) / 100).toFixed(2).replace(".", ",")}
+                                  R$ {parseFloat(request.valor_principal || request.valor || 0).toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}
                                 </span>
                               </div>
                               

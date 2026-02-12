@@ -751,7 +751,8 @@ export const Dashboard = () => {
         // Formatar valor apenas em números, sem R$ ou símbolo de moeda
         const formatCurrency = (value) => {
           if (!value) return "";
-          const num = Number(value) / 100;
+          // Valor já vem como float do backend (ex: 500.00), não precisa dividir por 100
+          const num = Number(value);
           return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
