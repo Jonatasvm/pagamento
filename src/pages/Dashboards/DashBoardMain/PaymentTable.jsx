@@ -565,7 +565,9 @@ const PaymentTable = ({
                                         R$ {formatCurrencyDisplay(obra.valor || 0)}
                                       </span>
                                     </>
-                                  )}
+                                  ))}
+                              
+                              {/* Total */}
                               <div className="flex justify-between items-center bg-gradient-to-r from-purple-300 to-purple-400 p-3 rounded font-bold border-2 border-purple-600">
                                 <span className="text-sm text-purple-900">💰 Total do Lançamento</span>
                                 <span className="text-base text-purple-900">
