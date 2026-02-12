@@ -565,7 +565,9 @@ const PaymentTable = ({
                                         R$ {formatCurrencyDisplay(obra.valor || 0)}
                                       </span>
                                     </>
-                                  ))}
+                                  )}
+                                </div>
+                              ))}
                               
                               {/* Total */}
                               <div className="flex justify-between items-center bg-gradient-to-r from-purple-300 to-purple-400 p-3 rounded font-bold border-2 border-purple-600">
