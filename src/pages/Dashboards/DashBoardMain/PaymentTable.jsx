@@ -312,6 +312,13 @@ const PaymentTable = ({
     
 
     
+    // ✅ NOVO: Para múltiplos lançamentos, mostra o valor TOTAL na tabela
+    if (!isEditing && key === "valor" && request?.grupo_lancamento && request?.obras_relacionadas?.length > 0) {
+      const valorTotal = parseFloat(request.valor_principal || request.valor || 0) + 
+                         (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0);
+      return fieldConfig.format ? fieldConfig.format(valorTotal) : formatCurrencyDisplay(valorTotal);
+    }
+    
     // ✅ CORREÇÃO 1: Prioriza o format definido na coluna (como o de 'obra' em dashboard.data.jsx)
     if (fieldConfig.format) {
       return fieldConfig.format(value);
