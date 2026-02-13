@@ -640,7 +640,6 @@ const TelaSolicitacao = () => {
       "referente",
       "valor",
       "titular",
-      "cpfCnpj",
       "dataVencimento",
     ];
     if (formData.paymentMethod === "Pix") required.push("pixKey");
