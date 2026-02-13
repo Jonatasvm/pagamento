@@ -140,6 +140,15 @@ export const UserManager = ({ API_IP, availableObras }) => {
         headers: getAuthHeaders(),
       });
 
+      // ✅ NOVO: Se receber 401, token expirou - fazer logout
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "/login";
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        return;
+      }
+
       if (!response.ok) throw new Error("Erro ao buscar dados.");
 
       const data = await response.json();
@@ -223,6 +232,15 @@ export const UserManager = ({ API_IP, availableObras }) => {
         body: JSON.stringify(payload),
       });
 
+      // ✅ NOVO: Se receber 401, token expirou
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "/login";
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        return;
+      }
+
       const responseData = await response.json();
 
       if (!response.ok) {
@@ -289,6 +307,15 @@ export const UserManager = ({ API_IP, availableObras }) => {
         body: JSON.stringify(payload),
       });
 
+      // ✅ NOVO: Se receber 401, token expirou
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "/login";
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        return;
+      }
+
       if (!response.ok) {
         // Tenta ler msg de erro do backend se houver
         const errData = await response.json().catch(() => null);
@@ -316,6 +343,15 @@ export const UserManager = ({ API_IP, availableObras }) => {
             method: "DELETE",
             headers: getAuthHeaders(),
           });
+
+          // ✅ NOVO: Se receber 401, token expirou
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("usuario");
+            window.location.href = "/login";
+            toast.error("Sua sessão expirou. Faça login novamente.");
+            return;
+          }
 
           if (!response.ok) throw new Error("Erro ao remover.");
 
