@@ -458,8 +458,8 @@ export const Dashboard = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const rawValue = String(editFormData.valor).replace(/\D/g, "");
-    if (rawValue.length === 0) {
+    const rawValue = String(editFormData.valor).replace(/[^\d.]/g, "").replace(/,/g, ".");
+    if (rawValue.length === 0 || parseFloat(rawValue) === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
       return;
@@ -481,7 +481,7 @@ export const Dashboard = () => {
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
-            const obraValor = String(obra.valor || 0).replace(/\D/g, "");
+            const obraValor = String(obra.valor || 0).replace(/[^\d.]/g, "").replace(/,/g, ".");
             const obraDataToSave = {
               ...obra,
               valor: obraValor,
