@@ -157,14 +157,18 @@ export const FornecedorManager = ({
 
   // ✅ NOVO: Filtrar fornecedores por busca
   const fornecedoresFiltrados = useMemo(() => {
-    if (!fornecedores) return [];
+    if (!fornecedores || fornecedores.length === 0) return [];
     if (!searchTerm.trim()) return fornecedores;
     
     const termo = searchTerm.toLowerCase();
-    return fornecedores.filter((f) =>
-      f.titular.toLowerCase().includes(termo) ||
-      f.cpf_cnpj.replace(/\D/g, "").includes(termo.replace(/\D/g, ""))
-    );
+    console.log("🔍 Buscando:", termo, "Em:", fornecedores.length, "fornecedores");
+    const resultado = fornecedores.filter((f) => {
+      const nomeMatch = f.titular && f.titular.toLowerCase().includes(termo);
+      const cpfMatch = f.cpf_cnpj && f.cpf_cnpj.replace(/\D/g, "").includes(termo.replace(/\D/g, ""));
+      return nomeMatch || cpfMatch;
+    });
+    console.log("✅ Encontrados:", resultado.length);
+    return resultado;
   }, [fornecedores, searchTerm]);
 
   // ✅ NOVO: Calcular paginação
