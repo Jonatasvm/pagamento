@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Edit, Trash2, Save, X, Plus, Users2 } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Edit, Trash2, Save, X, Plus, Users2, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export const FornecedorManager = ({
@@ -20,6 +20,11 @@ export const FornecedorManager = ({
     titular: "",
     cpf_cnpj: "",
   });
+
+  // ✅ NOVO: Estados para paginação e busca
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   // Formatar CPF/CNPJ para exibição
   const formatarCpfCnpj = (valor) => {
@@ -150,6 +155,29 @@ export const FornecedorManager = ({
     return banco ? banco.nome : "-";
   };
 
+  // ✅ NOVO: Filtrar fornecedores por busca
+  const fornecedoresFiltrados = useMemo(() => {
+    if (!fornecedores) return [];
+    if (!searchTerm.trim()) return fornecedores;
+    
+    const termo = searchTerm.toLowerCase();
+    return fornecedores.filter((f) =>
+      f.titular.toLowerCase().includes(termo) ||
+      f.cpf_cnpj.replace(/\D/g, "").includes(termo.replace(/\D/g, ""))
+    );
+  }, [fornecedores, searchTerm]);
+
+  // ✅ NOVO: Calcular paginação
+  const totalPages = Math.ceil(fornecedoresFiltrados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const fornecedoresPaginados = fornecedoresFiltrados.slice(startIndex, endIndex);
+
+  // ✅ NOVO: Resetar página ao buscar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   return (
     <section>
       <h1 className="text-3xl font-extrabold text-orange-700 mb-8 border-b pb-2 flex items-center gap-2">
@@ -201,6 +229,23 @@ export const FornecedorManager = ({
         </div>
       </div>
 
+      {/* --- Campo de Busca --- */}
+      <div className="my-6 flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nome ou CPF/CNPJ..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-orange-500 focus:ring-1 transition"
+          />
+        </div>
+        <span className="text-sm text-gray-600">
+          {fornecedoresFiltrados.length} de {fornecedores?.length || 0} fornecedores
+        </span>
+      </div>
+
       {/* --- Tabela --- */}
       <div className="overflow-x-auto rounded-xl shadow-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
@@ -224,14 +269,14 @@ export const FornecedorManager = ({
                   Carregando dados...
                 </td>
               </tr>
-            ) : !fornecedores || fornecedores.length === 0 ? (
+            ) : fornecedoresFiltrados.length === 0 ? (
               <tr>
                 <td colSpan="3" className="p-6 text-center text-gray-500 italic">
-                  Nenhum fornecedor cadastrado. Comece adicionando um novo.
+                  {searchTerm ? "Nenhum fornecedor encontrado com este termo de busca." : "Nenhum fornecedor cadastrado. Comece adicionando um novo."}
                 </td>
               </tr>
             ) : (
-              fornecedores.map((fornecedor) => (
+              fornecedoresPaginados.map((fornecedor) => (
                 <tr
                   key={fornecedor.id}
                   className="hover:bg-orange-50 transition duration-150"
@@ -306,6 +351,63 @@ export const FornecedorManager = ({
           </tbody>
         </table>
       </div>
+
+      {/* --- Paginação --- */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+          >
+            ← Anterior
+          </button>
+
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Mostrar apenas páginas próximas (5 páginas no máximo)
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                      currentPage === page
+                        ? "bg-orange-600 text-white"
+                        : "border border-gray-300 bg-white hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+              if (
+                page === currentPage - 2 ||
+                page === currentPage + 2
+              ) {
+                return <span key={page} className="px-2">...</span>;
+              }
+              return null;
+            })}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+          >
+            Próxima →
+          </button>
+
+          <span className="ml-4 text-sm text-gray-600">
+            Página {currentPage} de {totalPages}
+          </span>
+        </div>
+      )}
     </section>
   );
 };
