@@ -646,7 +646,9 @@ const TelaSolicitacao = () => {
 
     const hasEmptyFields = required.some((field) => !formData[field]);
     if (hasEmptyFields) {
-      toast.error("Preencha todos os campos obrigatorios.");
+      const camposFaltando = required.filter((field) => !formData[field]);
+      console.log("❌ Campos faltando:", camposFaltando, "FormData:", formData);
+      toast.error(`Preencha todos os campos obrigatorios. Faltando: ${camposFaltando.join(", ")}`);
       setIsSubmitting(false);
       return;
     }
