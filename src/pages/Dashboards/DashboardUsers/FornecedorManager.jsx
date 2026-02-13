@@ -155,20 +155,28 @@ export const FornecedorManager = ({
     return banco ? banco.nome : "-";
   };
 
-  // ✅ NOVO: Filtrar fornecedores por busca
+  // ✅ NOVO: Filtrar fornecedores por busca (busca por palavras completas)
   const fornecedoresFiltrados = useMemo(() => {
     if (!fornecedores || fornecedores.length === 0) return [];
     if (!searchTerm.trim()) return fornecedores;
     
-    const termo = searchTerm.toLowerCase();
-    console.log("🔍 Buscando:", termo, "Em:", fornecedores.length, "fornecedores");
-    const resultado = fornecedores.filter((f) => {
-      const nomeMatch = f.titular && f.titular.toLowerCase().includes(termo);
-      const cpfMatch = f.cpf_cnpj && f.cpf_cnpj.replace(/\D/g, "").includes(termo.replace(/\D/g, ""));
-      return nomeMatch || cpfMatch;
+    const termo = searchTerm.toLowerCase().trim();
+    // Dividir o termo em palavras para buscar por cada uma
+    const palavras = termo.split(/\s+/).filter(p => p.length > 0);
+    
+    return fornecedores.filter((f) => {
+      const nomeNormalizado = (f.titular || "").toLowerCase();
+      const cpfNormalizado = (f.cpf_cnpj || "").replace(/\D/g, "");
+      
+      // Se buscar por CPF (apenas números), buscar assim
+      if (termo.replace(/\D/g, "").length >= 3) {
+        if (cpfNormalizado.includes(termo.replace(/\D/g, ""))) return true;
+      }
+      
+      // Para nome, buscar por todas as palavras (AND lógico)
+      // Exemplo: "cedro madeira" retorna apenas fornecedores que têm AMBAS as palavras
+      return palavras.every(palavra => nomeNormalizado.includes(palavra));
     });
-    console.log("✅ Encontrados:", resultado.length);
-    return resultado;
   }, [fornecedores, searchTerm]);
 
   // ✅ NOVO: Calcular paginação
