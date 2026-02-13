@@ -17,6 +17,17 @@ import { toast } from "react-hot-toast";
 
 // --- COMPONENTES UTILITÁRIOS ---
 
+// ✅ NOVO: Componente de redirecionamento com loading
+const RedirectingScreen = ({ message = "Sua sessão expirou. Redirecionando..." }) => {
+  return (
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+      <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+      <p className="text-lg font-semibold text-gray-700">{message}</p>
+      <p className="text-sm text-gray-500 mt-2">Você será redirecionado para login...</p>
+    </div>
+  );
+};
+
 const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
   if (!isOpen) return null;
   return (
@@ -90,6 +101,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false); // ✅ NOVO: Estado de redirecionamento
 
   const [visible, setVisible] = useState({});
   const [editingUserId, setEditingUserId] = useState(null);
@@ -142,10 +154,13 @@ export const UserManager = ({ API_IP, availableObras }) => {
 
       // ✅ NOVO: Se receber 401, token expirou - fazer logout
       if (response.status === 401) {
+        setIsRedirecting(true);
+        toast.error("Sua sessão expirou. Faça login novamente.");
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
-        window.location.href = "/login";
-        toast.error("Sua sessão expirou. Faça login novamente.");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
         return;
       }
 
@@ -374,6 +389,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
 
   return (
     <>
+      {isRedirecting && <RedirectingScreen />}
       <ConfirmationModal
         isOpen={modalData.isOpen}
         title={modalData.title}
