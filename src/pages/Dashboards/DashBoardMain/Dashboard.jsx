@@ -471,7 +471,7 @@ export const Dashboard = () => {
     }
 
     try {
-      // ✅ CORREÇÃO: rawValue já é em reais (ex: "604.2"), sem precisa de conversão extra
+      // ✅ CORREÇÃO: O valor está em reais (ex: "5202.20"), passar direto sem conversão
       const valorEmReais = rawValue ? Number(rawValue) : 0;
       const dataToSave = { ...editFormData, valor: valorEmReais };
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
@@ -483,9 +483,8 @@ export const Dashboard = () => {
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
-            const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            // ✅ CORREÇÃO: obraValor vem em centavos (após remover não-dígitos), converter para reais
-            const obraValorEmReais = obraValor ? Number(obraValor) / 100 : 0;
+            // ✅ CORREÇÃO: obra.valor já está em reais, não precisa dividir por 100
+            const obraValorEmReais = Number(obra.valor) || 0;
             const obraDataToSave = {
               ...obra,
               valor: obraValorEmReais,
