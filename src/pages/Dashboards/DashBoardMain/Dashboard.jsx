@@ -471,9 +471,8 @@ export const Dashboard = () => {
     }
 
     try {
-      // ✅ CORREÇÃO: rawValue é em centavos (ex: "45000"), converter para reais (ex: 450)
-      // antes de passar para o adapter que vai multiplicar por 100 novamente
-      const valorEmReais = rawValue ? Math.round(Number(rawValue) / 100 * 100) / 100 : 0;
+      // ✅ CORREÇÃO: rawValue já é em reais (ex: "604.2"), sem precisa de conversão extra
+      const valorEmReais = rawValue ? Number(rawValue) : 0;
       const dataToSave = { ...editFormData, valor: valorEmReais };
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
@@ -485,8 +484,8 @@ export const Dashboard = () => {
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
-            // ✅ CORREÇÃO: converter de centavos para reais (mesmo problema da obra principal)
-            const obraValorEmReais = obraValor ? Math.round(Number(obraValor) / 100 * 100) / 100 : 0;
+            // ✅ CORREÇÃO: obraValor vem em centavos (após remover não-dígitos), converter para reais
+            const obraValorEmReais = obraValor ? Number(obraValor) / 100 : 0;
             const obraDataToSave = {
               ...obra,
               valor: obraValorEmReais,
