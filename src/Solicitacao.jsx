@@ -743,7 +743,8 @@ const TelaSolicitacao = () => {
               body: JSON.stringify({
                 ...basePayload,
                 referente: `${formData.referente} (${parcela.number}/${formData.installmentsCount})`,
-                valor: parseCurrencyToFloat(parcela.value),
+                // ✅ CORREÇÃO: Multiplicar por 100 para enviar em CENTAVOS
+                valor: Math.round(parseCurrencyToFloat(parcela.value) * 100),
                 data_pagamento: parcela.date,
                 data_competencia: parcela.date,
               }),
@@ -759,7 +760,8 @@ const TelaSolicitacao = () => {
             body: JSON.stringify({
               ...basePayload,
               referente: formData.referente,
-              valor: parseCurrencyToFloat(formData.valor), // ✅ SEMPRE enviar valor TOTAL
+              // ✅ CORREÇÃO: Multiplicar por 100 para enviar em CENTAVOS
+              valor: Math.round(parseCurrencyToFloat(formData.valor) * 100),
               data_pagamento: formData.dataVencimento,
               data_competencia: formData.dataVencimento,
             }),
