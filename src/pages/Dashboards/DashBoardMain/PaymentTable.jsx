@@ -310,21 +310,13 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
-    // ✅ NOVO: VERIFICA MÚLTIPLOS LANÇAMENTOS - mas apenas em VISUALIZAÇÃO
-    // Quando é múltiplo e NÃO está em modo de edição, mostra o total
-    if (!isEditing && key === "valor" && request?.obras_relacionadas?.length > 0) {
-      const valorTotal = (request.valor_total !== undefined) 
-        ? request.valor_total 
-        : (parseFloat(request.valor || 0) + 
-           (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0));
-      
-      return (
-        <span className="font-bold text-green-700">
-          R$ {valorTotal.toFixed(2).replace(".", ",")} 
-          <br />
-          <span className="text-xs text-gray-500">({request.obras_relacionadas.length + 1} obras)</span>
-        </span>
-      );
+
+    
+    // ✅ NOVO: Para múltiplos lançamentos, mostra o valor TOTAL na tabela
+    if (!isEditing && key === "valor" && request?.grupo_lancamento && request?.obras_relacionadas?.length > 0) {
+      const valorTotal = parseFloat(request.valor_principal || request.valor || 0) + 
+                         (request.obras_relacionadas?.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0) || 0);
+      return fieldConfig.format ? fieldConfig.format(valorTotal) : formatCurrencyDisplay(valorTotal);
     }
     
     // ✅ CORREÇÃO 1: Prioriza o format definido na coluna (como o de 'obra' em dashboard.data.jsx)
@@ -358,7 +350,7 @@ const PaymentTable = ({
         </button>
       );
     }
-
+ 
     return value || "—";
   };
 
@@ -540,7 +532,7 @@ const PaymentTable = ({
                                   {getNameById(listaObras, request.obra) || `Obra ${request.obra}`}
                                 </span>
                                 <span className="text-sm font-bold text-green-600">
-                                  R$ {(parseFloat(request.valor_principal || request.valor || 0) / 100).toFixed(2).replace(".", ",")}
+                                  R$ {formatCurrencyDisplay(request.valor_principal || request.valor || 0)}
                                 </span>
                               </div>
                               
@@ -577,7 +569,7 @@ const PaymentTable = ({
                                         {getNameById(listaObras, obra.obra) || `Obra ${obra.obra}`}
                                       </span>
                                       <span className="text-sm font-bold text-blue-600">
-                                        R$ {parseFloat(obra.valor || 0).toFixed(2).replace(".", ",")}
+                                        R$ {formatCurrencyDisplay(obra.valor || 0)}
                                       </span>
                                     </>
                                   )}
@@ -588,11 +580,7 @@ const PaymentTable = ({
                               <div className="flex justify-between items-center bg-gradient-to-r from-purple-300 to-purple-400 p-3 rounded font-bold border-2 border-purple-600">
                                 <span className="text-sm text-purple-900">💰 Total do Lançamento</span>
                                 <span className="text-base text-purple-900">
-                                  R$ {(request.valor_total !== undefined 
-                                    ? request.valor_total 
-                                    : (parseFloat(request.valor_principal || request.valor || 0) + 
-                                       request.obras_relacionadas.reduce((acc, o) => acc + parseFloat(o.valor || 0), 0))
-                                  ).toFixed(2).replace(".", ",")}
+                                  R$ {formatCurrencyDisplay(request.valor_total || request.valor || 0)}
                                 </span>
                               </div>
                             </div>

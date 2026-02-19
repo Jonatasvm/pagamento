@@ -39,7 +39,7 @@ const adapterBackendToFrontend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? String(Math.round(Number(data.valor) / 100)) : "",
+    valor: data.valor ? String(data.valor) : "",
     obra: data.obra ? Number(data.obra) : null,
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
@@ -56,9 +56,9 @@ const adapterBackendToFrontend = (data) => {
     grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
-      valor: obra.valor ? String(Math.round(Number(obra.valor) / 100)) : "",
+      valor: obra.valor ? String(obra.valor) : "",
     })),
-    valor_total: data.valor_total ? Math.round(Number(data.valor_total) / 100) : data.valor,
+    valor_total: data.valor_total ? data.valor_total : data.valor,
   };
 };
 

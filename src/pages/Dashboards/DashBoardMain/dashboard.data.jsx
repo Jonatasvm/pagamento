@@ -86,9 +86,10 @@ export const getNameById = (list, id) => {
 
 export function formatCurrencyDisplay(value) {
     if (!value) return "0,00";
-    const numericValue = String(value).replace(/\D/g, "");
-    const reais = (Number(numericValue) / 100).toFixed(2).replace(".", ",");
-    return reais.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+    // Valor já vem como float do backend (ex: 500.00), não precisa dividir por 100
+    const numValue = parseFloat(value);
+    const formatted = numValue.toFixed(2).replace(".", ",");
+    return formatted.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
 
 export function getStatusClasses(isLancado) {

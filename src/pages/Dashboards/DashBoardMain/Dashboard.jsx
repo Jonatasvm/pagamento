@@ -458,8 +458,8 @@ export const Dashboard = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const rawValue = String(editFormData.valor).replace(/\D/g, "");
-    if (rawValue.length === 0) {
+    const rawValue = String(editFormData.valor).replace(/[^\d.]/g, "").replace(/,/g, ".");
+    if (rawValue.length === 0 || parseFloat(rawValue) === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
       return;
@@ -756,7 +756,8 @@ export const Dashboard = () => {
         // Formatar valor apenas em números, sem R$ ou símbolo de moeda
         const formatCurrency = (value) => {
           if (!value) return "";
-          const num = Number(value) / 100;
+          // Valor já vem como float do backend (ex: 500.00), não precisa dividir por 100
+          const num = Number(value);
           return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
