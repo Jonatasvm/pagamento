@@ -471,7 +471,10 @@ export const Dashboard = () => {
     }
 
     try {
-      const dataToSave = { ...editFormData, valor: rawValue };
+      // ✅ CORREÇÃO: rawValue é em centavos (ex: "45000"), converter para reais (ex: 450)
+      // antes de passar para o adapter que vai multiplicar por 100 novamente
+      const valorEmReais = rawValue ? Math.round(Number(rawValue) / 100 * 100) / 100 : 0;
+      const dataToSave = { ...editFormData, valor: valorEmReais };
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
       if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {
@@ -482,9 +485,11 @@ export const Dashboard = () => {
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
             const obraValor = String(obra.valor || 0).replace(/\D/g, "");
+            // ✅ CORREÇÃO: converter de centavos para reais (mesmo problema da obra principal)
+            const obraValorEmReais = obraValor ? Math.round(Number(obraValor) / 100 * 100) / 100 : 0;
             const obraDataToSave = {
               ...obra,
-              valor: obraValor,
+              valor: obraValorEmReais,
               data_pagamento: editFormData.dataPagamento,
             };
             await atualizarFormulario(obra.id, obraDataToSave);
