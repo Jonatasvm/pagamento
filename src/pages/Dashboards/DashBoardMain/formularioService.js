@@ -39,8 +39,8 @@ const adapterBackendToFrontend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    // ✅ CORREÇÃO: O backend retorna em REAIS, não dividir por 100!
-    valor: data.valor ? String(data.valor) : "",
+    // ✅ CORREÇÃO: Backend retorna em CENTAVOS, dividir por 100 para exibição
+    valor: data.valor ? String(Number(data.valor) / 100) : "",
     obra: data.obra ? Number(data.obra) : null,
     dataPagamento: formatDateToInput(data.data_pagamento),
     formaDePagamento: data.forma_pagamento,
@@ -57,8 +57,8 @@ const adapterBackendToFrontend = (data) => {
     grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
-      // ✅ CORREÇÃO: O backend retorna em REAIS, não dividir por 100!
-      valor: obra.valor ? String(obra.valor) : "",
+      // ✅ CORREÇÃO: Backend retorna em CENTAVOS, dividir por 100 para exibição
+      valor: obra.valor ? String(Number(obra.valor) / 100) : "",
     })),
     valor_total: data.valor_total ? data.valor_total : data.valor,
   };
