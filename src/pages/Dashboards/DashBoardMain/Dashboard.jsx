@@ -419,7 +419,20 @@ export const Dashboard = () => {
     let newValue = value;
 
     if (name === "valor") {
-      newValue = value.replace(/\D/g, "");
+      // ✅ NOVO: Aceita ponto ou vírgula como decimal
+      // Remove tudo exceto dígitos, ponto e vírgula
+      newValue = value.replace(/[^\d.,]/g, "");
+      // Se tiver múltiplos pontos ou vírgulas, remove extras
+      const hasComma = newValue.includes(",");
+      const hasDot = newValue.includes(".");
+      if (hasComma && hasDot) {
+        // Se tiver ambos, remove o primeiro que aparecer (mantém apenas o último como decimal)
+        if (newValue.indexOf(".") < newValue.indexOf(",")) {
+          newValue = newValue.replace(".", "");
+        } else {
+          newValue = newValue.replace(",", "");
+        }
+      }
     }
     if (type === "checkbox") newValue = checked;
     if (["quemPaga", "obra", "conta", "titular"].includes(name)) {
@@ -458,7 +471,9 @@ export const Dashboard = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const rawValue = String(editFormData.valor).replace(/[^\d.]/g, "").replace(/,/g, ".");
+    // ✅ NOVO: Converte vírgula ou ponto para decimal corretamente
+    const normalizedValue = String(editFormData.valor).replace(",", ".");
+    const rawValue = normalizedValue.replace(/[^\d.]/g, "");
     if (rawValue.length === 0 || parseFloat(rawValue) === 0) {
       toast.error("O campo 'VALOR' é obrigatório.");
       setIsSaving(false);
