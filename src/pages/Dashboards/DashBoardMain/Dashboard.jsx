@@ -787,19 +787,18 @@ export const Dashboard = () => {
           }
         };
 
-        // ✅ CORREÇÃO: Valor vem em CENTAVOS do backend, dividir por 100
-        const formatCurrency = (value) => {
-          if (!value && value !== 0) return "";
+        // ✅ CORREÇÃO: Valor em CENTAVOS → converter para REAIS como número puro
+        const valorReais = (value) => {
+          if (!value && value !== 0) return 0;
           const centavos = Number(value) || 0;
-          const reais = centavos / 100;  // ✅ DIVIDE POR 100!
-          return reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          return Math.round(centavos) / 100;  // Número puro: 1234.56
         };
 
         return {
           "Data de competência*": formatDate(request.dataCompetencia),
           "Data de vencimento*": formatDate(request.dataPagamento),
           "Data de pagamento": "",
-          "Valor*": formatCurrency(request.valor),
+          "Valor*": valorReais(request.valor),  // NÚMERO puro, não string formatada
           "Pago a (Fornecedor)": request.titular || "",
           "Descrição": request.referente || "",
           "Número do Documento": request.chavePix || "",
@@ -808,7 +807,6 @@ export const Dashboard = () => {
           "Quem Paga*": "Empresa",
           "Conta Bancária*": bancoEncontrado?.nome || "",
           "Centro de Custo*": "Obra",
-          // ✅ CORREÇÃO: Trazer o NOME da obra do endpoint /obras (campo "nome")
           "Obra": obraEncontrada?.nome || "",
           "Índice Etapa / Item": "",
         };
@@ -863,12 +861,22 @@ export const Dashboard = () => {
         ws[cellRef] = { v: h, t: 's' };
       });
       
-      // Escrever dados (linha 1 em diante) - TUDO como string pura
+      // Escrever dados (linha 1 em diante)
+      // Coluna 3 (índice 3) = "Valor*" → tipo número
+      // Demais colunas → tipo string
       dataToExport.forEach((item, rowIdx) => {
         keys.forEach((key, colIdx) => {
           const cellRef = XLSX.utils.encode_cell({ r: rowIdx + 1, c: colIdx });
-          const val = item[key] || "";
-          ws[cellRef] = { v: String(val), t: 's' };
+          const val = item[key];
+          
+          if (key === "Valor*") {
+            // Valor como NÚMERO puro — Excel reconhece sem aspas
+            const numVal = Number(val) || 0;
+            ws[cellRef] = { v: numVal, t: 'n', z: '#,##0.00' };
+          } else {
+            // Texto puro — sem quotePrefix
+            ws[cellRef] = { v: String(val || ""), t: 's' };
+          }
         });
       });
       
