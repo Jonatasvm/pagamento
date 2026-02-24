@@ -819,21 +819,22 @@ export const Dashboard = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilha de Importação");
       
-      // ✅ NOVO: Aplicar formato de data às colunas de data
-      // Colunas A, B, C são as datas (Data de competência, Data de vencimento, Data de pagamento)
+      // ✅ CORREÇÃO: Limpar tipo das células para evitar ' no começo
+      // Colunas: A=DataCompetencia, B=DataVencimento, C=DataPagamento, D=Valor
       const range = XLSX.utils.decode_range(ws['!ref']);
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        // Coluna A (Data de competência) - índice 0
-        const cellA = XLSX.utils.encode_cell({ r: R, c: 0 });
-        if (ws[cellA]) ws[cellA].z = 'dd/mm/yyyy';
-        
-        // Coluna B (Data de vencimento) - índice 1
-        const cellB = XLSX.utils.encode_cell({ r: R, c: 1 });
-        if (ws[cellB]) ws[cellB].z = 'dd/mm/yyyy';
-        
-        // Coluna C (Data de pagamento) - índice 2
-        const cellC = XLSX.utils.encode_cell({ r: R, c: 2 });
-        if (ws[cellC]) ws[cellC].z = 'dd/mm/yyyy';
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        // Colunas A, B, C (datas) - Garantir que são strings puras
+        for (let C = 0; C <= 2; C++) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (ws[cellRef] && ws[cellRef].v) {
+            ws[cellRef] = { t: 's', v: String(ws[cellRef].v) };
+          }
+        }
+        // Coluna D (Valor) - Garantir que é string pura
+        const cellD = XLSX.utils.encode_cell({ r: R, c: 3 });
+        if (ws[cellD] && ws[cellD].v) {
+          ws[cellD] = { t: 's', v: String(ws[cellD].v) };
+        }
       }
       
       // Ajustar largura das colunas

@@ -41,13 +41,6 @@ const formatDateToInput = (dateString) => {
 
 // --- ADAPTADORES ---
 const adapterBackendToFrontend = (data) => {
-  // ✅ DEBUG: Log dos dados brutos do backend
-  console.log("📦 Backend data:", {
-    id: data.id,
-    data_pagamento: data.data_pagamento,
-    valor: data.valor,
-  });
-  
   // ✅ CORREÇÃO: Converter data_pagamento usando a função auxiliar
   const dataPagamentoFormatada = formatDateToInput(data.data_pagamento);
   const dataCompetenciaFormatada = formatDateToInput(data.data_competencia);
@@ -58,10 +51,9 @@ const adapterBackendToFrontend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    // ✅ CORREÇÃO: Valor JÁ VEM EM REAIS do backend (ex: 2200.63), multiplicar por 100 para centavos
-    valor: data.valor ? Math.round(Number(data.valor) * 100) : 0,
+    // ✅ Valor JÁ VEM EM CENTAVOS do backend, NÃO multiplicar
+    valor: data.valor ? Number(data.valor) : 0,
     obra: data.obra ? Number(data.obra) : null,
-    // ✅ CORREÇÃO: Usar função de formatação para converter RFC para ISO
     dataPagamento: dataPagamentoFormatada,
     formaDePagamento: data.forma_pagamento,
     statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
@@ -77,10 +69,10 @@ const adapterBackendToFrontend = (data) => {
     grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
-      // ✅ CORREÇÃO: Valor em reais, converter para centavos
-      valor: obra.valor ? Math.round(Number(obra.valor) * 100) : 0,
+      // ✅ Valor JÁ VEM EM CENTAVOS, NÃO multiplicar
+      valor: obra.valor ? Number(obra.valor) : 0,
     })),
-    valor_total: data.valor_total ? Math.round(Number(data.valor_total) * 100) : (data.valor ? Math.round(Number(data.valor) * 100) : 0),
+    valor_total: data.valor_total ? Number(data.valor_total) : (data.valor ? Number(data.valor) : 0),
   };
 };
 
@@ -90,7 +82,8 @@ const adapterFrontendToBackend = (data) => {
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    valor: data.valor ? Math.round(Number(data.valor) * 100) : 0,
+    // ✅ Valor JÁ ESTÁ EM CENTAVOS no frontend, enviar direto
+    valor: data.valor ? Number(data.valor) : 0,
     obra: Number(data.obra),
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento,
