@@ -33,21 +33,21 @@ const formatDateToInput = (dateString) => {
 // --- ADAPTADORES ---
 const adapterBackendToFrontend = (data) => {
   return {
-    id: data.id,
+    id: data.id ? Number(data.id) : 0,  // Mantém como número, não string
     // Aplica a formatação em todos os campos de data
-    dataLancamento: formatDateToInput(data.data_lancamento),
+    dataLancamento: formatDateToInput(data.data_lancamento || ''),
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    // ✅ CORREÇÃO: Backend retorna em CENTAVOS, dividir por 100 para exibição
-    valor: data.valor ? String(Number(data.valor) / 100) : "",
+    // ✅ CORREÇÃO: Backend retorna em CENTAVOS, manter como número inteiro (centavos)
+    valor: data.valor ? Number(data.valor) : 0,  // Mantém em centavos como número
     obra: data.obra ? Number(data.obra) : null,
-    dataPagamento: formatDateToInput(data.data_pagamento),
+    dataPagamento: data.data_pagamento || '',  // Mantém como string ISO (YYYY-MM-DD)
     formaDePagamento: data.forma_pagamento,
     statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
-    dataCompetencia: formatDateToInput(data.data_competencia),
+    dataCompetencia: data.data_competencia || '',  // Mantém como string ISO (YYYY-MM-DD)
     observacao: data.observacao,
     carimboDataHora: data.carimbo,
     conta: data.conta ? Number(data.conta) : null,
@@ -57,10 +57,10 @@ const adapterBackendToFrontend = (data) => {
     grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
-      // ✅ CORREÇÃO: Backend retorna em CENTAVOS, dividir por 100 para exibição
-      valor: obra.valor ? String(Number(obra.valor) / 100) : "",
+      // ✅ CORREÇÃO: Mantém valor em centavos como número
+      valor: obra.valor ? Number(obra.valor) : 0,
     })),
-    valor_total: data.valor_total ? data.valor_total : data.valor,
+    valor_total: data.valor_total ? Number(data.valor_total) : (data.valor ? Number(data.valor) : 0),
   };
 };
 

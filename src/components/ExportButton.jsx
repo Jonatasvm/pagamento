@@ -40,10 +40,15 @@ const ExportButton = ({ selectedRequests, requests, disabled }) => {
             const a = document.createElement('a');
             a.href = url;
             a.download = `Planilha de Importação_${new Date().toISOString().split('T')[0]}.xlsx`;
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            
+            // Aguardar um pouco antes de remover
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
 
             toast.success(`${selectedRequests.length} registro(s) exportado(s) com sucesso!`, { id: toastId });
 

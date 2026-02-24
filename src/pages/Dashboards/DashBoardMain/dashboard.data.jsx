@@ -85,10 +85,11 @@ export const getNameById = (list, id) => {
 };
 
 export function formatCurrencyDisplay(value) {
-    if (!value) return "0,00";
-    // Valor já vem como float do backend (ex: 500.00), não precisa dividir por 100
-    const numValue = parseFloat(value);
-    const formatted = numValue.toFixed(2).replace(".", ",");
+    if (!value && value !== 0) return "0,00";
+    // ✅ CORREÇÃO: Agora valor vem em centavos (inteiro), dividir por 100 para exibição
+    const centavos = Number(value) || 0;
+    const reais = centavos / 100;
+    const formatted = reais.toFixed(2).replace(".", ",");
     return formatted.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
 
