@@ -814,8 +814,7 @@ export const Dashboard = () => {
         };
       }).filter(item => item !== null);
       
-      // ✅ CORREÇÃO DEFINITIVA: Usar aoa_to_sheet para controle total das células (evita ')
-      // Montar array de arrays: primeira linha = cabeçalhos, demais = dados
+      // ✅ CORREÇÃO DEFINITIVA: Construir worksheet manualmente célula por célula
       const headers = [
         "Data de competência*",
         "Data de vencimento*",
@@ -833,25 +832,46 @@ export const Dashboard = () => {
         "Índice Etapa / Item",
       ];
       
-      const rows = dataToExport.map(item => [
-        item["Data de competência*"],
-        item["Data de vencimento*"],
-        item["Data de pagamento"],
-        item["Valor*"],
-        item["Pago a (Fornecedor)"],
-        item["Descrição"],
-        item["Número do Documento"],
-        item["Categoria*"],
-        item["Forma de Pagamento"],
-        item["Quem Paga*"],
-        item["Conta Bancária*"],
-        item["Centro de Custo*"],
-        item["Obra"],
-        item["Índice Etapa / Item"],
-      ]);
+      const keys = [
+        "Data de competência*",
+        "Data de vencimento*",
+        "Data de pagamento",
+        "Valor*",
+        "Pago a (Fornecedor)",
+        "Descrição",
+        "Número do Documento",
+        "Categoria*",
+        "Forma de Pagamento",
+        "Quem Paga*",
+        "Conta Bancária*",
+        "Centro de Custo*",
+        "Obra",
+        "Índice Etapa / Item",
+      ];
+
+      // Criar worksheet vazio
+      const ws = {};
+      const totalRows = dataToExport.length + 1; // +1 para header
+      const totalCols = headers.length;
       
-      const aoa = [headers, ...rows];
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      // Definir range
+      ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: totalRows - 1, c: totalCols - 1 } });
+      
+      // Escrever cabeçalhos (linha 0)
+      headers.forEach((h, c) => {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+        ws[cellRef] = { v: h, t: 's' };
+      });
+      
+      // Escrever dados (linha 1 em diante) - TUDO como string pura
+      dataToExport.forEach((item, rowIdx) => {
+        keys.forEach((key, colIdx) => {
+          const cellRef = XLSX.utils.encode_cell({ r: rowIdx + 1, c: colIdx });
+          const val = item[key] || "";
+          ws[cellRef] = { v: String(val), t: 's' };
+        });
+      });
+      
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilha de Importação");
       
@@ -880,8 +900,20 @@ export const Dashboard = () => {
       const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
       const fileName = `Planilha de Importação_${dateStr}_${timeStr}.xlsx`;
       
-      // Fazer download
-      XLSX.writeFile(wb, fileName);
+      // Fazer download - usar write com bookSST false para evitar quote prefix
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', bookSST: false });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
       
       // Atualizar status para "Lançado" se estiver "Pendente"
       let statusUpdateErrors = 0;
