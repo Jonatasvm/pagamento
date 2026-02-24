@@ -736,13 +736,18 @@ const TelaSolicitacao = () => {
       if (formData.installmentsCount > 1) {
         // Multiplas requisicoes
         schedule.forEach((parcela) => {
+          // ✅ VALIDAÇÃO: Garante que formData.referente não é vazio/undefined
+          const referenteSeguro = formData.referente || "Sem descrição";
+          const numeroSeguro = parcela.number || "?";
+          const totalSeguro = formData.installmentsCount || "?";
+          
           requests.push(
             fetch(`${API_URL}/formulario`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 ...basePayload,
-                referente: `${formData.referente} (${parcela.number}/${formData.installmentsCount})`,
+                referente: `${referenteSeguro} (${numeroSeguro}/${totalSeguro})`,
                 // ✅ CORREÇÃO: Multiplicar por 100 para enviar em CENTAVOS
                 valor: Math.round(parseCurrencyToFloat(parcela.value) * 100),
                 data_pagamento: parcela.date,

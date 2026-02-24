@@ -17,15 +17,19 @@ api.interceptors.request.use(
 );
 
 // --- FUNÇÃO AUXILIAR PARA FORMATAR DATA (CORREÇÃO DO ERRO 1) ---
-// --- FUNÇÃO AUXILIAR PARA FORMATAR DATA (CORREÇÃO DO ERRO 1) ---
 const formatDateToInput = (dateString) => {
   if (!dateString) return "";
   try {
+    // Se já for string ISO (YYYY-MM-DD), retorna direto
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
     // Tenta criar um objeto Date e pegar apenas a parte YYYY-MM-DD
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return ""; // Se for data inválida, retorna vazio
     return date.toISOString().split('T')[0];
   } catch (error) {
+    console.error("Erro ao formatar data:", error, "Valor:", dateString);
     return "";
   }
 };
