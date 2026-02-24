@@ -861,9 +861,27 @@ export const Dashboard = () => {
         ws[cellRef] = { v: h, t: 's' };
       });
       
+      // Função para converter data DD/MM/YYYY em serial number do Excel
+      // Excel conta dias desde 01/01/1900 (com bug do leap year 1900)
+      const dateToExcelSerial = (dateStr) => {
+        if (!dateStr) return null;
+        const parts = String(dateStr).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!parts) return null;
+        const [, day, month, year] = parts.map(Number);
+        // Criar data UTC para evitar timezone
+        const date = new Date(Date.UTC(year, month - 1, day));
+        if (isNaN(date.getTime())) return null;
+        // Epoch do Excel: 30/12/1899 (dia 0) — inclui bug do 29/02/1900
+        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+        const diffMs = date.getTime() - excelEpoch.getTime();
+        const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
+        return diffDays;
+      };
+
+      // Colunas que são datas (índices 0 e 1)
+      const dateKeys = ["Data de competência*", "Data de vencimento*", "Data de pagamento"];
+
       // Escrever dados (linha 1 em diante)
-      // Coluna 3 (índice 3) = "Valor*" → tipo número
-      // Demais colunas → tipo string
       dataToExport.forEach((item, rowIdx) => {
         keys.forEach((key, colIdx) => {
           const cellRef = XLSX.utils.encode_cell({ r: rowIdx + 1, c: colIdx });
@@ -873,8 +891,16 @@ export const Dashboard = () => {
             // Valor como NÚMERO puro — Excel reconhece sem aspas
             const numVal = Number(val) || 0;
             ws[cellRef] = { v: numVal, t: 'n', z: '#,##0.00' };
+          } else if (dateKeys.includes(key) && val) {
+            // Data como número serial do Excel — sem aspas, formato DD/MM/YYYY
+            const serial = dateToExcelSerial(val);
+            if (serial) {
+              ws[cellRef] = { v: serial, t: 'n', z: 'dd/mm/yyyy' };
+            } else {
+              ws[cellRef] = { v: String(val || ""), t: 's' };
+            }
           } else {
-            // Texto puro — sem quotePrefix
+            // Texto puro
             ws[cellRef] = { v: String(val || ""), t: 's' };
           }
         });
