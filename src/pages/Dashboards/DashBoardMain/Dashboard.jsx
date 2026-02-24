@@ -760,18 +760,37 @@ export const Dashboard = () => {
         // Formatar datas para DD/MM/YYYY
         const formatDate = (dateStr) => {
           if (!dateStr) return "";
-          const date = new Date(dateStr);
-          // ✅ CORREÇÃO: Adicionar 1 dia para compensar diferença de timezone
-          date.setDate(date.getDate() + 1);
-          return date.toLocaleDateString('pt-BR');
+          try {
+            const strDate = String(dateStr).trim();
+            // Se está no formato YYYY-MM-DD, faz parse manual
+            if (/^\d{4}-\d{2}-\d{2}$/.test(strDate)) {
+              const [year, month, day] = strDate.split("-").map(Number);
+              // ✅ CORREÇÃO: Adicionar 1 dia para compensar timezone
+              const adjustedDay = day + 1;
+              return `${String(adjustedDay).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+            }
+            // Para ISO com T
+            if (strDate.includes("T")) {
+              const datePart = strDate.split("T")[0];
+              const [year, month, day] = datePart.split("-").map(Number);
+              const adjustedDay = day + 1;
+              return `${String(adjustedDay).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+            }
+            // Fallback
+            const date = new Date(strDate);
+            date.setDate(date.getDate() + 1);
+            return date.toLocaleDateString('pt-BR');
+          } catch {
+            return "";
+          }
         };
 
-        // Formatar valor apenas em números, sem R$ ou símbolo de moeda
+        // ✅ CORREÇÃO: Valor vem em CENTAVOS do backend, dividir por 100
         const formatCurrency = (value) => {
-          if (!value) return "";
-          // Valor já vem como float do backend (ex: 500.00), não precisa dividir por 100
-          const num = Number(value);
-          return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          if (!value && value !== 0) return "";
+          const centavos = Number(value) || 0;
+          const reais = centavos / 100;  // ✅ DIVIDE POR 100!
+          return reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
         return {

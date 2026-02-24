@@ -36,6 +36,13 @@ const formatDateToInput = (dateString) => {
 
 // --- ADAPTADORES ---
 const adapterBackendToFrontend = (data) => {
+  // ✅ DEBUG: Log dos dados brutos do backend
+  console.log("📦 Backend data:", {
+    id: data.id,
+    data_pagamento: data.data_pagamento,
+    valor: data.valor,
+  });
+  
   return {
     id: data.id ? Number(data.id) : 0,  // Mantém como número, não string
     // Aplica a formatação em todos os campos de data
@@ -46,12 +53,13 @@ const adapterBackendToFrontend = (data) => {
     // ✅ CORREÇÃO: Backend retorna em CENTAVOS, manter como número inteiro (centavos)
     valor: data.valor ? Number(data.valor) : 0,  // Mantém em centavos como número
     obra: data.obra ? Number(data.obra) : null,
-    dataPagamento: data.data_pagamento || '',  // Mantém como string ISO (YYYY-MM-DD)
+    // ✅ CORREÇÃO: Garantir que data_pagamento seja string
+    dataPagamento: data.data_pagamento ? String(data.data_pagamento) : '',
     formaDePagamento: data.forma_pagamento,
     statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
-    dataCompetencia: data.data_competencia || '',  // Mantém como string ISO (YYYY-MM-DD)
+    dataCompetencia: data.data_competencia ? String(data.data_competencia) : '',
     observacao: data.observacao,
     carimboDataHora: data.carimbo,
     conta: data.conta ? Number(data.conta) : null,
