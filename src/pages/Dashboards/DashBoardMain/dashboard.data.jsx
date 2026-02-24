@@ -26,23 +26,31 @@ export const formatCPFCNPJ = (value) => {
 
 // ✅ Formatar data em português (DD/MM/YYYY)
 export const formatDatePT = (dateStr) => {
-  if (!dateStr) return "—";
+  // ✅ CORREÇÃO: Validar entrada antes de processar
+  if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || dateStr === '') return "—";
+  
   try {
+    const strDate = String(dateStr).trim();
+    
     // Se está no formato YYYY-MM-DD, faz parse manual para evitar timezone issues
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      const [year, month, day] = dateStr.split("-").map(Number);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(strDate)) {
+      const [year, month, day] = strDate.split("-").map(Number);
+      // Validar se os números são válidos
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return "—";
       return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
     }
     
     // Para ISO com T, extrai a data e usa parse manual
-    if (dateStr.includes("T")) {
-      const datePart = dateStr.split("T")[0];
+    if (strDate.includes("T")) {
+      const datePart = strDate.split("T")[0];
       const [year, month, day] = datePart.split("-").map(Number);
+      // Validar se os números são válidos
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return "—";
       return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
     }
     
     // Fallback para outros formatos
-    const date = new Date(dateStr);
+    const date = new Date(strDate);
     if (isNaN(date.getTime())) return "—";
     return date.toLocaleDateString('pt-BR');
   } catch {
