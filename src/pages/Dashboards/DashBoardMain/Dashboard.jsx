@@ -762,24 +762,26 @@ export const Dashboard = () => {
           if (!dateStr) return "";
           try {
             const strDate = String(dateStr).trim();
-            // Se está no formato YYYY-MM-DD, faz parse manual
+            // Se está no formato YYYY-MM-DD, faz parse manual SEM ajuste de dia
             if (/^\d{4}-\d{2}-\d{2}$/.test(strDate)) {
               const [year, month, day] = strDate.split("-").map(Number);
-              // ✅ CORREÇÃO: Adicionar 1 dia para compensar timezone
-              const adjustedDay = day + 1;
-              return `${String(adjustedDay).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+              if (isNaN(year) || isNaN(month) || isNaN(day)) return "";
+              return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
             }
             // Para ISO com T
             if (strDate.includes("T")) {
               const datePart = strDate.split("T")[0];
               const [year, month, day] = datePart.split("-").map(Number);
-              const adjustedDay = day + 1;
-              return `${String(adjustedDay).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+              if (isNaN(year) || isNaN(month) || isNaN(day)) return "";
+              return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
             }
-            // Fallback
+            // Fallback - usar UTC para evitar problemas de timezone
             const date = new Date(strDate);
-            date.setDate(date.getDate() + 1);
-            return date.toLocaleDateString('pt-BR');
+            if (isNaN(date.getTime())) return "";
+            const day = date.getUTCDate();
+            const month = date.getUTCMonth() + 1;
+            const year = date.getUTCFullYear();
+            return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
           } catch {
             return "";
           }

@@ -24,10 +24,15 @@ const formatDateToInput = (dateString) => {
     if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       return dateString;
     }
+    // ✅ CORREÇÃO: Se for formato RFC (ex: "Tue, 24 Mar 2026 00:00:00 GMT")
     // Tenta criar um objeto Date e pegar apenas a parte YYYY-MM-DD
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return ""; // Se for data inválida, retorna vazio
-    return date.toISOString().split('T')[0];
+    // Usar UTC para evitar problemas de timezone
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   } catch (error) {
     console.error("Erro ao formatar data:", error, "Valor:", dateString);
     return "";
@@ -43,23 +48,26 @@ const adapterBackendToFrontend = (data) => {
     valor: data.valor,
   });
   
+  // ✅ CORREÇÃO: Converter data_pagamento usando a função auxiliar
+  const dataPagamentoFormatada = formatDateToInput(data.data_pagamento);
+  const dataCompetenciaFormatada = formatDateToInput(data.data_competencia);
+  
   return {
-    id: data.id ? Number(data.id) : 0,  // Mantém como número, não string
-    // Aplica a formatação em todos os campos de data
+    id: data.id ? Number(data.id) : 0,
     dataLancamento: formatDateToInput(data.data_lancamento || ''),
     solicitante: data.solicitante,
     titular: data.titular,
     referente: data.referente,
-    // ✅ CORREÇÃO: Backend retorna em CENTAVOS, manter como número inteiro (centavos)
-    valor: data.valor ? Number(data.valor) : 0,  // Mantém em centavos como número
+    // ✅ CORREÇÃO: Valor JÁ VEM EM REAIS do backend (ex: 2200.63), multiplicar por 100 para centavos
+    valor: data.valor ? Math.round(Number(data.valor) * 100) : 0,
     obra: data.obra ? Number(data.obra) : null,
-    // ✅ CORREÇÃO: Garantir que data_pagamento seja string
-    dataPagamento: data.data_pagamento ? String(data.data_pagamento) : '',
+    // ✅ CORREÇÃO: Usar função de formatação para converter RFC para ISO
+    dataPagamento: dataPagamentoFormatada,
     formaDePagamento: data.forma_pagamento,
     statusLancamento: data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
-    dataCompetencia: data.data_competencia ? String(data.data_competencia) : '',
+    dataCompetencia: dataCompetenciaFormatada,
     observacao: data.observacao,
     carimboDataHora: data.carimbo,
     conta: data.conta ? Number(data.conta) : null,
@@ -69,10 +77,10 @@ const adapterBackendToFrontend = (data) => {
     grupo_lancamento: data.grupo_lancamento || null,
     obras_relacionadas: (data.obras_relacionadas || []).map(obra => ({
       ...obra,
-      // ✅ CORREÇÃO: Mantém valor em centavos como número
-      valor: obra.valor ? Number(obra.valor) : 0,
+      // ✅ CORREÇÃO: Valor em reais, converter para centavos
+      valor: obra.valor ? Math.round(Number(obra.valor) * 100) : 0,
     })),
-    valor_total: data.valor_total ? Number(data.valor_total) : (data.valor ? Number(data.valor) : 0),
+    valor_total: data.valor_total ? Math.round(Number(data.valor_total) * 100) : (data.valor ? Math.round(Number(data.valor) * 100) : 0),
   };
 };
 
