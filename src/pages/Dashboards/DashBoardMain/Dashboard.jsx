@@ -1008,7 +1008,7 @@ export const Dashboard = () => {
         </div>
       )}
 
-      <div className="max-w-[1800px] mx-auto">
+      <div className="w-full">
         <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
             Gerenciamento de Pagamentos

@@ -363,10 +363,16 @@ const PaymentTable = ({
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl">
-        <table className="w-full divide-y divide-gray-200">
+        <table className="w-full divide-y divide-gray-200" style={{ tableLayout: "fixed" }}>
+          <colgroup>
+            <col style={{ width: "100px" }} />
+            {columns.map((col) => (
+              <col key={col.key} style={{ width: col.width || "auto" }} />
+            ))}
+          </colgroup>
           <thead className="bg-gray-50 sticky top-0 z-20">
             <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 sticky left-0 bg-gray-50 z-10 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -379,12 +385,10 @@ const PaymentTable = ({
                   Ações
                 </div>
               </th>
-              {/* Mapeia as colunas recebidas via Props */}
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  style={{ minWidth: col.minWidth || "100px" }}
                 >
                   {col.label}
                 </th>
@@ -491,8 +495,9 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 ${isEditing ? '' : 'whitespace-nowrap'} text-sm ${rowClasses}`}
+                        className={`px-3 py-3 text-sm ${rowClasses} overflow-hidden text-ellipsis`}
                         style={isEditing ? { pointerEvents: 'auto' } : {}}
+                        title={typeof (isEditing ? editFormData[col.key] : request[col.key]) === 'string' ? (isEditing ? editFormData[col.key] : request[col.key]) : ''}
                       >
                         {renderField(
                           col.key,
