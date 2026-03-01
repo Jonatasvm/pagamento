@@ -168,7 +168,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
   },
   {
     key: "conta",
-    label: "Banco",
+    label: "CONTA BANCÁRIA",
     type: "select",
     options: listaBancos,
     width: "12%",
