@@ -21,7 +21,7 @@ export const FornecedorManager = ({
     cpf_cnpj: "",
   });
 
-  // ✅ NOVO: Estados para paginação e busca
+  // ✅ NOVO: Estados para paginação e busca 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
