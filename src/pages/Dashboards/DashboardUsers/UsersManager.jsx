@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Eye,
   EyeOff,
@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Plus,
   Loader2,
+  Search,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -85,9 +86,9 @@ export const UserManager = ({ API_IP, availableObras }) => {
     return typeof obra === "string" ? obra : (obra?.nome || obra?.name || "");
   };
 
-  // Normalizar availableObras para apenas nomes
+  // Normalizar availableObras para apenas nomes e ordenar alfabeticamente
   const obrasNormalizadas = Array.isArray(availableObras)
-    ? availableObras.map(getObraName).filter(Boolean)
+    ? availableObras.map(getObraName).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt-BR'))
     : [];
 
   const availableLevels = useMemo(
@@ -126,6 +127,12 @@ export const UserManager = ({ API_IP, availableObras }) => {
   const [isNewUserDropdownOpen, setIsNewUserDropdownOpen] = useState(false);
   const [isNewUserPasswordVisible, setIsNewUserPasswordVisible] =
     useState(false);
+
+  // Estados para busca nas dropdowns de obras
+  const [editObraSearch, setEditObraSearch] = useState("");
+  const [newUserObraSearch, setNewUserObraSearch] = useState("");
+  const editObraSearchRef = useRef(null);
+  const newUserObraSearchRef = useRef(null);
 
   const [modalData, setModalData] = useState({
     isOpen: false,
@@ -268,6 +275,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
       setNewUserData({ user: "", password: "", obras: [], level: "user" });
       setIsNewUserDropdownOpen(false);
       setIsNewUserPasswordVisible(false);
+      setNewUserObraSearch("");
 
       // Recarregar lista
       fetchUsers();
@@ -289,6 +297,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
     });
     setIsDropdownOpen(false);
     setIsEditPasswordVisible(false);
+    setEditObraSearch("");
   };
 
   const toggleObraEdit = (obra) => {
@@ -510,26 +519,44 @@ export const UserManager = ({ API_IP, availableObras }) => {
               </div>
             </div>
             {isNewUserDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto z-20">
-                {obrasNormalizadas.length === 0 ? (
-                  <div className="p-3 text-sm text-gray-500">
-                    Nenhuma obra disponível
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-hidden z-20">
+                {/* Campo de busca */}
+                <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      ref={newUserObraSearchRef}
+                      type="text"
+                      value={newUserObraSearch}
+                      onChange={(e) => setNewUserObraSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full border border-gray-300 rounded-md pl-8 pr-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                      placeholder="Buscar obra..."
+                      autoFocus
+                    />
                   </div>
-                ) : (
-                  obrasNormalizadas.map((obra) => (
-                    <div
-                      key={obra}
-                      onClick={() => toggleNewUserObra(obra)}
-                      className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ${
-                        newUserData.obras.includes(obra)
-                          ? "bg-blue-100 text-blue-700 font-semibold"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {obra}
+                </div>
+                <div className="max-h-44 overflow-y-auto">
+                  {obrasNormalizadas.filter(o => o.toLowerCase().includes(newUserObraSearch.toLowerCase())).length === 0 ? (
+                    <div className="p-3 text-sm text-gray-500">
+                      {obrasNormalizadas.length === 0 ? "Nenhuma obra disponível" : "Nenhuma obra encontrada"}
                     </div>
-                  ))
-                )}
+                  ) : (
+                    obrasNormalizadas.filter(o => o.toLowerCase().includes(newUserObraSearch.toLowerCase())).map((obra) => (
+                      <div
+                        key={obra}
+                        onClick={() => toggleNewUserObra(obra)}
+                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ${
+                          newUserData.obras.includes(obra)
+                            ? "bg-blue-100 text-blue-700 font-semibold"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {obra}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -728,20 +755,42 @@ export const UserManager = ({ API_IP, availableObras }) => {
                             />
                           </div>
                           {isDropdownOpen && (
-                            <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded shadow-lg z-50 max-h-40 overflow-y-auto">
-                              {obrasNormalizadas.map((o) => (
-                                <div
-                                  key={o}
-                                  onClick={() => toggleObraEdit(o)}
-                                  className={`px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer ${
-                                    editUserData.obras.includes(o)
-                                      ? "bg-blue-50 font-semibold text-blue-700"
-                                      : ""
-                                  }`}
-                                >
-                                  {o}
+                            <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded shadow-lg z-50 max-h-56 overflow-hidden">
+                              {/* Campo de busca */}
+                              <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
+                                <div className="relative">
+                                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                                  <input
+                                    ref={editObraSearchRef}
+                                    type="text"
+                                    value={editObraSearch}
+                                    onChange={(e) => setEditObraSearch(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full border border-gray-300 rounded-md pl-8 pr-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                    placeholder="Buscar obra..."
+                                    autoFocus
+                                  />
                                 </div>
-                              ))}
+                              </div>
+                              <div className="max-h-40 overflow-y-auto">
+                                {obrasNormalizadas.filter(o => o.toLowerCase().includes(editObraSearch.toLowerCase())).length === 0 ? (
+                                  <div className="p-3 text-sm text-gray-500">Nenhuma obra encontrada</div>
+                                ) : (
+                                  obrasNormalizadas.filter(o => o.toLowerCase().includes(editObraSearch.toLowerCase())).map((o) => (
+                                    <div
+                                      key={o}
+                                      onClick={() => toggleObraEdit(o)}
+                                      className={`px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer ${
+                                        editUserData.obras.includes(o)
+                                          ? "bg-blue-50 font-semibold text-blue-700"
+                                          : ""
+                                      }`}
+                                    >
+                                      {o}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -780,6 +829,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
                               onClick={() => {
                                 setEditingUserId(null);
                                 setIsDropdownOpen(false);
+                                setEditObraSearch("");
                               }}
                               className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600"
                             >
