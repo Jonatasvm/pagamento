@@ -684,7 +684,7 @@ const TelaSolicitacao = () => {
       }
     }
 
-    const usuarioLogado = localStorage.getItem("usuario") || "Usuario";
+    const usuarioLogado = localStorage.getItem("nome") || localStorage.getItem("usuario") || "Usuario";
     const hoje = new Date().toISOString().split("T")[0];    try {
       const requests = [];
       

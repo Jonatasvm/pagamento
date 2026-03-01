@@ -111,6 +111,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
   // Estado de Edição
   const [editUserData, setEditUserData] = useState({
     user: "",
+    nome: "",
     password: "",
     obras: [],
     level: "",
@@ -120,6 +121,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
   // Estado de Novo Usuário
   const [newUserData, setNewUserData] = useState({
     user: "",
+    nome: "",
     password: "",
     obras: [],
     level: "user",
@@ -189,6 +191,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
       const usuariosAdaptados = listaUsuarios.map((u) => ({
         id: u.user_id || u.id, // Garante compatibilidade com o SELECT do backend
         user: u.username, // Backend manda 'username', UI usa 'user'
+        nome: u.nome || "", // Nome do usuário
         level: u.role, // Backend manda 'role', UI usa 'level'
         password: u.password_hash || "******", // Hash para exibição
         obras: Array.isArray(u.obras) ? u.obras : [],
@@ -217,8 +220,13 @@ export const UserManager = ({ API_IP, availableObras }) => {
   }, [API_IP]);
 
   // --- CREATE USER ---
-  const handleNewUserInputChange = (field, value) =>
+  const handleNewUserInputChange = (field, value) => {
+    // Forçar maiúsculo no campo de login (user)
+    if (field === "user") {
+      value = value.toUpperCase();
+    }
     setNewUserData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const toggleNewUserObra = (obra) => {
     setNewUserData((prev) => {
@@ -234,7 +242,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
     const password = newUserData.password.trim();
 
     if (!trimmedUser || !password) {
-      toast.error("Usuário e Senha são obrigatórios.");
+      toast.error("Login e Senha são obrigatórios.");
       return;
     }
 
@@ -242,7 +250,8 @@ export const UserManager = ({ API_IP, availableObras }) => {
     try {
       // PAYLOAD CORRIGIDO: Chaves compatíveis com auth_routes.py
       const payload = {
-        usuario: trimmedUser, // Backend espera 'usuario'
+        usuario: trimmedUser.toUpperCase(), // Backend espera 'usuario' em MAIÚSCULO
+        nome: newUserData.nome.trim(), // Nome do usuário
         password: password,
         role: newUserData.level, // Backend espera 'role'
         obras: newUserData.obras, // Lista de nomes de obras
@@ -272,7 +281,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
       toast.success("Usuário criado com sucesso!");
 
       // Limpar formulário
-      setNewUserData({ user: "", password: "", obras: [], level: "user" });
+      setNewUserData({ user: "", nome: "", password: "", obras: [], level: "user" });
       setIsNewUserDropdownOpen(false);
       setIsNewUserPasswordVisible(false);
       setNewUserObraSearch("");
@@ -291,6 +300,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
     setEditingUserId(user.id);
     setEditUserData({
       user: user.user, // Frontend 'user' -> Edit 'user'
+      nome: user.nome || "", // Nome do usuário
       password: "", // Senha vazia ao iniciar edição para não reenviar hash antigo
       obras: user.obras || [],
       level: user.level, // Frontend 'level' -> Edit 'level'
@@ -311,14 +321,15 @@ export const UserManager = ({ API_IP, availableObras }) => {
 
   const handleSaveClick = async (id) => {
     if (!editUserData.user.trim()) {
-      toast.error("Nome de usuário inválido.");
+      toast.error("Login de usuário inválido.");
       return;
     }
 
     try {
       // PAYLOAD CORRIGIDO para o Backend Python
       const payload = {
-        usuario: editUserData.user,
+        usuario: editUserData.user.toUpperCase(), // Forçar maiúsculo
+        nome: editUserData.nome || "",
         role: editUserData.level,
         obras: editUserData.obras,
         // Só envia password se o usuário digitou algo novo
@@ -412,18 +423,32 @@ export const UserManager = ({ API_IP, availableObras }) => {
         <h2 className="text-2xl font-bold text-blue-700 mb-6 border-b border-blue-200 pb-3 flex items-center gap-2">
           <UserPlus size={24} /> Criar Novo Usuário
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
           {/* Campo Nome */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nome de Usuário
+              Nome
+            </label>
+            <input
+              type="text"
+              value={newUserData.nome}
+              onChange={(e) => handleNewUserInputChange("nome", e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              placeholder="Ex: João Silva"
+            />
+          </div>
+
+          {/* Campo Login */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Login (Usuário)
             </label>
             <input
               type="text"
               value={newUserData.user}
               onChange={(e) => handleNewUserInputChange("user", e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-              placeholder="Ex: novo.gestor"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none uppercase"
+              placeholder="Ex: JOAO.SILVA"
             />
           </div>
 
@@ -586,19 +611,22 @@ export const UserManager = ({ API_IP, availableObras }) => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-blue-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/5">
-                  Usuário
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/5">
-                  Senha
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/6">
+                  Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/6">
+                  Login
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/6">
+                  Senha
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/8">
                   Nível
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-2/5">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-2/6">
                   Obras
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase w-1/6">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase w-1/8">
                   Ações
                 </th>
               </tr>
@@ -606,7 +634,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
             <tbody className="bg-white divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">
+                  <td colSpan="6" className="p-8 text-center text-gray-500">
                     <div className="flex justify-center items-center gap-2">
                       <Loader2
                         className="animate-spin text-blue-500"
@@ -619,7 +647,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
               ) : !Array.isArray(users) || users.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="5"
+                    colSpan="6"
                     className="p-8 text-center text-gray-500 italic"
                   >
                     Nenhum usuário encontrado.
@@ -631,7 +659,27 @@ export const UserManager = ({ API_IP, availableObras }) => {
                     key={u.id}
                     className="hover:bg-blue-50 transition align-top"
                   >
-                    {/* Coluna Usuário */}
+                    {/* Coluna Nome */}
+                    <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                      {editingUserId === u.id ? (
+                        <input
+                          type="text"
+                          value={editUserData.nome}
+                          onChange={(e) =>
+                            setEditUserData({
+                              ...editUserData,
+                              nome: e.target.value,
+                            })
+                          }
+                          className="border border-blue-400 rounded px-2 py-1 w-full text-sm"
+                          placeholder="Nome completo"
+                        />
+                      ) : (
+                        u.nome || <span className="text-gray-400 italic">—</span>
+                      )}
+                    </td>
+
+                    {/* Coluna Login */}
                     <td className="px-6 py-3 text-sm font-medium text-gray-900">
                       {editingUserId === u.id ? (
                         <input
@@ -640,13 +688,13 @@ export const UserManager = ({ API_IP, availableObras }) => {
                           onChange={(e) =>
                             setEditUserData({
                               ...editUserData,
-                              user: e.target.value,
+                              user: e.target.value.toUpperCase(),
                             })
                           }
-                          className="border border-blue-400 rounded px-2 py-1 w-full text-sm"
+                          className="border border-blue-400 rounded px-2 py-1 w-full text-sm uppercase"
                         />
                       ) : (
-                        u.user
+                        <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{u.user}</span>
                       )}
                     </td>
 

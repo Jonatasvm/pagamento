@@ -47,6 +47,7 @@ export default function Login() {
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("user_id", res.data.id);
       localStorage.setItem("usuario", res.data.usuario);
+      localStorage.setItem("nome", res.data.nome || res.data.usuario);
 
       toast.success("Login automático realizado!");
       redirectUser(res.data.role);
@@ -92,6 +93,7 @@ export default function Login() {
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("user_id", res.data.id);
       localStorage.setItem("usuario", res.data.usuario);
+      localStorage.setItem("nome", res.data.nome || res.data.usuario);
 
       // ✅ Se "Lembrar senha" foi marcado, salva as credenciais
       if (rememberMe) {
@@ -141,9 +143,10 @@ export default function Login() {
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5
                          focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
               value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
+              onChange={(e) => setUsuario(e.target.value.toUpperCase())}
               required
               disabled={isAutoLogging}
+              style={{ textTransform: "uppercase" }}
             />
           </div>
 
