@@ -594,10 +594,21 @@ const PaymentTable = ({
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
                           {/* Usa expandedFieldsConfig recebido via props */}
-                          {expandedFieldsConfig.map((field) => (
+                          {expandedFieldsConfig.map((field) => {
+                            // Label dinâmico para chavePix baseado na forma de pagamento
+                            let displayLabel = field.label;
+                            if (field.key === "chavePix") {
+                              const forma = (currentRowData.formaDePagamento || "").toLowerCase();
+                              if (forma === "boleto") {
+                                displayLabel = "Código de Barra";
+                              } else if (forma === "cheque") {
+                                displayLabel = "N° Folha de Cheque";
+                              }
+                            }
+                            return (
                             <div key={field.key} className="flex flex-col">
                               <span className="font-semibold uppercase text-gray-500 mb-1">
-                                {field.label}:
+                                {displayLabel}:
                               </span>
                               <div className="min-h-[24px] flex items-center">
                                 {renderField(
@@ -610,7 +621,8 @@ const PaymentTable = ({
                                 )}
                               </div>
                             </div>
-                          ))}
+                          );
+                          })}
                         </div>
                       </td>
                     </tr>
