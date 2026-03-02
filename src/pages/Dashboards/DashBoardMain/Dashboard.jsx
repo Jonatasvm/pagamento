@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { Loader2, FileText, Filter, RotateCcw, User } from "lucide-react";
+import { Loader2, FileText, Filter, RotateCcw, User, History, ChevronDown, Clock, Hash, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
 
@@ -48,6 +48,14 @@ export const Dashboard = () => {
   const [isTitularLocked, setIsTitularLocked] = useState(false);
   const autocompleteDropdownRef = useRef(null);
 
+  // --- Estados para Histórico de Exportações ---
+  const [historicoExportacoes, setHistoricoExportacoes] = useState([]);
+  const [isHistoricoOpen, setIsHistoricoOpen] = useState(false);
+  const [historicoFiltroAtivo, setHistoricoFiltroAtivo] = useState(null); // ID da exportação filtrada
+  const [isLoadingHistorico, setIsLoadingHistorico] = useState(false);
+  const [historicoFilterIds, setHistoricoFilterIds] = useState(null); // IDs dos formulários para filtrar
+  const historicoRef = useRef(null);
+
   // --- Filtros ---
   const [filters, setFilters] = useState({
     statusLancamento: "false", // ✅ PADRÃO: "Não (Pendente)" - mostra apenas lançamentos pendentes
@@ -62,6 +70,70 @@ export const Dashboard = () => {
     busca: "",
     multiplayosLancamentos: "todos", // ✅ NOVO: Filtro para múltiplos lançamentos - padrão é "todos"
   });
+
+  // =========================================================================
+  // HISTÓRICO DE EXPORTAÇÕES
+  // =========================================================================
+
+  const fetchHistorico = async () => {
+    try {
+      const response = await fetch(`${API_URL}/historico/exportacoes`);
+      if (!response.ok) throw new Error("Erro ao buscar histórico");
+      const data = await response.json();
+      setHistoricoExportacoes(data.exportacoes || []);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+    }
+  };
+
+  const handleSelecionarHistorico = async (exportacao) => {
+    if (historicoFiltroAtivo === exportacao.id) {
+      // Se clicar no mesmo, remove o filtro
+      setHistoricoFiltroAtivo(null);
+      setHistoricoFilterIds(null);
+      setIsHistoricoOpen(false);
+      toast.success("Filtro de histórico removido.");
+      return;
+    }
+
+    try {
+      setIsLoadingHistorico(true);
+      const response = await fetch(`${API_URL}/historico/exportacoes/${exportacao.id}/itens`);
+      if (!response.ok) throw new Error("Erro ao buscar itens");
+      const data = await response.json();
+
+      setHistoricoFilterIds(data.formulario_ids || []);
+      setHistoricoFiltroAtivo(exportacao.id);
+      setIsHistoricoOpen(false);
+
+      // Limpar filtro de status para mostrar todos (lançados e pendentes)
+      setFilters(prev => ({ ...prev, statusLancamento: "" }));
+
+      toast.success(`Filtrando ${exportacao.quantidade} lançamento(s) do histórico #${exportacao.id}`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar itens do histórico.");
+    } finally {
+      setIsLoadingHistorico(false);
+    }
+  };
+
+  const handleLimparHistoricoFiltro = () => {
+    setHistoricoFiltroAtivo(null);
+    setHistoricoFilterIds(null);
+    toast.success("Filtro de histórico removido.");
+  };
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (historicoRef.current && !historicoRef.current.contains(e.target)) {
+        setIsHistoricoOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // =========================================================================
   // 1. CARREGAMENTO DE DADOS (Consolidado)
@@ -131,6 +203,7 @@ export const Dashboard = () => {
     fetchListaTitulares();
     fetchListaBancos();
     fetchListaCategorias();
+    fetchHistorico();
     // Se tiver fetchListaUsuarios(), chame aqui
   }, []);
 
@@ -233,6 +306,11 @@ export const Dashboard = () => {
       if (req.grupo_lancamento) return false;
     }
     // Se "todos", não filtra nada
+
+    // FILTRO DE HISTÓRICO DE EXPORTAÇÃO
+    if (historicoFilterIds && historicoFilterIds.length > 0) {
+      if (!historicoFilterIds.includes(req.id)) return false;
+    }
 
     return true;
   });
@@ -967,6 +1045,24 @@ export const Dashboard = () => {
       // Recarrega os dados após atualizar status
       await fetchRequests();
       
+      // Registrar no histórico de exportações
+      try {
+        const usuario = localStorage.getItem("nome") || localStorage.getItem("usuario") || "Desconhecido";
+        await fetch(`${API_URL}/historico/exportacoes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            usuario: usuario,
+            formulario_ids: selectedRequests,
+          }),
+        });
+        // Recarregar histórico
+        await fetchHistorico();
+      } catch (histError) {
+        console.error("Erro ao salvar histórico:", histError);
+        // Não bloqueia o fluxo principal
+      }
+      
       // Mensagem de sucesso com informações adicionais se houver erros
       if (statusUpdateErrors > 0) {
         toast.success(`Excel gerado com ${selectedRequests.length} registro(s)! (⚠️ ${statusUpdateErrors} status não atualizados)`);
@@ -1013,13 +1109,94 @@ export const Dashboard = () => {
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
             Gerenciamento de Pagamentos
           </h1>
-          <Link
-            to="/dashboard/users"
-            className="flex gap-x-2 bg-green-500 w-fit text-white p-3 mt-10 rounded-xl shadow-lg shadow-gray-400 cursor-pointer"
-          >
-            <User />
-            <p>Gerenciamento do Sistema</p>
-          </Link>
+          <div className="flex gap-4 mt-10 flex-wrap items-start">
+            <Link
+              to="/dashboard/users"
+              className="flex gap-x-2 bg-green-500 w-fit text-white p-3 rounded-xl shadow-lg shadow-gray-400 cursor-pointer"
+            >
+              <User />
+              <p>Gerenciamento do Sistema</p>
+            </Link>
+
+            {/* Botão Histórico de Lançamentos */}
+            <div className="relative" ref={historicoRef}>
+              <button
+                onClick={() => { setIsHistoricoOpen(!isHistoricoOpen); if (!isHistoricoOpen) fetchHistorico(); }}
+                className={`flex gap-x-2 ${historicoFiltroAtivo ? 'bg-amber-500' : 'bg-indigo-600'} w-fit text-white p-3 rounded-xl shadow-lg shadow-gray-400 cursor-pointer hover:opacity-90 transition`}
+              >
+                <History className="w-5 h-5" />
+                <p>Histórico Lançamento</p>
+                <ChevronDown className={`w-5 h-5 transition-transform ${isHistoricoOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown do Histórico */}
+              {isHistoricoOpen && (
+                <div className="absolute top-full left-0 mt-2 w-[420px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[400px] overflow-y-auto">
+                  <div className="p-3 border-b bg-gray-50 rounded-t-xl">
+                    <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+                      <History className="w-4 h-4 text-indigo-600" />
+                      Histórico de Exportações
+                    </h3>
+                  </div>
+
+                  {/* Botão limpar filtro se ativo */}
+                  {historicoFiltroAtivo && (
+                    <div className="p-2 border-b bg-amber-50">
+                      <button
+                        onClick={handleLimparHistoricoFiltro}
+                        className="w-full text-center text-sm font-semibold text-amber-700 hover:text-amber-900 py-1"
+                      >
+                        <RotateCcw className="w-4 h-4 inline mr-1" />
+                        Limpar filtro ativo (#{historicoFiltroAtivo})
+                      </button>
+                    </div>
+                  )}
+
+                  {isLoadingHistorico ? (
+                    <div className="p-6 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500" />
+                    </div>
+                  ) : historicoExportacoes.length === 0 ? (
+                    <div className="p-6 text-center text-gray-400 text-sm">
+                      Nenhuma exportação registrada.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100">
+                      {historicoExportacoes.map((exp) => (
+                        <button
+                          key={exp.id}
+                          onClick={() => handleSelecionarHistorico(exp)}
+                          className={`w-full text-left p-3 hover:bg-indigo-50 transition flex items-center justify-between gap-3 ${
+                            historicoFiltroAtivo === exp.id ? 'bg-amber-100 border-l-4 border-l-amber-500' : ''
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                              <Hash className="w-3.5 h-3.5 text-gray-400" />
+                              Exportação #{exp.id}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {exp.data_geracao}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {exp.usuario}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                            {exp.quantidade} lanç.
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Container de Filtros */}
