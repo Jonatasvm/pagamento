@@ -30,7 +30,7 @@ export default function Register() {
       toast.success("Usuário criado com sucesso! Redirecionando para login...");
 
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/";
       }, 1500);
     } catch (err) {
       toast.error("Erro ao registrar usuário.");
@@ -99,7 +99,7 @@ export default function Register() {
           <p className="text-center text-sm text-gray-600">
             Já tem conta?{" "}
             <a
-              href="/login"
+              href="/"
               className="text-blue-600 hover:underline font-semibold"
             >
               Fazer login

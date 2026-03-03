@@ -168,7 +168,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/";
         }, 1500);
         return;
       }
@@ -267,7 +267,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
       if (response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
-        window.location.href = "/login";
+        window.location.href = "/";
         toast.error("Sua sessão expirou. Faça login novamente.");
         return;
       }
@@ -346,7 +346,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
       if (response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
-        window.location.href = "/login";
+        window.location.href = "/";
         toast.error("Sua sessão expirou. Faça login novamente.");
         return;
       }
@@ -383,7 +383,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
           if (response.status === 401) {
             localStorage.removeItem("token");
             localStorage.removeItem("usuario");
-            window.location.href = "/login";
+            window.location.href = "/";
             toast.error("Sua sessão expirou. Faça login novamente.");
             return;
           }
