@@ -173,7 +173,7 @@ export const ObrasManager = ({
             ) : !obras || obras.length === 0 ? (
               <tr><td colSpan="3" className="p-6 text-center text-gray-500 italic">Nenhuma obra disponível.</td></tr>
             ) : (
-              obras.map((obra) => (
+              [...obras].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map((obra) => (
                 <tr key={obra.id} className="hover:bg-blue-50 transition duration-150">
                   <td className="px-6 py-3 text-sm font-medium text-gray-900 align-middle">
                     {editingObraId === obra.id ? (
