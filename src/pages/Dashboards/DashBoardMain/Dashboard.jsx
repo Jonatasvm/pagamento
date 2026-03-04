@@ -51,6 +51,10 @@ export const Dashboard = () => {
   const [obraFilterText, setObraFilterText] = useState("");
   const [isObraDropdownOpen, setIsObraDropdownOpen] = useState(false);
 
+  const titularFilterRef = useRef(null);
+  const [titularFilterText, setTitularFilterText] = useState("");
+  const [isTitularDropdownOpen, setIsTitularDropdownOpen] = useState(false);
+
   // --- Estados para Histórico de Exportações ---
   const [historicoExportacoes, setHistoricoExportacoes] = useState([]);
   const [isHistoricoOpen, setIsHistoricoOpen] = useState(false);
@@ -144,6 +148,9 @@ export const Dashboard = () => {
       if (obraFilterRef.current && !obraFilterRef.current.contains(e.target)) {
         setIsObraDropdownOpen(false);
       }
+      if (titularFilterRef.current && !titularFilterRef.current.contains(e.target)) {
+        setIsTitularDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -158,6 +165,26 @@ export const Dashboard = () => {
     const search = obraFilterText.trim().toLowerCase();
     return sorted.filter((o) => (o.nome || "").toLowerCase().includes(search));
   }, [listaObras, obraFilterText]);
+
+  // Lista de titulares filtrados e ordenados para o autocomplete
+  const titularesFiltradosOrdenados = useMemo(() => {
+    // Extrair titulares únicos dos lançamentos carregados
+    const titularesUnicos = new Map();
+    requests.forEach((req) => {
+      if (req.titular && req.titular.trim()) {
+        const nome = req.titular.trim();
+        if (!titularesUnicos.has(nome.toUpperCase())) {
+          titularesUnicos.set(nome.toUpperCase(), nome);
+        }
+      }
+    });
+    const sorted = Array.from(titularesUnicos.values()).sort((a, b) =>
+      a.localeCompare(b, "pt-BR")
+    );
+    if (!titularFilterText.trim()) return sorted;
+    const search = titularFilterText.trim().toLowerCase();
+    return sorted.filter((nome) => nome.toLowerCase().includes(search));
+  }, [requests, titularFilterText]);
 
   // =========================================================================
   // 1. CARREGAMENTO DE DADOS (Consolidado)
@@ -280,7 +307,7 @@ export const Dashboard = () => {
       if (requestObraIdString !== filterIdString) return false;
     }
 
-    // FILTRO DE TITULAR
+    // FILTRO DE TITULAR (por nome)
     if (filters.titular) {
       const filterValue = filters.titular.trim().toUpperCase();
       const requestValue = req.titular
@@ -395,6 +422,8 @@ export const Dashboard = () => {
     });
     setObraFilterText("");
     setIsObraDropdownOpen(false);
+    setTitularFilterText("");
+    setIsTitularDropdownOpen(false);
     toast.success("Filtros limpos");
   };
 
@@ -1374,24 +1403,59 @@ export const Dashboard = () => {
               ></input>
             </div>
 
-            {/* Titular */}
-            <div className="flex flex-col gap-1">
+            {/* Titular - Autocomplete */}
+            <div className="flex flex-col gap-1 relative" ref={titularFilterRef}>
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Titular
               </label>
-              <select
-                name="titular"
-                value={filters.titular}
-                onChange={handleFilterChange}
+              <input
+                type="text"
+                placeholder="Buscar titular..."
+                value={titularFilterText}
+                onChange={(e) => {
+                  setTitularFilterText(e.target.value);
+                  setIsTitularDropdownOpen(true);
+                  if (!e.target.value.trim()) {
+                    setFilters((prev) => ({ ...prev, titular: "" }));
+                  }
+                }}
+                onFocus={() => setIsTitularDropdownOpen(true)}
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="">Todos</option>
-                {listaTitulares.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nome}
-                  </option>
-                ))}
-              </select>
+              />
+              {filters.titular && (
+                <button
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, titular: "" }));
+                    setTitularFilterText("");
+                    setIsTitularDropdownOpen(false);
+                  }}
+                  className="absolute right-2 top-[28px] text-gray-400 hover:text-red-500 text-xs"
+                  title="Limpar titular"
+                >✕</button>
+              )}
+              {isTitularDropdownOpen && (
+                <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {titularesFiltradosOrdenados.length === 0 ? (
+                    <li className="px-3 py-2 text-sm text-gray-400 italic">Nenhum titular encontrado</li>
+                  ) : (
+                    titularesFiltradosOrdenados.map((nome, idx) => (
+                      <li
+                        key={idx}
+                        onClick={() => {
+                          setFilters((prev) => ({ ...prev, titular: nome }));
+                          setTitularFilterText(nome);
+                          setIsTitularDropdownOpen(false);
+                        }}
+                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 ${
+                          filters.titular === nome ? "bg-indigo-100 font-semibold" : ""
+                        }`}
+                      >
+                        {nome}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
             </div>
 
             {/* Solicitante */}
