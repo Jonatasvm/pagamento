@@ -848,6 +848,22 @@ export const Dashboard = () => {
     }
   };
 
+  // =========================================================================
+  // ✅ TOTALIZADOR: Soma dos valores dos lançamentos selecionados
+  // =========================================================================
+  const selecaoResumo = useMemo(() => {
+    if (selectedRequests.length === 0) return { total: 0, quantidade: 0 };
+    let total = 0;
+    for (const id of selectedRequests) {
+      const req = requests.find((r) => r.id === id);
+      if (req) {
+        // valor_total para múltiplos, valor para simples — ambos em centavos
+        total += (req.valor_total || req.valor || 0);
+      }
+    }
+    return { total, quantidade: selectedRequests.length };
+  }, [selectedRequests, requests]);
+
   const handleGenerateCSV = async () => {
     if (selectedRequests.length === 0) {
       toast.error("Selecione pelo menos um registro para gerar o Excel.");
@@ -1143,19 +1159,41 @@ export const Dashboard = () => {
       <Toaster position="top-right" />
 
       {selectedRequests.length > 0 && (
-        <div className="fixed bottom-8 right-8 z-50">
-          <button
-            onClick={handleGenerateCSV}
-            className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-2xl hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
-            disabled={editingId !== null || isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <FileText className="w-5 h-5" />
-            )}
-            Gerar CSV ({selectedRequests.length})
-          </button>
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            {/* Resumo da seleção */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">
+                  {selecaoResumo.quantidade}
+                </span>
+                <span className="text-sm text-gray-600 font-medium">
+                  {selecaoResumo.quantidade === 1 ? "lançamento selecionado" : "lançamentos selecionados"}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-gray-300" />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Total:</span>
+                <span className="text-xl font-bold text-green-700">
+                  {(selecaoResumo.total / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+            </div>
+
+            {/* Botão Gerar CSV */}
+            <button
+              onClick={handleGenerateCSV}
+              className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
+              disabled={editingId !== null || isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <FileText className="w-5 h-5" />
+              )}
+              Gerar CSV ({selectedRequests.length})
+            </button>
+          </div>
         </div>
       )}
 
@@ -1585,6 +1623,9 @@ export const Dashboard = () => {
             autocompleteDropdownRef={autocompleteDropdownRef}
           />
         )}
+
+        {/* Espaçador para não sobrepor a barra fixa do totalizador */}
+        {selectedRequests.length > 0 && <div className="h-20" />}
       </div>
     </div>
   );
