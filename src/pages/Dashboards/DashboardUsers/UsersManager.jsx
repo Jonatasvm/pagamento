@@ -13,6 +13,8 @@ import {
   Plus,
   Loader2,
   Search,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -256,6 +258,14 @@ export const UserManager = ({ API_IP, availableObras }) => {
     });
   };
 
+  // ✅ NOVO: Selecionar/Desmarcar TODAS as obras (novo usuário)
+  const toggleAllNewUserObras = () => {
+    setNewUserData((prev) => {
+      const allSelected = obrasNormalizadas.length > 0 && obrasNormalizadas.every(o => prev.obras.includes(o));
+      return { ...prev, obras: allSelected ? [] : [...obrasNormalizadas] };
+    });
+  };
+
   const handleAddClick = async () => {
     const trimmedUser = newUserData.user.trim();
     const password = newUserData.password.trim();
@@ -335,6 +345,14 @@ export const UserManager = ({ API_IP, availableObras }) => {
         ? prev.obras.filter((o) => o !== obra)
         : [...prev.obras, obra];
       return { ...prev, obras: newObras };
+    });
+  };
+
+  // ✅ NOVO: Selecionar/Desmarcar TODAS as obras (edição)
+  const toggleAllEditObras = () => {
+    setEditUserData((prev) => {
+      const allSelected = obrasNormalizadas.length > 0 && obrasNormalizadas.every(o => prev.obras.includes(o));
+      return { ...prev, obras: allSelected ? [] : [...obrasNormalizadas] };
     });
   };
 
@@ -580,6 +598,18 @@ export const UserManager = ({ API_IP, availableObras }) => {
                     />
                   </div>
                 </div>
+                {/* ✅ NOVO: Botão Selecionar/Desmarcar Todas */}
+                {obrasNormalizadas.length > 0 && (
+                  <div
+                    onClick={(e) => { e.stopPropagation(); toggleAllNewUserObras(); }}
+                    className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 border-b border-gray-100 flex items-center gap-2 font-semibold text-blue-600"
+                  >
+                    {obrasNormalizadas.every(o => newUserData.obras.includes(o))
+                      ? <><CheckSquare size={16} /> Desmarcar Todas</>
+                      : <><Square size={16} /> Selecionar Todas</>
+                    }
+                  </div>
+                )}
                 <div className="max-h-44 overflow-y-auto">
                   {obrasNormalizadas.filter(o => o.toLowerCase().includes(newUserObraSearch.toLowerCase())).length === 0 ? (
                     <div className="p-3 text-sm text-gray-500">
@@ -868,6 +898,18 @@ export const UserManager = ({ API_IP, availableObras }) => {
                                   />
                                 </div>
                               </div>
+                              {/* ✅ NOVO: Botão Selecionar/Desmarcar Todas */}
+                              {obrasNormalizadas.length > 0 && (
+                                <div
+                                  onClick={(e) => { e.stopPropagation(); toggleAllEditObras(); }}
+                                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-blue-50 border-b border-gray-100 flex items-center gap-2 font-semibold text-blue-600"
+                                >
+                                  {obrasNormalizadas.every(o => editUserData.obras.includes(o))
+                                    ? <><CheckSquare size={14} /> Desmarcar Todas</>
+                                    : <><Square size={14} /> Selecionar Todas</>
+                                  }
+                                </div>
+                              )}
                               <div className="max-h-40 overflow-y-auto">
                                 {obrasNormalizadas.filter(o => o.toLowerCase().includes(editObraSearch.toLowerCase())).length === 0 ? (
                                   <div className="p-3 text-sm text-gray-500">Nenhuma obra encontrada</div>
