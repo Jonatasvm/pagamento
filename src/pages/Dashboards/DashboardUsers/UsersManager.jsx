@@ -148,6 +148,14 @@ export const UserManager = ({ API_IP, availableObras }) => {
   // ✅ NOVO: Estado para busca na lista de usuários
   const [userSearchTerm, setUserSearchTerm] = useState("");
 
+  // ✅ NOVO: Estado para controlar quais usuários têm obras expandidas
+  const [expandedObrasUsers, setExpandedObrasUsers] = useState({});
+  const OBRAS_LIMIT = 5; // Mostra no máximo 5 obras antes de colapsar
+
+  const toggleObrasExpanded = (userId) => {
+    setExpandedObrasUsers((prev) => ({ ...prev, [userId]: !prev[userId] }));
+  };
+
   // ✅ NOVO: Filtrar usuários por busca (reativo, ordenado)
   const usersFiltrados = useMemo(() => {
     if (!Array.isArray(users) || users.length === 0) return [];
@@ -935,14 +943,26 @@ export const UserManager = ({ API_IP, availableObras }) => {
                       ) : (
                         <div className="flex flex-wrap gap-1">
                           {u.obras && u.obras.length ? (
-                            u.obras.map((o, i) => (
-                              <span
-                                key={i}
-                                className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
-                              >
-                                {o}
-                              </span>
-                            ))
+                            <>
+                              {(expandedObrasUsers[u.id] ? u.obras : u.obras.slice(0, OBRAS_LIMIT)).map((o, i) => (
+                                <span
+                                  key={i}
+                                  className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
+                                >
+                                  {o}
+                                </span>
+                              ))}
+                              {u.obras.length > OBRAS_LIMIT && (
+                                <button
+                                  onClick={() => toggleObrasExpanded(u.id)}
+                                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 transition"
+                                >
+                                  {expandedObrasUsers[u.id]
+                                    ? "▲ Mostrar menos"
+                                    : `+${u.obras.length - OBRAS_LIMIT} mais...`}
+                                </button>
+                              )}
+                            </>
                           ) : (
                             <span className="text-gray-400 text-xs italic">
                               -
