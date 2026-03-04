@@ -47,6 +47,9 @@ export const Dashboard = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [isTitularLocked, setIsTitularLocked] = useState(false);
   const autocompleteDropdownRef = useRef(null);
+  const obraFilterRef = useRef(null);
+  const [obraFilterText, setObraFilterText] = useState("");
+  const [isObraDropdownOpen, setIsObraDropdownOpen] = useState(false);
 
   // --- Estados para Histórico de Exportações ---
   const [historicoExportacoes, setHistoricoExportacoes] = useState([]);
@@ -134,6 +137,27 @@ export const Dashboard = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Fechar dropdown de obra ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (obraFilterRef.current && !obraFilterRef.current.contains(e.target)) {
+        setIsObraDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Lista de obras filtradas e ordenadas para o autocomplete
+  const obrasFiltradasOrdenadas = useMemo(() => {
+    const sorted = [...listaObras].sort((a, b) =>
+      (a.nome || "").localeCompare(b.nome || "", "pt-BR")
+    );
+    if (!obraFilterText.trim()) return sorted;
+    const search = obraFilterText.trim().toLowerCase();
+    return sorted.filter((o) => (o.nome || "").toLowerCase().includes(search));
+  }, [listaObras, obraFilterText]);
 
   // =========================================================================
   // 1. CARREGAMENTO DE DADOS (Consolidado)
@@ -369,6 +393,8 @@ export const Dashboard = () => {
       referente: "",
       busca: "",
     });
+    setObraFilterText("");
+    setIsObraDropdownOpen(false);
     toast.success("Filtros limpos");
   };
 
@@ -1260,24 +1286,60 @@ export const Dashboard = () => {
               ></input>
             </div>
 
-            {/* Obra */}
-            <div className="flex flex-col gap-1">
+            {/* Obra - Autocomplete */}
+            <div className="flex flex-col gap-1 relative" ref={obraFilterRef}>
               <label className="text-xs font-semibold text-gray-500 uppercase">
                 Obra
               </label>
-              <select
-                name="obra"
-                value={filters.obra}
-                onChange={handleFilterChange}
+              <input
+                type="text"
+                placeholder="Buscar obra..."
+                value={obraFilterText}
+                onChange={(e) => {
+                  setObraFilterText(e.target.value);
+                  setIsObraDropdownOpen(true);
+                  // Se apagar o texto, limpa o filtro
+                  if (!e.target.value.trim()) {
+                    setFilters((prev) => ({ ...prev, obra: "" }));
+                  }
+                }}
+                onFocus={() => setIsObraDropdownOpen(true)}
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="">Todas</option>
-                {listaObras.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.nome}
-                  </option>
-                ))}
-              </select>
+              />
+              {filters.obra && (
+                <button
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, obra: "" }));
+                    setObraFilterText("");
+                    setIsObraDropdownOpen(false);
+                  }}
+                  className="absolute right-2 top-[28px] text-gray-400 hover:text-red-500 text-xs"
+                  title="Limpar obra"
+                >✕</button>
+              )}
+              {isObraDropdownOpen && (
+                <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {obrasFiltradasOrdenadas.length === 0 ? (
+                    <li className="px-3 py-2 text-sm text-gray-400 italic">Nenhuma obra encontrada</li>
+                  ) : (
+                    obrasFiltradasOrdenadas.map((opt) => (
+                      <li
+                        key={opt.id}
+                        onClick={() => {
+                          setFilters((prev) => ({ ...prev, obra: String(opt.id) }));
+                          setObraFilterText(opt.nome);
+                          setIsObraDropdownOpen(false);
+                        }}
+                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 ${
+                          String(filters.obra) === String(opt.id) ? "bg-indigo-100 font-semibold" : ""
+                        }`}
+                      >
+                        {opt.nome}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
             </div>
           </div>
 
