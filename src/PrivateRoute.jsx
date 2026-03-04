@@ -10,9 +10,14 @@ export default function PrivateRoute({ children, roleRequired }) {
   }
 
   // ✅ Se especificou uma role e não corresponde, redireciona
+  // financeiro tem acesso às mesmas rotas que admin
   if (roleRequired && role !== roleRequired) {
+    // financeiro pode acessar rotas de admin
+    if (roleRequired === "admin" && role === "financeiro") {
+      return children;
+    }
     if (role === "user") return <Navigate to="/solicitacao" replace />;
-    if (role === "admin") return <Navigate to="/dashboard" replace />;
+    if (role === "admin" || role === "financeiro") return <Navigate to="/dashboard" replace />;
     return <Navigate to="/" replace />; // fallback
   }
 

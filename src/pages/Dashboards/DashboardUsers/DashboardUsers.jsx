@@ -16,6 +16,9 @@ export default function DashboardUsers() {
   // --- ESTADO DE NAVEGAÇÃO ENTRE ABAS ---
   const [currentTab, setCurrentTab] = useState("menu"); // "menu" | "obras" | "usuarios" | "bancos" | "fornecedores"
   
+  // ✅ NOVO: Obter role do usuário logado
+  const currentUserRole = localStorage.getItem("role") || "user";
+  
   const [obrasList, setObrasList] = useState([]);
   const [loadingObras, setLoadingObras] = useState(false);
 
@@ -422,7 +425,7 @@ export default function DashboardUsers() {
                 <Users size={48} className="text-purple-100" />
                 <h2 className="text-2xl font-bold">Gerenciar Usuários</h2>
                 <p className="text-sm text-purple-100">
-                  Criar usuários e vincular às obras
+                  {currentUserRole === "financeiro" ? "Visualizar usuários do sistema" : "Criar usuários e vincular às obras"}
                 </p>
               </button>
 
@@ -510,7 +513,7 @@ export default function DashboardUsers() {
               </Link>
             </div>
             {/* Componente de Usuários */}
-            <UserManager API_IP={API_IP} availableObras={obrasList} />
+            <UserManager API_IP={API_IP} availableObras={obrasList} currentUserRole={currentUserRole} />
           </div>
         )}
 

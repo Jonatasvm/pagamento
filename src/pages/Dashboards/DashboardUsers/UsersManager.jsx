@@ -66,10 +66,19 @@ const LevelBadge = ({ level }) => {
   const isAdministrator =
     level?.toLowerCase() === "admin" ||
     level?.toLowerCase() === "administrador";
-  const className = isAdministrator
-    ? "bg-purple-100 text-purple-800 border border-purple-200"
-    : "bg-green-100 text-green-800 border border-green-200";
-  const displayLabel = isAdministrator ? "Administrador" : "Usuário";
+  const isFinanceiro = level?.toLowerCase() === "financeiro";
+  
+  let className, displayLabel;
+  if (isAdministrator) {
+    className = "bg-purple-100 text-purple-800 border border-purple-200";
+    displayLabel = "Administrador";
+  } else if (isFinanceiro) {
+    className = "bg-amber-100 text-amber-800 border border-amber-200";
+    displayLabel = "Financeiro";
+  } else {
+    className = "bg-green-100 text-green-800 border border-green-200";
+    displayLabel = "Usuário";
+  }
 
   return (
     <span
@@ -82,7 +91,9 @@ const LevelBadge = ({ level }) => {
 
 // --- COMPONENTE USER MANAGER ---
 
-export const UserManager = ({ API_IP, availableObras }) => {
+export const UserManager = ({ API_IP, availableObras, currentUserRole }) => {
+  // ✅ Verificar se é financeiro (modo somente leitura para usuários)
+  const isFinanceiro = currentUserRole === "financeiro";
   // Função helper para extrair nome da obra (suporta string ou objeto)
   const getObraName = (obra) => {
     return typeof obra === "string" ? obra : (obra?.nome || obra?.name || "");
@@ -96,6 +107,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
   const availableLevels = useMemo(
     () => [
       { value: "user", label: "Usuário" },
+      { value: "financeiro", label: "Financeiro" },
       { value: "admin", label: "Administrador" },
     ],
     []
@@ -463,7 +475,8 @@ export const UserManager = ({ API_IP, availableObras }) => {
         onCancel={() => setModalData({ ...modalData, isOpen: false })}
       />
 
-      {/* SEÇÃO DE CRIAÇÃO */}
+      {/* SEÇÃO DE CRIAÇÃO - Oculta para financeiro */}
+      {!isFinanceiro && (
       <section className="p-6 bg-blue-50 rounded-2xl shadow-md border border-blue-100">
         <h2 className="text-2xl font-bold text-blue-700 mb-6 border-b border-blue-200 pb-3 flex items-center gap-2">
           <UserPlus size={24} /> Criar Novo Usuário
@@ -658,6 +671,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
           </button>
         </div>
       </section>
+      )}
 
       {/* LISTA DE USUÁRIOS */}
       <section>
@@ -786,7 +800,9 @@ export const UserManager = ({ API_IP, availableObras }) => {
 
                     {/* Coluna Senha */}
                     <td className="px-6 py-3 text-sm text-gray-700">
-                      {editingUserId === u.id ? (
+                      {isFinanceiro ? (
+                        <span className="text-gray-400 italic text-xs">Sem permissão</span>
+                      ) : editingUserId === u.id ? (
                         <div className="relative">
                           <input
                             type={isEditPasswordVisible ? "text" : "password"}
@@ -974,6 +990,9 @@ export const UserManager = ({ API_IP, availableObras }) => {
 
                     {/* Coluna Ações */}
                     <td className="px-6 py-3 text-right">
+                      {isFinanceiro ? (
+                        <span className="text-gray-400 italic text-xs">—</span>
+                      ) : (
                       <div className="flex justify-end gap-2">
                         {editingUserId === u.id ? (
                           <>
@@ -1011,6 +1030,7 @@ export const UserManager = ({ API_IP, availableObras }) => {
                           </>
                         )}
                       </div>
+                      )}
                     </td>
                   </tr>
                 ))

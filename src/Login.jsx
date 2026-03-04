@@ -65,7 +65,7 @@ export default function Login() {
   const redirectUser = (role = null) => {
     const userRole = role || localStorage.getItem("role");
     setTimeout(() => {
-      if (userRole === "admin") {
+      if (userRole === "admin" || userRole === "financeiro") {
         window.location.href = "/dashboard";
       } else {
         window.location.href = "/solicitacao";
