@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Edit, Trash2, Save, X, Plus, Zap } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Edit, Trash2, Save, X, Plus, Zap, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 // CORREÇÃO AQUI: As chaves { } garantem que as props sejam lidas corretamente
@@ -17,6 +17,23 @@ export const ObrasManager = ({
   const [editingObraId, setEditingObraId] = useState(null);
   const [editedObraName, setEditedObraName] = useState("");
   const [editedBankId, setEditedBankId] = useState("");
+
+  // ✅ NOVO: Estado para busca
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // ✅ NOVO: Filtrar obras por busca (reativo)
+  const obrasFiltradas = useMemo(() => {
+    if (!obras || obras.length === 0) return [];
+    const sorted = [...obras].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+    if (!searchTerm.trim()) return sorted;
+    const termo = searchTerm.toLowerCase().trim();
+    const palavras = termo.split(/\s+/).filter(p => p.length > 0);
+    return sorted.filter((obra) => {
+      const nome = (obra.nome || "").toLowerCase();
+      const banco = (obra.quem_paga || "").toLowerCase();
+      return palavras.every(p => nome.includes(p) || banco.includes(p));
+    });
+  }, [obras, searchTerm]);
 
   const checkNameExists = (name, excludeId = null) => {
     if (!obras) return false;
@@ -157,6 +174,25 @@ export const ObrasManager = ({
         </div>
       </div>
 
+      {/* ✅ NOVO: Campo de Busca */}
+      <div className="mb-6 flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nome da obra ou banco..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 transition"
+          />
+        </div>
+        {searchTerm && (
+          <span className="text-xs text-gray-500">
+            {obrasFiltradas.length} resultado(s)
+          </span>
+        )}
+      </div>
+
       {/* --- Tabela --- */}
       <div className="overflow-x-auto rounded-xl shadow-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
@@ -173,7 +209,7 @@ export const ObrasManager = ({
             ) : !obras || obras.length === 0 ? (
               <tr><td colSpan="3" className="p-6 text-center text-gray-500 italic">Nenhuma obra disponível.</td></tr>
             ) : (
-              [...obras].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map((obra) => (
+              obrasFiltradas.map((obra) => (
                 <tr key={obra.id} className="hover:bg-blue-50 transition duration-150">
                   <td className="px-6 py-3 text-sm font-medium text-gray-900 align-middle">
                     {editingObraId === obra.id ? (

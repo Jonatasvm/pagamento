@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Edit, Trash2, Save, X, Plus, Building2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Edit, Trash2, Save, X, Plus, Building2, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export const BanksManager = ({
@@ -12,6 +12,24 @@ export const BanksManager = ({
   const [newBankName, setNewBankName] = useState("");
   const [editingBankId, setEditingBankId] = useState(null);
   const [editedBankName, setEditedBankName] = useState("");
+
+  // ✅ NOVO: Estado para busca
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // ✅ NOVO: Filtrar bancos por busca (reativo, ordenado)
+  const banksFiltrados = useMemo(() => {
+    if (!banks || banks.length === 0) return [];
+    const sorted = [...banks].sort((a, b) =>
+      (a.nome || "").localeCompare(b.nome || "", "pt-BR")
+    );
+    if (!searchTerm.trim()) return sorted;
+    const termo = searchTerm.toLowerCase().trim();
+    const palavras = termo.split(/\s+/).filter((p) => p.length > 0);
+    return sorted.filter((bank) => {
+      const nome = (bank.nome || "").toLowerCase();
+      return palavras.every((p) => nome.includes(p));
+    });
+  }, [banks, searchTerm]);
 
   const checkNameExists = (name, excludeId = null) => {
     if (!banks) return false;
@@ -69,7 +87,8 @@ export const BanksManager = ({
   return (
     <section>
       <h1 className="text-3xl font-extrabold text-green-700 mb-8 border-b pb-2 flex items-center gap-2">
-        <Building2 size={28} className="text-green-500" /> Gerenciar Contas Bancárias
+        <Building2 size={28} className="text-green-500" /> Gerenciar Contas
+        Bancárias
       </h1>
 
       {/* --- Inputs de Adicionar --- */}
@@ -96,6 +115,25 @@ export const BanksManager = ({
             <Plus size={18} /> {isLoading ? "..." : "Adicionar"}
           </button>
         </div>
+      </div>
+
+      {/* ✅ NOVO: Campo de Busca */}
+      <div className="mb-6 flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nome do banco..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 transition"
+          />
+        </div>
+        {searchTerm && (
+          <span className="text-xs text-gray-500">
+            {banksFiltrados.length} resultado(s)
+          </span>
+        )}
       </div>
 
       {/* --- Tabela --- */}
@@ -125,7 +163,7 @@ export const BanksManager = ({
                 </td>
               </tr>
             ) : (
-              banks.map((bank) => (
+              banksFiltrados.map((bank) => (
                 <tr
                   key={bank.id}
                   className="hover:bg-green-50 transition duration-150"

@@ -143,6 +143,25 @@ export const UserManager = ({ API_IP, availableObras }) => {
     onConfirm: () => {},
   });
 
+  // ✅ NOVO: Estado para busca na lista de usuários
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+
+  // ✅ NOVO: Filtrar usuários por busca (reativo, ordenado)
+  const usersFiltrados = useMemo(() => {
+    if (!Array.isArray(users) || users.length === 0) return [];
+    const sorted = [...users].sort((a, b) => ((a.nome || a.user) || "").localeCompare((b.nome || b.user) || "", "pt-BR"));
+    if (!userSearchTerm.trim()) return sorted;
+    const termo = userSearchTerm.toLowerCase().trim();
+    const palavras = termo.split(/\s+/).filter(p => p.length > 0);
+    return sorted.filter((u) => {
+      const nome = (u.nome || "").toLowerCase();
+      const login = (u.user || "").toLowerCase();
+      const level = (u.level || "").toLowerCase();
+      const obrasStr = (u.obras || []).join(" ").toLowerCase();
+      return palavras.every(p => nome.includes(p) || login.includes(p) || level.includes(p) || obrasStr.includes(p));
+    });
+  }, [users, userSearchTerm]);
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return {
@@ -607,6 +626,26 @@ export const UserManager = ({ API_IP, availableObras }) => {
         <h1 className="text-3xl font-extrabold text-blue-700 mb-8 border-b pb-2 flex items-center gap-2">
           <Users size={28} className="text-blue-500" /> Gestão de Usuários
         </h1>
+
+        {/* ✅ NOVO: Campo de Busca */}
+        <div className="mb-6 flex items-center gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nome, login, nível ou obra..."
+              value={userSearchTerm}
+              onChange={(e) => setUserSearchTerm(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 transition"
+            />
+          </div>
+          {userSearchTerm && (
+            <span className="text-xs text-gray-500">
+              {usersFiltrados.length} resultado(s)
+            </span>
+          )}
+        </div>
+
         <div className="overflow-visible rounded-xl shadow-lg border border-gray-200 bg-white">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-blue-600">
@@ -653,8 +692,17 @@ export const UserManager = ({ API_IP, availableObras }) => {
                     Nenhum usuário encontrado.
                   </td>
                 </tr>
+              ) : usersFiltrados.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="p-8 text-center text-gray-500 italic"
+                  >
+                    Nenhum usuário corresponde à busca.
+                  </td>
+                </tr>
               ) : (
-                users.map((u) => (
+                usersFiltrados.map((u) => (
                   <tr
                     key={u.id}
                     className="hover:bg-blue-50 transition align-top"
