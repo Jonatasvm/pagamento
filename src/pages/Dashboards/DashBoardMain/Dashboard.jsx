@@ -139,8 +139,8 @@ export const Dashboard = () => {
   // 1. CARREGAMENTO DE DADOS (Consolidado)
   // =========================================================================
   
-  const fetchRequests = async () => {
-    setIsLoadingData(true);
+  const fetchRequests = async (silent = false) => {
+    if (!silent) setIsLoadingData(true);
     try {
       const data = await listarFormularios();
       setRequests(data);
@@ -148,7 +148,7 @@ export const Dashboard = () => {
       console.error("Erro ao carregar requisições:", error);
       toast.error("Erro ao carregar a lista de lançamentos.");
     } finally {
-      setIsLoadingData(false);
+      if (!silent) setIsLoadingData(false);
     }
   };
 
@@ -594,7 +594,7 @@ export const Dashboard = () => {
       setEditingId(null);
       setEditFormData({});
       setIsTitularLocked(false);
-      await fetchRequests();
+      await fetchRequests(true);
     } catch (error) {
       console.error("❌ ERRO ao salvar:", error);
       toast.error("Erro ao salvar alterações.");
@@ -1043,7 +1043,7 @@ export const Dashboard = () => {
       }
       
       // Recarrega os dados após atualizar status
-      await fetchRequests();
+      await fetchRequests(true);
       
       // Registrar no histórico de exportações
       try {
