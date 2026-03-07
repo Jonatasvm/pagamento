@@ -106,14 +106,19 @@ const PaymentTable = ({
           <input
             type="text"
             name={key}
-            value={String(value || "").replace(",", ".")} 
+            value={String(value || "")}
             onChange={(e) => {
-              handleEditChange(e);
+              // ✅ MÁSCARA: Só permite dígitos e vírgula, máximo 1 vírgula, máx 2 casas decimais
+              let raw = e.target.value.replace(/[^\d,]/g, "");
+              const parts = raw.split(",");
+              if (parts.length > 2) raw = parts[0] + "," + parts.slice(1).join("");
+              if (parts.length === 2 && parts[1].length > 2) raw = parts[0] + "," + parts[1].slice(0, 2);
+              handleEditChange({ target: { name: key, value: raw, type: "text" } });
             }}
             onClick={(e) => {
               e.stopPropagation();
             }}
-            placeholder="0.00"
+            placeholder="0,00"
             style={{position: "relative", zIndex: 1000, pointerEvents: 'auto'}}
             className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
             autoFocus
@@ -564,7 +569,7 @@ const PaymentTable = ({
                                         type="text"
                                         value={String(editFormData.obras_relacionadas?.[idx]?.valor || obra.valor || "")}
                                         onChange={(e) => handleEditObraRelacionada(idx, "valor", e.target.value)}
-                                        placeholder="0"
+                                        placeholder="0,00"
                                         className="w-full px-2 py-1 border border-green-400 rounded-md text-sm focus:ring-2 focus:ring-green-500"
                                       />
                                     </>

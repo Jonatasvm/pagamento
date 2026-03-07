@@ -505,13 +505,24 @@ export const Dashboard = () => {
     const quemPagaValue = request.quemPaga || "";
     
     
+    // ✅ MÁSCARA: Converter valor de centavos para reais com vírgula ao abrir edição
+    const valorCentavos = Number(request.valor) || 0;
+    const valorFormatado = (valorCentavos / 100).toFixed(2).replace(".", ",");
+
+    // ✅ MÁSCARA: Converter valores das obras relacionadas de centavos para reais com vírgula
+    const obrasRelacionadasFormatadas = (request.obras_relacionadas || []).map(obra => ({
+      ...obra,
+      valor: obra.valor ? (Number(obra.valor) / 100).toFixed(2).replace(".", ",") : "0,00",
+    }));
+
     const newFormData = {
       ...request,
       obra: request.obra ? String(request.obra) : "",
       conta: contaValue ? String(contaValue) : "",
       quemPaga: quemPagaValue ? String(quemPagaValue) : "",
-      // ✅ NOVO: Copiar obras_relacionadas para edição
-      obras_relacionadas: request.obras_relacionadas || [],
+      valor: valorFormatado, // ✅ Ex: 1289 → "12,89"
+      // ✅ NOVO: Copiar obras_relacionadas para edição (já formatadas)
+      obras_relacionadas: obrasRelacionadasFormatadas,
     };
     
     setEditFormData(newFormData);
@@ -552,20 +563,12 @@ export const Dashboard = () => {
     let newValue = value;
 
     if (name === "valor") {
-      // ✅ NOVO: Aceita ponto ou vírgula como decimal
-      // Remove tudo exceto dígitos, ponto e vírgula
-      newValue = value.replace(/[^\d.,]/g, "");
-      // Se tiver múltiplos pontos ou vírgulas, remove extras
-      const hasComma = newValue.includes(",");
-      const hasDot = newValue.includes(".");
-      if (hasComma && hasDot) {
-        // Se tiver ambos, remove o primeiro que aparecer (mantém apenas o último como decimal)
-        if (newValue.indexOf(".") < newValue.indexOf(",")) {
-          newValue = newValue.replace(".", "");
-        } else {
-          newValue = newValue.replace(",", "");
-        }
-      }
+      // ✅ MÁSCARA: Aceita apenas dígitos e vírgula (a máscara do input já filtra)
+      newValue = value.replace(/[^\d,]/g, "");
+      // Garante no máximo 1 vírgula e máx 2 casas decimais
+      const parts = newValue.split(",");
+      if (parts.length > 2) newValue = parts[0] + "," + parts.slice(1).join("");
+      if (parts.length === 2 && parts[1].length > 2) newValue = parts[0] + "," + parts[1].slice(0, 2);
     }
     if (type === "checkbox") newValue = checked;
     if (["quemPaga", "obra", "conta", "titular"].includes(name)) {
@@ -590,9 +593,12 @@ export const Dashboard = () => {
       }
       
       if (field === "valor") {
-        // Remove caracteres não numéricos e mantém como string de número
-        const numericValue = value.replace(/\D/g, "");
-        novasObras[index][field] = numericValue || "0";
+        // ✅ MÁSCARA: Permite dígitos e vírgula, máx 1 vírgula, máx 2 decimais
+        let raw = value.replace(/[^\d,]/g, "");
+        const parts = raw.split(",");
+        if (parts.length > 2) raw = parts[0] + "," + parts.slice(1).join("");
+        if (parts.length === 2 && parts[1].length > 2) raw = parts[0] + "," + parts[1].slice(0, 2);
+        novasObras[index][field] = raw || "0";
       } else {
         // Para 'obra', converte para número
         novasObras[index][field] = Number(value);
@@ -619,9 +625,10 @@ export const Dashboard = () => {
     }
 
     try {
-      // ✅ CORREÇÃO: O valor está em reais (ex: "5202.20"), passar direto sem conversão
+      // ✅ CORREÇÃO: O valor está em reais (ex: "12.89"), converter para centavos antes de salvar
       const valorEmReais = rawValue ? Number(rawValue) : 0;
-      const dataToSave = { ...editFormData, valor: valorEmReais };
+      const valorEmCentavos = Math.round(valorEmReais * 100);
+      const dataToSave = { ...editFormData, valor: valorEmCentavos };
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
       if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {
@@ -631,11 +638,13 @@ export const Dashboard = () => {
         // Salva cada obra relacionada com seu valor editado
         if (editFormData.obras_relacionadas?.length > 0) {
           for (const obra of editFormData.obras_relacionadas) {
-            // ✅ CORREÇÃO: obra.valor já está em reais, não precisa dividir por 100
-            const obraValorEmReais = Number(obra.valor) || 0;
+            // ✅ CORREÇÃO: obra.valor está em reais com vírgula (ex: "12,89"), converter para centavos
+            const obraValorNorm = String(obra.valor).replace(",", ".");
+            const obraValorEmReais = Number(obraValorNorm) || 0;
+            const obraValorEmCentavos = Math.round(obraValorEmReais * 100);
             const obraDataToSave = {
               ...obra,
-              valor: obraValorEmReais,
+              valor: obraValorEmCentavos,
               data_pagamento: editFormData.dataPagamento,
             };
             await atualizarFormulario(obra.id, obraDataToSave);
