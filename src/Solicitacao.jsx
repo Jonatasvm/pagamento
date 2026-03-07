@@ -947,13 +947,6 @@ const TelaSolicitacao = () => {
                         setMultipleWorks(e.target.checked);
                         if (!e.target.checked) {
                           setSelectedWorks([]); // Limpa obras selecionadas se desabilitar
-                        } else {
-                          // Quando habilita múltiplas obras, pré-preenche o valor da obra principal
-                          // com o valor total (se houver)
-                          if (!formData.valor) {
-                            toast.error("Por favor, informe o valor total primeiro", { duration: 3000 });
-                            return;
-                          }
                         }
                       }}
                       className="w-5 h-5 text-blue-600 border-gray-300 rounded"
@@ -964,6 +957,28 @@ const TelaSolicitacao = () => {
                   </label>
                   <p className="text-xs text-gray-600 mt-2 ml-8">
                     Selecione se o valor será dividido entre duas ou mais obras
+                  </p>
+                </div>
+              )}
+
+              {/* ✅ REORGANIZADO: Quando multi-obras ativo, Valor Total aparece aqui (acima do seletor de obras) */}
+              {multipleWorks && formData.obra && (
+                <div className="mt-4">
+                  <label htmlFor="valor" className={labelClass}>
+                    <DollarSign className="w-4 h-4 mr-2 text-blue-600" /> Valor
+                    Total <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="valor"
+                    value={formData.valor}
+                    onChange={handleChange}
+                    placeholder="R$ 0,00"
+                    inputMode="numeric"
+                    className={`${inputClass} text-lg font-medium text-gray-900 border-2 border-green-400 bg-green-50`}
+                  />
+                  <p className="text-xs text-green-700 mt-1 font-medium">
+                    💡 Informe o valor total primeiro, depois distribua entre as obras abaixo
                   </p>
                 </div>
               )}
@@ -1083,6 +1098,8 @@ const TelaSolicitacao = () => {
                   className={`${inputClass} resize-none`}
                 />
               </div>
+              {/* ✅ Valor Total: Esconde aqui quando multi-obras ativo (já aparece acima) */}
+              {!multipleWorks && (
               <div>
                 <label htmlFor="valor" className={labelClass}>
                   <DollarSign className="w-4 h-4 mr-2 text-blue-600" /> Valor
@@ -1098,6 +1115,7 @@ const TelaSolicitacao = () => {
                   className={`${inputClass} text-lg font-medium text-gray-900`}
                 />
               </div>
+              )}
             </div>
           </div>
 
