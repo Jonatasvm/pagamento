@@ -691,16 +691,24 @@ const TelaSolicitacao = () => {
       // ✅ NOVO: Se for múltiplos lançamentos, incluir a obra principal no array de obras
       let obrasParaLancar = [];
       if (multipleWorks && selectedWorks.length > 0) {
-        // Adicionar obra principal com seu valor
+        // Adicionar obra principal com seu valor — ✅ já em CENTAVOS para consistência com o backend
         obrasParaLancar = [
           { 
             obra_id: parseInt(formData.obra), 
-            valor: parseCurrencyToFloat(valorObraPrincipal || formData.valor) // Converter para float
+            valor: Math.round(parseCurrencyToFloat(valorObraPrincipal || formData.valor) * 100)
           },
           ...selectedWorks.map(w => ({
             obra_id: parseInt(w.obra_id),
-            valor: parseCurrencyToFloat(w.valor || "0") // Converter para float
+            valor: Math.round(parseCurrencyToFloat(w.valor || "0") * 100)
           }))
+        ];
+      } else if (multipleWorks && selectedWorks.length === 0) {
+        // Múltiplo marcado mas sem obras adicionais — só a principal, em CENTAVOS
+        obrasParaLancar = [
+          {
+            obra_id: parseInt(formData.obra),
+            valor: Math.round(parseCurrencyToFloat(formData.valor) * 100)
+          }
         ];
       }
       
