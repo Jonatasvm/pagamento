@@ -341,7 +341,14 @@ export const Dashboard = () => {
       const titular = req.titular ? String(req.titular).toUpperCase() : "";
       const referente = req.referente ? String(req.referente).toUpperCase() : "";
       
+      // ✅ CORREÇÃO: Também busca no valor formatado em reais (ex: "30,02")
+      // O valor no banco está em centavos (3002), formata para "30,02" para comparação
+      const valorReaisFormatado = req.valor 
+        ? (Number(req.valor) / 100).toFixed(2).replace(".", ",") 
+        : "";
+      
       const encontrado = valor.includes(searchValue) || 
+                        valorReaisFormatado.includes(searchValue) ||
                         titular.includes(searchValue) || 
                         referente.includes(searchValue);
       
