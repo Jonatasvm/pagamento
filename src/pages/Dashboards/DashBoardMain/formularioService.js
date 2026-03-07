@@ -115,7 +115,8 @@ export const atualizarFormulario = async (id, data) => {
 };
 
 export const deletarFormulario = async (id) => {
-  await api.delete(`/formulario/${id}`);
+  const response = await api.delete(`/formulario/${id}`);
+  return response.data; // ✅ Retorna { ids_deletados, total_deletados }
 };
 
 export const criarFormulario = async (data) => {

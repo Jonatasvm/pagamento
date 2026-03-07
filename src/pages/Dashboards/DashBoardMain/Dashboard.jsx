@@ -690,10 +690,20 @@ export const Dashboard = () => {
     }
     if (window.confirm("Tem certeza que deseja remover esta solicitação?")) {
       try {
-        await deletarFormulario(id);
-        setRequests((prev) => prev.filter((req) => req.id !== id));
-        setSelectedRequests((prev) => prev.filter((reqId) => reqId !== id));
-        toast.success("Solicitação removida.");
+        const result = await deletarFormulario(id);
+        const idsDeletados = result?.ids_deletados || [id];
+        const totalDeletados = result?.total_deletados || 1;
+        
+        // ✅ Remover TODOS os IDs deletados da lista local (inclui todos do grupo)
+        const idsSet = new Set(idsDeletados.map(Number));
+        setRequests((prev) => prev.filter((req) => !idsSet.has(Number(req.id))));
+        setSelectedRequests((prev) => prev.filter((reqId) => !idsSet.has(Number(reqId))));
+        
+        if (totalDeletados > 1) {
+          toast.success(`${totalDeletados} lançamentos do grupo removidos com sucesso.`);
+        } else {
+          toast.success("Solicitação removida.");
+        }
       } catch (error) {
         console.error(error);
         toast.error("Erro ao remover solicitação.");
