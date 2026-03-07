@@ -975,10 +975,10 @@ const TelaSolicitacao = () => {
                     onChange={handleChange}
                     placeholder="R$ 0,00"
                     inputMode="numeric"
-                    className={`${inputClass} text-lg font-medium text-gray-900 border-2 border-green-400 bg-green-50`}
+                    className={`${inputClass} text-lg font-medium text-gray-900`}
                   />
-                  <p className="text-xs text-green-700 mt-1 font-medium">
-                    💡 Informe o valor total primeiro, depois distribua entre as obras abaixo
+                  <p className="text-xs text-gray-500 mt-1">
+                    Informe o valor total primeiro, depois distribua entre as obras abaixo
                   </p>
                 </div>
               )}
