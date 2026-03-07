@@ -646,6 +646,8 @@ export const Dashboard = () => {
       }
       
       toast.success("Solicitação atualizada com sucesso!");
+      // ✅ Recolhe a linha expandida após salvar
+      setExpandedRows((prev) => prev.filter((rowId) => rowId !== editingId));
       setEditingId(null);
       setEditFormData({});
       setIsTitularLocked(false);
