@@ -426,6 +426,7 @@ export const Dashboard = () => {
       solicitante: "",
       referente: "",
       busca: "",
+      multiplayosLancamentos: "todos", // ✅ CORREÇÃO: Resetar filtro de múltiplos
     });
     setObraFilterText("");
     setIsObraDropdownOpen(false);
@@ -688,7 +689,17 @@ export const Dashboard = () => {
       toast.error("Finalize a edição atual antes de remover.");
       return;
     }
-    if (window.confirm("Tem certeza que deseja remover esta solicitação?")) {
+    
+    // ✅ CORREÇÃO: Detectar se é lançamento múltiplo e avisar o usuário
+    const request = groupedAndSortedRequests.find(r => r.id === id);
+    const isMultiple = request?.grupo_lancamento && request?.obras_relacionadas?.length > 0;
+    const totalNoGrupo = isMultiple ? (request.obras_relacionadas.length + 1) : 1;
+    
+    const confirmMessage = isMultiple
+      ? `⚠️ Este lançamento faz parte de um grupo com ${totalNoGrupo} obras.\n\nDeseja excluir TODOS os ${totalNoGrupo} lançamentos do grupo?`
+      : "Tem certeza que deseja remover esta solicitação?";
+    
+    if (window.confirm(confirmMessage)) {
       try {
         const result = await deletarFormulario(id);
         const idsDeletados = result?.ids_deletados || [id];
@@ -704,6 +715,10 @@ export const Dashboard = () => {
         } else {
           toast.success("Solicitação removida.");
         }
+        
+        // ✅ CORREÇÃO: Recarregar dados do servidor para garantir consistência
+        // Isso previne que registros órfãos do grupo fiquem visíveis
+        await fetchRequests(true);
       } catch (error) {
         console.error(error);
         toast.error("Erro ao remover solicitação.");
