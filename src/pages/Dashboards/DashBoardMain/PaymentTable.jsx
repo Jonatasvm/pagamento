@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Edit, Save, Trash2, X, Loader2, ChevronDown, AlertTriangle, Repeat } from "lucide-react";
+import { Edit, Save, Trash2, X, Loader2, ChevronDown, Flag, Repeat } from "lucide-react";
 import toast from "react-hot-toast";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
 import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data";
@@ -337,7 +337,7 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
-    // ✅ NOVO: Flag visual para fornecedor não cadastrado
+    // ✅ Flag visual para fornecedor NÃO cadastrado
     if (!isEditing && key === "titular" && request) {
       const nome = String(value || "—");
       const isCadastrado = request.fornecedor_cadastrado;
@@ -346,11 +346,10 @@ const PaymentTable = ({
           <span className="text-gray-900 truncate">{nome}</span>
           {isCadastrado === false && (
             <span 
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300 whitespace-nowrap flex-shrink-0"
-              title="Este fornecedor não está cadastrado no sistema"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white whitespace-nowrap flex-shrink-0 animate-pulse"
+              title="Fornecedor NÃO cadastrado no sistema"
             >
-              <AlertTriangle className="w-3 h-3" />
-              NOVO
+              <Flag className="w-3 h-3" />
             </span>
           )}
         </div>
