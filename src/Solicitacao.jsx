@@ -464,59 +464,16 @@ const TelaSolicitacao = () => {
       return; // Se não tem titular ou CPF/CNPJ, não salva
     }
 
-    // Se o usuário selecionou um fornecedor do autocomplete, não salva (porque já existe)
-    if (isCpfCnpjLocked) {
+    // ✅ Se o usuário DIGITOU manualmente (não selecionou do autocomplete), 
+    // NÃO cria automaticamente. O dashboard mostrará a flag "fornecedor novo"
+    // e o usuário poderá vincular a um fornecedor cadastrado depois.
+    if (!isCpfCnpjLocked) {
+      console.log("ℹ️ Fornecedor digitado manualmente - não será auto-cadastrado");
       return;
     }
 
-    const cpfCnpjLimpo = cleanDigits(formData.cpfCnpj);
-
-    try {
-      // Primeiro, verifica se o fornecedor já existe pelo CPF/CNPJ
-      const searchResponse = await fetch(
-        `${API_URL}/formulario/titulares/search?q=${encodeURIComponent(formData.titular)}`
-      );
-      
-      if (searchResponse.ok) {
-        const fornecedoresExistentes = await searchResponse.json();
-        
-        // Verifica se já existe um fornecedor com o mesmo CPF/CNPJ
-        const jaExiste = fornecedoresExistentes.some(
-          (f) => cleanDigits(f.cpf_cnpj) === cpfCnpjLimpo
-        );
-        
-        if (jaExiste) {
-          console.log("ℹ️ Fornecedor já existe no banco");
-          return; // Fornecedor já existe, não precisa criar
-        }
-      }
-
-      // Se não existe, cria o fornecedor
-      const createResponse = await fetch(`${API_URL}/fornecedor`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titular: formData.titular.trim(),
-          cpf_cnpj: cpfCnpjLimpo,
-          chave_pix: formData.pixKey || "",
-          banco_padrao: formData.conta ? Number(formData.conta) : null,
-        }),
-      });
-
-      const responseData = await createResponse.json();
-
-      if (createResponse.ok) {
-        console.log("✅ Fornecedor criado com sucesso:", responseData);
-      } else if (createResponse.status === 409) {
-        // CPF/CNPJ já cadastrado
-        console.log("ℹ️ Fornecedor já existe no banco (duplicado):", responseData);
-      } else {
-        console.error("❌ Erro ao salvar fornecedor:", createResponse.status, responseData);
-      }
-    } catch (error) {
-      console.error("❌ Erro ao conectar ao servidor de fornecedor:", error);
-      // Não bloqueia o envio do formulário se houver erro ao salvar fornecedor
-    }
+    // Se o usuário selecionou do autocomplete, o fornecedor já existe no banco
+    console.log("ℹ️ Fornecedor selecionado do autocomplete - já existe no banco");
   };
 
   // Handler para navegacao com teclado nas sugestoes
