@@ -578,10 +578,13 @@ const TelaSolicitacao = () => {
     setShowObraDropdown(false);
   };
 
-  // Filtrar obras baseado na busca
-  const obrasFiltradas = obras.filter((obra) =>
-    obra.nome.toLowerCase().includes(obraBusca.toLowerCase())
-  );
+  // Filtrar obras baseado na busca e ordenar alfabeticamente
+  const obrasFiltradas = obras
+    .filter((obra) => obra.nome.toLowerCase().includes(obraBusca.toLowerCase()))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  // Obras ordenadas alfabeticamente (para a seção de múltiplas obras)
+  const obrasOrdenadas = [...obras].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
   const handleFileChange = (e) => {
     if (e.target.files) {
@@ -1001,7 +1004,7 @@ const TelaSolicitacao = () => {
                     Edite os valores livremente para distribuir entre as obras
                   </p>
                   <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {obras.map((obra) => {
+                    {obrasOrdenadas.map((obra) => {
                       const obraAtual = Number(formData.obra) === obra.id;
                       const isSelected = selectedWorks.find(w => w.obra_id === obra.id);
                       const valor = isSelected ? isSelected.valor : "";
