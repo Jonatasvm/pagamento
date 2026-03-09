@@ -862,6 +862,21 @@ export const Dashboard = () => {
     setTitularSuggestions([]);
   };
 
+  // ✅ NOVO: Handler para foco no campo titular - força abertura do dropdown
+  const handleTitularFocus = () => {
+    if (editFormData.titular && typeof editFormData.titular === "string" && editFormData.titular.trim()) {
+      setShowTitularSuggestions(true);
+    }
+  };
+
+  // ✅ NOVO: Desbloquear titular para permitir troca de fornecedor
+  const handleUnlockTitular = () => {
+    setIsTitularLocked(false);
+    setEditFormData((prev) => ({ ...prev, titular: "" }));
+    setShowTitularSuggestions(false);
+    setTitularSuggestions([]);
+  };
+
   const handleKeyDown = (e) => {
     if (!showTitularSuggestions || titularSuggestions.length === 0) return;
 
@@ -1663,6 +1678,8 @@ export const Dashboard = () => {
             isTitularLocked={isTitularLocked}
             handleSelectTitular={handleSelectTitular}
             handleKeyDown={handleKeyDown}
+            handleTitularFocus={handleTitularFocus}
+            handleUnlockTitular={handleUnlockTitular}
             autocompleteDropdownRef={autocompleteDropdownRef}
           />
         )}

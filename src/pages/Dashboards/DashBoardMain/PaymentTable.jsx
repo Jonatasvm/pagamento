@@ -1,5 +1,6 @@
 import React from "react";
-import { Edit, Save, Trash2, X, Loader2, ChevronDown } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Edit, Save, Trash2, X, Loader2, ChevronDown, AlertTriangle, Repeat } from "lucide-react";
 import toast from "react-hot-toast";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
 import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data";
@@ -42,6 +43,8 @@ const PaymentTable = ({
   isTitularLocked = false,
   handleSelectTitular = () => {},
   handleKeyDown = () => {},
+  handleTitularFocus = () => {},
+  handleUnlockTitular = () => {},
   autocompleteDropdownRef = null,
 }) => {
   
@@ -193,28 +196,46 @@ const PaymentTable = ({
             ref={autocompleteDropdownRef}
             className="relative w-full"
           >
-            <input
-              type="text"
-              name={key}
-              value={value || ""}
-              onChange={handleEditChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => {
-                if (value && typeof value === "string" && value.trim() && titularSuggestions.length > 0) {
-                  // Lógica de abertura do dropdown (se necessário)
-                }
-              }}
-              placeholder="Digite o nome do fornecedor..."
-              className={`w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 ${
-                isTitularLocked ? "bg-gray-100 cursor-not-allowed" : ""
-              }`}
-              disabled={isTitularLocked}
-              autoComplete="off"
-            />
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                name={key}
+                value={value || ""}
+                onChange={handleEditChange}
+                onKeyDown={handleKeyDown}
+                onFocus={handleTitularFocus}
+                placeholder="Digite o nome do fornecedor..."
+                className={`w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 ${
+                  isTitularLocked ? "bg-gray-100" : ""
+                }`}
+                disabled={isTitularLocked}
+                autoComplete="off"
+              />
+              {isTitularLocked && (
+                <button
+                  type="button"
+                  onClick={handleUnlockTitular}
+                  title="Trocar fornecedor"
+                  className="p-1 rounded-full text-orange-600 hover:bg-orange-100 transition-colors flex-shrink-0"
+                >
+                  <Repeat className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-            {/* Dropdown de Sugestões */}
-            {showTitularSuggestions && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            {/* Dropdown de Sugestões - Renderizado via Portal para evitar corte por overflow */}
+            {showTitularSuggestions && autocompleteDropdownRef?.current && createPortal(
+              <div 
+                className="bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                style={{
+                  position: 'fixed',
+                  zIndex: 99999,
+                  width: autocompleteDropdownRef.current.getBoundingClientRect().width,
+                  left: autocompleteDropdownRef.current.getBoundingClientRect().left,
+                  top: autocompleteDropdownRef.current.getBoundingClientRect().bottom + 4,
+                }}
+                onMouseDown={(e) => e.preventDefault()}
+              >
                 {isLoadingSuggestions ? (
                   <div className="px-4 py-3 text-center text-gray-500 text-sm">
                     Carregando...
@@ -245,7 +266,8 @@ const PaymentTable = ({
                     Nenhum fornecedor encontrado.
                   </div>
                 )}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         );
@@ -315,8 +337,26 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
+    // ✅ NOVO: Flag visual para fornecedor não cadastrado
+    if (!isEditing && key === "titular" && request) {
+      const nome = String(value || "—");
+      const isCadastrado = request.fornecedor_cadastrado;
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="text-gray-900 truncate">{nome}</span>
+          {isCadastrado === false && (
+            <span 
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300 whitespace-nowrap flex-shrink-0"
+              title="Este fornecedor não está cadastrado no sistema"
+            >
+              <AlertTriangle className="w-3 h-3" />
+              NOVO
+            </span>
+          )}
+        </div>
+      );
+    }
 
-    
     // ✅ NOVO: Para múltiplos lançamentos, mostra o valor TOTAL na tabela
     if (!isEditing && key === "valor" && request?.grupo_lancamento && request?.obras_relacionadas?.length > 0) {
       const valorTotal = parseFloat(request.valor_principal || request.valor || 0) + 
