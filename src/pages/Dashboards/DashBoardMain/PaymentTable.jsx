@@ -340,11 +340,11 @@ const PaymentTable = ({
     // ✅ Flag visual para fornecedor NÃO cadastrado
     if (!isEditing && key === "titular" && request) {
       const nome = String(value || "—");
-      const isCadastrado = request.fornecedor_cadastrado;
+      const isNovo = request.fornecedor_novo || request.fornecedorNovo;
       return (
         <div className="flex items-center gap-1.5">
           <span className="text-gray-900 truncate">{nome}</span>
-          {isCadastrado === false && (
+          {isNovo && (
             <span 
               className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white whitespace-nowrap flex-shrink-0 animate-pulse"
               title="Fornecedor NÃO cadastrado no sistema"

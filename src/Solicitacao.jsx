@@ -738,6 +738,7 @@ const TelaSolicitacao = () => {
         conta: formData.conta ? Number(formData.conta) : null, // ? NOVO: Enviar o banco (conta)
         multiplos_lancamentos: multipleWorks ? 1 : 0, // ✅ NOVO: Flag para múltiplas obras
         obras_adicionais: obrasParaLancar, // ✅ Agora inclui a obra principal + adicionais
+        fornecedor_novo: isCpfCnpjLocked ? 0 : 1, // ✅ Flag: 1 = fornecedor digitado manualmente (não selecionado do autocomplete)
         // O anexo sera tratado separadamente ou via outro campo/API, aqui e so o dado
       };
 

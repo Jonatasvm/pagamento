@@ -636,7 +636,9 @@ export const Dashboard = () => {
       // ✅ CORREÇÃO: O valor está em reais (ex: "12.89"), converter para centavos antes de salvar
       const valorEmReais = rawValue ? Number(rawValue) : 0;
       const valorEmCentavos = Math.round(valorEmReais * 100);
-      const dataToSave = { ...editFormData, valor: valorEmCentavos };
+      // ✅ Se o fornecedor foi selecionado do autocomplete, limpar a flag fornecedor_novo
+      const fornecedorNovoFlag = isTitularLocked ? 0 : (editFormData.fornecedor_novo || editFormData.fornecedorNovo || 0);
+      const dataToSave = { ...editFormData, valor: valorEmCentavos, fornecedor_novo: fornecedorNovoFlag };
       const requestAtual = groupedAndSortedRequests.find(r => r.id === editingId);
       
       if (requestAtual?.grupo_lancamento && editFormData.obras_relacionadas?.length > 0) {

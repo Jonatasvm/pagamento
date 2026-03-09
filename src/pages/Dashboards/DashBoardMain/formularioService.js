@@ -73,6 +73,7 @@ const adapterBackendToFrontend = (data) => {
       valor: obra.valor ? Number(obra.valor) : 0,
     })),
     valor_total: data.valor_total ? Number(data.valor_total) : (data.valor ? Number(data.valor) : 0),
+    fornecedor_novo: data.fornecedor_novo ? true : false,
   };
 };
 
@@ -94,6 +95,7 @@ const adapterFrontendToBackend = (data) => {
     observacao: data.observacao,
     conta: data.conta ? Number(data.conta) : null,
     categoria: data.categoria ? Number(data.categoria) : null,
+    fornecedor_novo: data.fornecedor_novo ? 1 : 0,
   };
   return payload;
 };
