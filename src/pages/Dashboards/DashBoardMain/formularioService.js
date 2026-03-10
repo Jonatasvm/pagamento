@@ -103,7 +103,24 @@ const adapterFrontendToBackend = (data) => {
 // --- CHAMADAS API ---
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
+  
+  // ✅ DEBUG 1: Log do JSON bruto que vem do backend
+  console.log("📡 [DEBUG] Dados BRUTOS do backend (/formulario):", response.data);
+  console.log("📡 [DEBUG] Total de registros:", response.data.length);
+  
+  // Verificar fornecedor_novo nos dados brutos
+  const novosRaw = response.data.filter(item => item.fornecedor_novo === true || item.fornecedor_novo === 1);
+  console.log(`📡 [DEBUG] Fornecedores NOVOS no JSON bruto: ${novosRaw.length}`, novosRaw.map(i => ({ id: i.id, titular: i.titular, fornecedor_novo: i.fornecedor_novo })));
+  
   const adapted = response.data.map(adapterBackendToFrontend);
+  
+  // ✅ DEBUG 2: Log dos dados adaptados
+  const novosAdapted = adapted.filter(item => item.fornecedor_novo === true);
+  console.log(`🔄 [DEBUG] Fornecedores NOVOS após adapter: ${novosAdapted.length}`, novosAdapted.map(i => ({ id: i.id, titular: i.titular, fornecedor_novo: i.fornecedor_novo })));
+  
+  // ✅ DEBUG 3: Log de TODOS os titulares com seu status
+  console.table(adapted.map(i => ({ id: i.id, titular: i.titular, fornecedor_novo: i.fornecedor_novo })));
+  
   // Debug: verificar fornecedor_novo
   adapted.forEach((item) => {
     if (item.fornecedor_novo) {
