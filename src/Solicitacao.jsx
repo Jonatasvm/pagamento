@@ -458,23 +458,9 @@ const TelaSolicitacao = () => {
     setTitularSuggestions([]);
   };
 
-  // ✅ FUNÇÃO PARA SALVAR FORNECEDOR AUTOMATICAMENTE
-  const salvarFornecedorSeNaoExistir = async () => {
-    if (!formData.titular || !formData.cpfCnpj) {
-      return; // Se não tem titular ou CPF/CNPJ, não salva
-    }
 
-    // ✅ Se o usuário DIGITOU manualmente (não selecionou do autocomplete), 
-    // NÃO cria automaticamente. O dashboard mostrará a flag "fornecedor novo"
-    // e o usuário poderá vincular a um fornecedor cadastrado depois.
-    if (!isCpfCnpjLocked) {
-      console.log("ℹ️ Fornecedor digitado manualmente - não será auto-cadastrado");
-      return;
-    }
-
-    // Se o usuário selecionou do autocomplete, o fornecedor já existe no banco
-    console.log("ℹ️ Fornecedor selecionado do autocomplete - já existe no banco");
-  };
+  // ℹ️ Fornecedor digitado manualmente NÃO é cadastrado automaticamente.
+  // O cadastro de fornecedores é feito apenas pelo Gerenciador de Fornecedores.
 
   // Handler para navegacao com teclado nas sugestoes
   const handleKeyDown = (e) => {
@@ -578,9 +564,6 @@ const TelaSolicitacao = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // ✅ SALVAR FORNECEDOR AUTOMATICAMENTE ANTES DE ENVIAR
-    await salvarFornecedorSeNaoExistir();
 
     // ? AJUSTE 1: VALIDACAO DO ANEXO OBRIGATORIO (CORRIGIDO)
     const isPaymentMethodRequiringFile = 
