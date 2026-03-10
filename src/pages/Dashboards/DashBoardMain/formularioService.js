@@ -104,8 +104,10 @@ const adapterFrontendToBackend = (data) => {
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
   const adapted = response.data.map(adapterBackendToFrontend);
+  // Debug: verificar fornecedor_novo
   adapted.forEach((item) => {
-    if (item.obra) {
+    if (item.fornecedor_novo) {
+      console.warn(`🔴 Fornecedor NOVO (não cadastrado): "${item.titular}" (ID ${item.id})`);
     }
   });
   return adapted;
