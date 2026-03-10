@@ -1634,40 +1634,6 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* 🔴 DEBUG TEMPORÁRIO - REMOVER DEPOIS */}
-        {!isLoadingData && (
-          <div className="mb-4 p-3 bg-yellow-100 border-2 border-yellow-500 rounded-lg text-sm">
-            <strong>🔍 DEBUG FORNECEDOR_NOVO:</strong>{" "}
-            Total registros: {requests.length} |{" "}
-            Com fornecedor_novo=true: <span className="text-red-600 font-bold">{requests.filter(r => r.fornecedor_novo === true).length}</span> |{" "}
-            Com fornecedor_novo truthy: <span className="text-red-600 font-bold">{requests.filter(r => r.fornecedor_novo).length}</span> |{" "}
-            Amostra: {requests.slice(0, 3).map(r => `[ID=${r.id} titular="${r.titular}" novo=${String(r.fornecedor_novo)}]`).join(", ")}
-            <button
-              className="ml-3 px-2 py-1 bg-blue-500 text-white rounded text-xs"
-              onClick={async () => {
-                try {
-                  const resp = await fetch(`${API_URL}/formulario`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                  });
-                  const raw = await resp.json();
-                  const amostra = raw.slice(0, 5).map(r => ({
-                    id: r.id,
-                    titular: r.titular,
-                    fornecedor_novo: r.fornecedor_novo,
-                    tipo_fornecedor_novo: typeof r.fornecedor_novo
-                  }));
-                  alert("API RAW (primeiros 5):\n" + JSON.stringify(amostra, null, 2));
-                  console.log("🔎 API RAW COMPLETO:", raw);
-                } catch (e) {
-                  alert("Erro: " + e.message);
-                }
-              }}
-            >
-              🔎 Testar API Direto
-            </button>
-          </div>
-        )}
-
         {/* Tabela de Pagamentos */}
         {isLoadingData ? (
           <div className="flex justify-center items-center p-12">
