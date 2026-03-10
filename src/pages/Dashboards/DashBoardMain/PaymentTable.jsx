@@ -343,10 +343,10 @@ const PaymentTable = ({
       const isNovo = request.fornecedor_novo || request.fornecedorNovo;
       return (
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-900 truncate">{nome}</span>
+          <span className={`truncate font-medium ${isNovo ? "text-red-600" : "text-gray-900"}`}>{nome}</span>
           {isNovo && (
             <span 
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white whitespace-nowrap flex-shrink-0 animate-pulse"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 whitespace-nowrap flex-shrink-0"
               title="Fornecedor NÃO cadastrado no sistema"
             >
               <Flag className="w-3 h-3" />
