@@ -104,27 +104,10 @@ const adapterFrontendToBackend = (data) => {
 export const listarFormularios = async () => {
   const response = await api.get("/formulario");
   
-  // ✅ DEBUG: Verificar o tipo e valor EXATO de fornecedor_novo no JSON bruto
-  if (response.data.length > 0) {
-    const primeiro = response.data[0];
-    console.log(`📡 [DEBUG] Primeiro registro RAW:`, {
-      id: primeiro.id,
-      titular: primeiro.titular,
-      fornecedor_novo: primeiro.fornecedor_novo,
-      tipo: typeof primeiro.fornecedor_novo,
-      temCampo: "fornecedor_novo" in primeiro,
-    });
-  }
-  
-  // Verificar fornecedor_novo nos dados brutos
-  const novosRaw = response.data.filter(item => item.fornecedor_novo === true || item.fornecedor_novo === 1);
-  const falseRaw = response.data.filter(item => item.fornecedor_novo === false || item.fornecedor_novo === 0);
-  const nullRaw = response.data.filter(item => item.fornecedor_novo === null || item.fornecedor_novo === undefined);
-  console.log(`� [DEBUG RAW] Total: ${response.data.length} | true/1: ${novosRaw.length} | false/0: ${falseRaw.length} | null/undefined: ${nullRaw.length}`);
-  
-  if (novosRaw.length === 0) {
-    console.warn(`⚠️ [PROBLEMA] NENHUM fornecedor marcado como novo! O backend pode estar retornando tudo como 0/false.`);
-    console.warn(`⚠️ Verifique se o backend foi atualizado e reiniciado no servidor!`);
+  // Debug mínimo: apenas resumo
+  if (response.data && response.data.length > 0) {
+    const novos = response.data.filter(item => item.fornecedor_novo === true || item.fornecedor_novo === 1);
+    console.log(`[formularioService] Total: ${response.data.length} | fornecedor_novo=true: ${novos.length}`);
   }
   
   const adapted = response.data.map(adapterBackendToFrontend);

@@ -341,8 +341,6 @@ const PaymentTable = ({
     if (!isEditing && key === "titular" && request) {
       const nome = String(value || "—");
       const isNovo = request.fornecedor_novo || request.fornecedorNovo;
-      // 🔍 DEBUG: Log para CADA titular renderizado
-      console.log(`🎨 [RENDER] ID=${request.id} | titular="${nome}" | fornecedor_novo=${request.fornecedor_novo} | fornecedorNovo=${request.fornecedorNovo} | isNovo=${isNovo}`);
       return (
         <div className="flex items-center gap-1.5">
           <span className={`truncate font-medium ${isNovo ? "text-red-600" : "text-gray-900"}`}>{nome}</span>
