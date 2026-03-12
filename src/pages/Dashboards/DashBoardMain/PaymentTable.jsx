@@ -46,6 +46,7 @@ const PaymentTable = ({
   handleTitularFocus = () => {},
   handleUnlockTitular = () => {},
   autocompleteDropdownRef = null,
+  suggestionsPortalRef = null,
 }) => {
   
   // ✅ FUNÇÃO DE DOWNLOAD DIRETO DO GOOGLE DRIVE
@@ -226,6 +227,7 @@ const PaymentTable = ({
             {/* Dropdown de Sugestões - Renderizado via Portal para evitar corte por overflow */}
             {showTitularSuggestions && autocompleteDropdownRef?.current && createPortal(
               <div 
+                ref={suggestionsPortalRef}
                 className="bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto"
                 style={{
                   position: 'fixed',
@@ -234,7 +236,6 @@ const PaymentTable = ({
                   left: autocompleteDropdownRef.current.getBoundingClientRect().left,
                   top: autocompleteDropdownRef.current.getBoundingClientRect().bottom + 4,
                 }}
-                onMouseDown={(e) => e.preventDefault()}
               >
                 {isLoadingSuggestions ? (
                   <div className="px-4 py-3 text-center text-gray-500 text-sm">

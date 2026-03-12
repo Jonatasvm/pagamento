@@ -47,6 +47,7 @@ export const Dashboard = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [isTitularLocked, setIsTitularLocked] = useState(false);
   const autocompleteDropdownRef = useRef(null);
+  const suggestionsPortalRef = useRef(null);
   const obraFilterRef = useRef(null);
   const [obraFilterText, setObraFilterText] = useState("");
   const [isObraDropdownOpen, setIsObraDropdownOpen] = useState(false);
@@ -841,10 +842,11 @@ export const Dashboard = () => {
   // Fechar sugestões ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        autocompleteDropdownRef.current &&
-        !autocompleteDropdownRef.current.contains(event.target)
-      ) {
+      // Verificar se o clique foi dentro do container do input OU dentro do dropdown do Portal
+      const isInsideInput = autocompleteDropdownRef.current && autocompleteDropdownRef.current.contains(event.target);
+      const isInsidePortal = suggestionsPortalRef.current && suggestionsPortalRef.current.contains(event.target);
+      
+      if (!isInsideInput && !isInsidePortal) {
         setShowTitularSuggestions(false);
       }
     };
@@ -1685,6 +1687,7 @@ export const Dashboard = () => {
             handleTitularFocus={handleTitularFocus}
             handleUnlockTitular={handleUnlockTitular}
             autocompleteDropdownRef={autocompleteDropdownRef}
+            suggestionsPortalRef={suggestionsPortalRef}
           />
         )}
 
