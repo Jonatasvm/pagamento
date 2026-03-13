@@ -58,10 +58,22 @@ export const formatDatePT = (dateStr) => {
   }
 };
 
-// ✅ Traduzir data de carimbo para português
+// ✅ Traduzir data de carimbo para português (horário de Brasília vindo do backend)
 export const formatCarimbo = (dateStr) => {
   if (!dateStr) return "—";
   try {
+    // O backend já envia em horário de Brasília (formato: "2026-03-13T14:35:22")
+    // Parse manual para evitar que o navegador aplique timezone local
+    const str = String(dateStr).trim();
+    
+    // Tenta extrair partes da data ISO: YYYY-MM-DDTHH:MM:SS
+    const match = str.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+    if (match) {
+      const [, year, month, day, hour, minute, second] = match;
+      return `${day}/${month}/${year}, ${hour}:${minute}:${second}`;
+    }
+
+    // Fallback: tenta com Date mas pode ter offset do navegador
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return "—";
     return date.toLocaleString('pt-BR', {
