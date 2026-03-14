@@ -190,6 +190,9 @@ const TelaSolicitacao = () => {
   const [showObraDropdown, setShowObraDropdown] = useState(false);
   const obraDropdownRef = useRef(null);
 
+  // Estado para busca no seletor de múltiplas obras
+  const [multiObraBusca, setMultiObraBusca] = useState("");
+
   // 1. Buscar Obras (Com Filtro de Usuario)
   useEffect(() => {
     const fetchObras = async () => {
@@ -524,10 +527,12 @@ const TelaSolicitacao = () => {
   // Filtrar obras baseado na busca e ordenar alfabeticamente
   const obrasFiltradas = obras
     .filter((obra) => obra.nome.toLowerCase().includes(obraBusca.toLowerCase()))
-    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 
   // Obras ordenadas alfabeticamente (para a seção de múltiplas obras)
-  const obrasOrdenadas = [...obras].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const obrasOrdenadas = [...obras]
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))
+    .filter((obra) => obra.nome.toLowerCase().includes(multiObraBusca.toLowerCase()));
 
   const handleFileChange = (e) => {
     if (e.target.files) {
@@ -944,6 +949,13 @@ const TelaSolicitacao = () => {
                   <p className="text-xs text-gray-600 mb-3">
                     Edite os valores livremente para distribuir entre as obras
                   </p>
+                  <input
+                    type="text"
+                    value={multiObraBusca}
+                    onChange={(e) => setMultiObraBusca(e.target.value)}
+                    placeholder="Buscar obra..."
+                    className="w-full mb-3 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
                   <div className="space-y-3 max-h-60 overflow-y-auto">
                     {obrasOrdenadas.map((obra) => {
                       const obraAtual = Number(formData.obra) === obra.id;
