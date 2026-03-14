@@ -161,7 +161,7 @@ const PaymentTable = ({
             // 🥇 SOLUÇÃO: Converte o ID de edição para string para garantir o match no <select>
             value={value != null ? String(value) : ""}
             onChange={handleEditChange}
-            className="min-w-[140px] max-w-[180px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            className="w-full min-w-[100px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione...</option>
             {selectOptions.map((opt) => {
@@ -325,6 +325,18 @@ const PaymentTable = ({
       }
 
       // --- INPUT DE TEXTO PADRÃO ---
+      // Campos de texto longos (referente, titular) usam textarea para permitir quebra de linha
+      if (["referente", "titular"].includes(key)) {
+        return (
+          <textarea
+            name={key}
+            value={value || ""}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+            rows="2"
+          />
+        );
+      }
       return (
         <input
           type="text"
@@ -344,7 +356,7 @@ const PaymentTable = ({
       const isNovo = request.fornecedor_novo || request.fornecedorNovo;
       return (
         <div className="flex items-center gap-1.5">
-          <span className={`truncate font-medium ${isNovo ? "text-red-600" : "text-gray-900"}`}>{nome}</span>
+          <span className={`break-words font-medium ${isNovo ? "text-red-600" : "text-gray-900"}`}>{nome}</span>
           {isNovo && (
             <span 
               className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 whitespace-nowrap flex-shrink-0"
@@ -540,8 +552,8 @@ const PaymentTable = ({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 text-sm ${rowClasses} overflow-hidden text-ellipsis`}
-                        style={isEditing ? { pointerEvents: 'auto' } : {}}
+                        className={`px-3 py-3 text-sm ${rowClasses} overflow-hidden ${isEditing ? '' : 'break-words'}`}
+                        style={isEditing ? { pointerEvents: 'auto', wordBreak: 'break-word' } : { wordBreak: 'break-word' }}
                         title={typeof (isEditing ? editFormData[col.key] : request[col.key]) === 'string' ? (isEditing ? editFormData[col.key] : request[col.key]) : ''}
                       >
                         {renderField(

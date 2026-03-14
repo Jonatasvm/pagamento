@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { Loader2, FileText, Filter, RotateCcw, User, History, ChevronDown, Clock, Hash, Users } from "lucide-react";
+import { Loader2, FileText, Filter, RotateCcw, User, History, ChevronDown, Clock, Hash, Users, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
 
@@ -1244,19 +1244,29 @@ export const Dashboard = () => {
               </div>
             </div>
 
-            {/* Botão Gerar CSV */}
-            <button
-              onClick={handleGenerateCSV}
-              className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
-              disabled={editingId !== null || isSaving}
-            >
-              {isSaving ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <FileText className="w-5 h-5" />
-              )}
-              Gerar CSV ({selectedRequests.length})
-            </button>
+            {/* Botões de ação */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedRequests([])}
+                className="flex items-center gap-2 bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-300 transition-all duration-300"
+              >
+                <XCircle className="w-5 h-5" />
+                Desmarcar Todos
+              </button>
+              {/* Botão Gerar CSV */}
+              <button
+                onClick={handleGenerateCSV}
+                className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
+                disabled={editingId !== null || isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <FileText className="w-5 h-5" />
+                )}
+                Gerar CSV ({selectedRequests.length})
+              </button>
+            </div>
           </div>
         </div>
       )}
