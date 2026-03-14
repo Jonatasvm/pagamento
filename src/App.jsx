@@ -6,6 +6,7 @@ import Solicitacao from "./Solicitacao";
 import Header from "./Header";
 import { Toaster } from "react-hot-toast";
 import DashboardUsers from "./pages/Dashboards/DashboardUsers/DashboardUsers";
+import MinhasSolicitacoes from "./pages/MinhasSolicitacoes";
 
 export default function App() {
   return (
@@ -42,6 +43,16 @@ export default function App() {
               <PrivateRoute>
                 <Header />
                 <DashboardUsers />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/minhas-solicitacoes"
+            element={
+              <PrivateRoute>
+                <Header />
+                <MinhasSolicitacoes />
               </PrivateRoute>
             }
           />

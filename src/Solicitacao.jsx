@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import {
   User,
@@ -818,9 +819,18 @@ const TelaSolicitacao = () => {
             <DollarSign className="w-8 h-8 mr-3 text-blue-600" />
             Solicitacao de Pagamento
           </h2>
-          <p className="text-gray-500 mt-1 text-sm">
-            Preencha os dados da despesa para aprovacao.
-          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-gray-500 text-sm">
+              Preencha os dados da despesa para aprovacao.
+            </p>
+            <Link
+              to="/minhas-solicitacoes"
+              className="flex items-center gap-2 bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm whitespace-nowrap"
+            >
+              <List className="w-4 h-4" />
+              Minhas Solicitações
+            </Link>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
