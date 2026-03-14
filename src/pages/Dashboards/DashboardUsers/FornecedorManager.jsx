@@ -118,12 +118,12 @@ export const FornecedorManager = ({
     const titulo = editedData.titular.trim();
     const cpf = editedData.cpf_cnpj.trim();
 
-    if (!titulo || !cpf) {
-      toast.error("Preencha título e CPF/CNPJ.");
+    if (!titulo) {
+      toast.error("Preencha o título.");
       return;
     }
 
-    if (cpf.length < 11) {
+    if (cpf && cpf.length < 11) {
       toast.error("CPF/CNPJ inválido.");
       return;
     }
