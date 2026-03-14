@@ -53,10 +53,9 @@ export const FornecedorManager = ({
     const cpfLimpo = limparCpfCnpj(cpf).toLowerCase();
     return fornecedores.some((f) => {
       if (excludeId && f.id === excludeId) return false;
-      return (
-        f.titular.trim().toLowerCase() === titulo.trim().toLowerCase() ||
-        limparCpfCnpj(f.cpf_cnpj).toLowerCase() === cpfLimpo
-      );
+      const tituloMatch = f.titular.trim().toLowerCase() === titulo.trim().toLowerCase();
+      const cpfMatch = cpfLimpo && limparCpfCnpj(f.cpf_cnpj).toLowerCase() === cpfLimpo;
+      return tituloMatch || cpfMatch;
     });
   };
 
