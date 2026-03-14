@@ -155,15 +155,29 @@ const PaymentTable = ({
             (selectOptions.length > 0 && typeof selectOptions[0] === "object");
 
 
+        // Encontrar o nome da opção selecionada para exibir acima do select
+        const currentSelectedName = (() => {
+          if (!value) return null;
+          if (isIdSelect) {
+            const found = selectOptions.find(o => typeof o === 'object' && String(o.id) === String(value));
+            return found ? (found.nome || found.name) : null;
+          }
+          return String(value);
+        })();
+
         return (
-          <select
-            name={key}
-            // 🥇 SOLUÇÃO: Converte o ID de edição para string para garantir o match no <select>
-            value={value != null ? String(value) : ""}
-            onChange={handleEditChange}
-            className="w-full min-w-[100px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-            style={{ whiteSpace: 'normal', height: 'auto', minHeight: '32px' }}
-          >
+          <div className="w-full">
+            {currentSelectedName && (
+              <span className="block text-xs text-gray-600 break-words mb-1 leading-tight">
+                {currentSelectedName}
+              </span>
+            )}
+            <select
+              name={key}
+              value={value != null ? String(value) : ""}
+              onChange={handleEditChange}
+              className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            >
             <option value="">Selecione...</option>
             {selectOptions.map((opt) => {
               // Se for objeto {id, nome} (Caso da Obra, Titular, Solicitante)
@@ -188,6 +202,7 @@ const PaymentTable = ({
               return null; // Ignora outros formatos
             })}
           </select>
+          </div>
         );
       }
 
