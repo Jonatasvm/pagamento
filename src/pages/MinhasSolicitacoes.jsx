@@ -35,6 +35,8 @@ export default function MinhasSolicitacoes() {
     localStorage.getItem("nome") ||
     localStorage.getItem("usuario") ||
     "";
+  const usernameUsuario = localStorage.getItem("usuario") || "";
+  const userIdUsuario = localStorage.getItem("user_id") || "";
 
   // Buscar dados
   useEffect(() => {
@@ -72,12 +74,17 @@ export default function MinhasSolicitacoes() {
 
   // Filtrar apenas as solicitações do usuário logado
   const minhasSolicitacoes = useMemo(() => {
-    if (!nomeUsuario) return [];
+    if (!nomeUsuario && !usernameUsuario && !userIdUsuario) return [];
     return requests.filter((r) => {
       const solicitante = String(r.solicitante || "").toLowerCase().trim();
-      return solicitante === nomeUsuario.toLowerCase().trim();
+      // Compara com nome, username e user_id para cobrir lançamentos antigos e novos
+      return (
+        (nomeUsuario && solicitante === nomeUsuario.toLowerCase().trim()) ||
+        (usernameUsuario && solicitante === usernameUsuario.toLowerCase().trim()) ||
+        (userIdUsuario && solicitante === userIdUsuario)
+      );
     });
-  }, [requests, nomeUsuario]);
+  }, [requests, nomeUsuario, usernameUsuario, userIdUsuario]);
 
   // Aplicar filtros
   const filteredRequests = useMemo(() => {
