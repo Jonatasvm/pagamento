@@ -40,13 +40,19 @@ export default function MinhasSolicitacoes() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        const safeFetch = async (url) => {
+          const r = await fetch(url);
+          if (!r.ok) return [];
+          return r.json();
+        };
+
         const [formData, obrasRes, titularesRes, bancosRes, categoriasRes] =
           await Promise.all([
             listarFormularios(),
-            fetch(`${API_URL}/obras?user_id=${localStorage.getItem("user_id")}`).then((r) => r.json()),
-            fetch(`${API_URL}/titulares/list`).then((r) => r.json()),
-            fetch(`${API_URL}/bancos`).then((r) => r.json()),
-            fetch(`${API_URL}/categorias`).then((r) => r.json()),
+            safeFetch(`${API_URL}/obras`),
+            safeFetch(`${API_URL}/titulares/list`),
+            safeFetch(`${API_URL}/bancos`),
+            safeFetch(`${API_URL}/categoria`),
           ]);
 
         setRequests(formData);
