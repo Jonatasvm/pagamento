@@ -83,7 +83,10 @@ const PaymentTable = ({
   
   // --- Lógica de Renderização de Campos ---
   const renderField = (key, data, isEditing, colConfig = {}, request, handleEditChange) => {
+    // ✅ CORREÇÃO: Para campos expandidos, priorizar colConfig (que vem direto do expandedFieldsConfig)
+    // para evitar conflito quando o mesmo key existe nas columns e nos expandedFields (ex: "conta")
     const fieldConfig =
+      colConfig?.key === key ? colConfig :
       columns.find((c) => c.key === key) ||
       expandedFieldsConfig.find((c) => c.key === key) ||
       colConfig;
@@ -340,6 +343,24 @@ const PaymentTable = ({
         );
       }
 
+      // --- CAMPO ESPECIAL: CHAVE PIX / CÓDIGO BOLETO / Nº CHEQUE ---
+      if (key === "chavePix") {
+        const forma = (data.formaDePagamento || "").toLowerCase();
+        let placeholder = "Chave PIX";
+        if (forma === "boleto") placeholder = "Código de Barra";
+        else if (forma === "cheque") placeholder = "N° Folha de Cheque";
+        return (
+          <input
+            type="text"
+            name={key}
+            value={value || ""}
+            onChange={handleEditChange}
+            placeholder={placeholder}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          />
+        );
+      }
+
       // --- INPUT DE TEXTO PADRÃO ---
       // Campos de texto longos (referente, titular) usam textarea para permitir quebra de linha
       if (["referente", "titular"].includes(key)) {
@@ -366,6 +387,11 @@ const PaymentTable = ({
 
     // --- RENDERIZAÇÃO EM MODO VISUALIZAÇÃO (Tabela Principal e Expandida) ---
     
+    // ✅ Campo chavePix em modo visualização - sempre mostra o valor ou "—"
+    if (!isEditing && key === "chavePix") {
+      return <span className="text-gray-900 text-sm">{value || "—"}</span>;
+    }
+
     // ✅ Flag visual para fornecedor NÃO cadastrado
     if (!isEditing && key === "titular" && request) {
       const nome = String(value || "—");
