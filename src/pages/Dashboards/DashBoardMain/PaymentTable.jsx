@@ -667,7 +667,7 @@ const PaymentTable = ({
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
                           {/* Usa expandedFieldsConfig recebido via props */}
-                          {expandedFieldsConfig.map((field) => {
+                          {expandedFieldsConfig.filter((field) => !field.hidden).map((field) => {
                             // Label dinâmico para chavePix baseado na forma de pagamento
                             let displayLabel = field.label;
                             if (field.key === "chavePix") {

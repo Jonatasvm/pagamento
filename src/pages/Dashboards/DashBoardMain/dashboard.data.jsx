@@ -205,11 +205,13 @@ export const getExpandedFields = (listaUsuarios, listaCategorias = []) => [
     label: "Data Lançamento",
     type: "date",
     editable: false,
+    hidden: true, // ✅ Oculto no Dashboard (mantido no CSV e banco)
   },
   {
     key: "dataCompetencia",
     label: "Competência",
     type: "date",
+    hidden: true, // ✅ Oculto no Dashboard (mantido no CSV e banco)
   },
   {
     key: "formaDePagamento",
