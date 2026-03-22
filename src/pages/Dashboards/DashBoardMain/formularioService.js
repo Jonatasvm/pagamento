@@ -101,17 +101,21 @@ const adapterFrontendToBackend = (data) => {
 };
 
 // --- CHAMADAS API ---
-export const listarFormularios = async () => {
-  const response = await api.get("/formulario");
-  
+export const listarFormularios = async (params = {}) => {
+  // Monta query string para filtros
+  const searchParams = new URLSearchParams();
+  if (params.codigo_barra_status && params.codigo_barra_status !== 'todos') {
+    searchParams.append('codigo_barra_status', params.codigo_barra_status);
+  }
+  // Adicione outros filtros se necessário
+  const url = "/formulario" + (searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const response = await api.get(url);
   // Debug mínimo: apenas resumo
   if (response.data && response.data.length > 0) {
     const novos = response.data.filter(item => item.fornecedor_novo === true || item.fornecedor_novo === 1);
     console.log(`[formularioService] Total: ${response.data.length} | fornecedor_novo=true: ${novos.length}`);
   }
-  
   const adapted = response.data.map(adapterBackendToFrontend);
-  
   return adapted;
 };
 

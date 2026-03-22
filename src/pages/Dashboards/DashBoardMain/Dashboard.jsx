@@ -77,6 +77,7 @@ export const Dashboard = () => {
     referente: "",
     busca: "",
     multiplayosLancamentos: "todos", // ✅ NOVO: Filtro para múltiplos lançamentos - padrão é "todos"
+    codigoBarraStatus: "todos", // NOVO: filtro código de barra
   });
 
   // =========================================================================
@@ -194,7 +195,7 @@ export const Dashboard = () => {
   const fetchRequests = async (silent = false) => {
     if (!silent) setIsLoadingData(true);
     try {
-      const data = await listarFormularios();
+      const data = await listarFormularios({ codigo_barra_status: filters.codigoBarraStatus });
       setRequests(data);
     } catch (error) {
       console.error("Erro ao carregar requisições:", error);
@@ -258,6 +259,11 @@ export const Dashboard = () => {
     fetchHistorico();
     // Se tiver fetchListaUsuarios(), chame aqui
   }, []);
+
+  // Recarrega lançamentos ao mudar filtro de código de barra
+  useEffect(() => {
+    fetchRequests(true);
+  }, [filters.codigoBarraStatus]);
 
   // =========================================================================
   // 2. GERAÇÃO DINÂMICA DE COLUNAS
@@ -415,6 +421,11 @@ export const Dashboard = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCodigoBarraStatusChange = (e) => {
+    const { value } = e.target;
+    setFilters((prev) => ({ ...prev, codigoBarraStatus: value }));
+  };
+
   const clearFilters = () => {
     setFilters({
       statusLancamento: "false", // ✅ Mantém padrão "Não (Pendente)"
@@ -428,6 +439,7 @@ export const Dashboard = () => {
       referente: "",
       busca: "",
       multiplayosLancamentos: "todos", // ✅ CORREÇÃO: Resetar filtro de múltiplos
+      codigoBarraStatus: "todos", // NOVO: Resetar filtro de código de barra
     });
     setObraFilterText("");
     setIsObraDropdownOpen(false);
@@ -957,7 +969,7 @@ export const Dashboard = () => {
         
         // Buscar obra com tratamento robusto
         const obraEncontrada = obrasAtualizada && obrasAtualizada.length > 0
-          ? obrasAtualizada.find(o => Number(o.id) === Number(request.obra))
+          ? obrasAtualizadas.find(o => Number(o.id) === Number(request.obra))
           : null;
 
         // Buscar banco pelo ID
@@ -1478,7 +1490,7 @@ export const Dashboard = () => {
                         {opt.nome}
                       </li>
                     ))
-                  )}
+                  }
                 </ul>
               )}
             </div>
@@ -1634,6 +1646,23 @@ export const Dashboard = () => {
                 onChange={handleFilterChange}
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               />
+            </div>
+
+            {/* Filtro Código de Barra */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Código de Barra
+              </label>
+              <select
+                name="codigoBarraStatus"
+                value={filters.codigoBarraStatus}
+                onChange={handleCodigoBarraStatusChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="todos">Todos</option>
+                <option value="vazio">Vazio</option>
+                <option value="preenchido">Preenchido</option>
+              </select>
             </div>
 
             {/* Botão Limpar - Espande para 2 colunas em telas pequenas */}

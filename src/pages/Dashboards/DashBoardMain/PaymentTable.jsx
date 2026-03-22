@@ -520,7 +520,7 @@ const PaymentTable = ({
                   >
                     {/* Faixa laranja sutil para boletos sem código de barra */}
                     {((request.formaDePagamento || request.forma_pagamento || "").toLowerCase() === "boleto" && !(request.chavePix || request.chave_pix || "").trim()) && (
-                      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(90deg, orange 80%, transparent 100%)', borderRadius: '2px', zIndex: 2 }}></div>
+                      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: 4, background: 'linear-gradient(90deg, orange 80%, transparent 100%)', borderRadius: '2px', zIndex: 2 }}></div>
                     )}
                     {/* Célula de Ações Fixa */}
                     <td
