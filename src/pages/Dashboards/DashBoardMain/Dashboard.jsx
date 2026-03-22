@@ -969,7 +969,7 @@ export const Dashboard = () => {
         
         // Buscar obra com tratamento robusto
         const obraEncontrada = obrasAtualizada && obrasAtualizada.length > 0
-          ? obrasAtualizadas.find(o => Number(o.id) === Number(request.obra))
+          ? obrasAtualizada.find(o => Number(o.id) === Number(request.obra))
           : null;
 
         // Buscar banco pelo ID
