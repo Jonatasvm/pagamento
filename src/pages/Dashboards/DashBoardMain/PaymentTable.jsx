@@ -158,8 +158,8 @@ const PaymentTable = ({
 
 
         // Encontrar o nome da opção selecionada para exibir acima do select
-        // Remover exibição para categoria, obra e conta
-        const showSelectedName = !["categoria", "obra", "conta"].includes(key);
+        // Remover exibição para categoria, obra, conta e formaDePagamento
+        const showSelectedName = !["categoria", "obra", "conta", "formaDePagamento"].includes(key);
         const currentSelectedName = (() => {
           if (!value) return null;
           if (isIdSelect) {
@@ -705,6 +705,7 @@ const PaymentTable = ({
                                 displayLabel = "N° Folha de Cheque";
                               }
                             }
+                            // Não renderiza label manual extra, só o displayLabel abaixo
                             return (
                             <div key={field.key} className="flex flex-col">
                               <span className="font-semibold uppercase text-gray-500 mb-1">
