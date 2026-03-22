@@ -517,6 +517,10 @@ const PaymentTable = ({
                     id={`row-${request.id}`}
                     className={`border-b hover:bg-gray-50 transition-colors ${rowClasses} ${isMultiple ? "border-l-4 border-l-green-600 shadow-md" : ""}`}
                   >
+                    {/* Faixa laranja sutil para boletos sem código de barra */}
+                    {((request.formaDePagamento || request.forma_pagamento || "").toLowerCase() === "boleto" && !(request.chavePix || request.chave_pix || "").trim()) && (
+                      <td className="p-0 m-0" style={{ width: 4, minWidth: 4, maxWidth: 4, background: 'linear-gradient(90deg, orange 60%, transparent 100%)', border: 'none' }}></td>
+                    )}
                     {/* Célula de Ações Fixa */}
                     <td
                       className={`px-3 py-3 whitespace-nowrap sticky left-0 z-10 ${rowClasses} shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}
