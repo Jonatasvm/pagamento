@@ -516,10 +516,11 @@ const PaymentTable = ({
                   <tr
                     id={`row-${request.id}`}
                     className={`border-b hover:bg-gray-50 transition-colors ${rowClasses} ${isMultiple ? "border-l-4 border-l-green-600 shadow-md" : ""}`}
+                    style={{ position: 'relative' }}
                   >
                     {/* Faixa laranja sutil para boletos sem código de barra */}
                     {((request.formaDePagamento || request.forma_pagamento || "").toLowerCase() === "boleto" && !(request.chavePix || request.chave_pix || "").trim()) && (
-                      <td className="p-0 m-0" style={{ width: 4, minWidth: 4, maxWidth: 4, background: 'linear-gradient(90deg, orange 60%, transparent 100%)', border: 'none' }}></td>
+                      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(90deg, orange 80%, transparent 100%)', borderRadius: '2px', zIndex: 2 }}></div>
                     )}
                     {/* Célula de Ações Fixa */}
                     <td
