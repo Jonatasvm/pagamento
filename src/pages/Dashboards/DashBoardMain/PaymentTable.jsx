@@ -126,8 +126,7 @@ const PaymentTable = ({
               e.stopPropagation();
             }}
             placeholder="0,00"
-            style={{position: "relative", zIndex: 1000, pointerEvents: 'auto'}}
-            className="min-w-[120px] max-w-[150px] px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
             autoFocus
           />
         );
@@ -159,6 +158,8 @@ const PaymentTable = ({
 
 
         // Encontrar o nome da opção selecionada para exibir acima do select
+        // Remover exibição para categoria, obra e conta
+        const showSelectedName = !["categoria", "obra", "conta"].includes(key);
         const currentSelectedName = (() => {
           if (!value) return null;
           if (isIdSelect) {
@@ -170,7 +171,7 @@ const PaymentTable = ({
 
         return (
           <div className="w-full">
-            {currentSelectedName && (
+            {showSelectedName && currentSelectedName && (
               <span className="block text-xs text-gray-600 break-words mb-1 leading-tight">
                 {currentSelectedName}
               </span>
