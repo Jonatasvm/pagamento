@@ -1490,7 +1490,7 @@ export const Dashboard = () => {
                         {opt.nome}
                       </li>
                     ))
-                  }
+                  )}
                 </ul>
               )}
             </div>
