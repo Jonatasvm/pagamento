@@ -516,12 +516,12 @@ const PaymentTable = ({
                   <tr
                     id={`row-${request.id}`}
                     className={`border-b hover:bg-gray-50 transition-colors ${rowClasses} ${isMultiple ? "border-l-4 border-l-green-600 shadow-md" : ""}`}
-                    style={{ position: 'relative' }}
+                    style={
+                      ((request.formaDePagamento || request.forma_pagamento || "").toLowerCase() === "boleto" && !(request.chavePix || request.chave_pix || "").trim())
+                        ? { borderLeft: '4px solid orange' }
+                        : {}
+                    }
                   >
-                    {/* Faixa laranja sutil para boletos sem código de barra */}
-                    {((request.formaDePagamento || request.forma_pagamento || "").toLowerCase() === "boleto" && !(request.chavePix || request.chave_pix || "").trim()) && (
-                      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: 4, background: 'linear-gradient(90deg, orange 80%, transparent 100%)', borderRadius: '2px', zIndex: 2 }}></div>
-                    )}
                     {/* Célula de Ações Fixa */}
                     <td
                       className={`px-3 py-3 whitespace-nowrap sticky left-0 z-10 ${rowClasses} shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}
