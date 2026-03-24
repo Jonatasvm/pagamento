@@ -113,21 +113,38 @@ export function formatCurrencyDisplay(value) {
     return formatted.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
 
-export function getStatusClasses(isLancado) {
-    return isLancado
-        ? "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-        : "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
+export function getStatusClasses(status) {
+    if (status === 'LANCADO' || status === true)
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800";
+    if (status === 'NAO_AUTORIZADO')
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800";
+    // PENDENTE ou false
+    return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
 }
+
+export function getStatusLabel(status) {
+    if (status === 'LANCADO' || status === true) return "LANÇADO";
+    if (status === 'NAO_AUTORIZADO') return "NÃO AUTORIZADO";
+    return "PENDENTE";
+}
+
+// Opções de status para selects e filtros
+export const statusOptions = [
+  { value: "PENDENTE", label: "PENDENTE" },
+  { value: "LANCADO", label: "LANÇADO" },
+  { value: "NAO_AUTORIZADO", label: "NÃO AUTORIZADO" },
+];
 
 // --- CONFIGURAÇÃO DE COLUNAS DA TABELA (Colunas Visíveis) ---
 export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, listaBancos = [], listaCategorias = []) => [
   {
     key: "statusLancamento",
     label: "Status",
-    type: "boolean",
+    type: "status",
+    editable: true,
     format: (value) => (
       <span className={getStatusClasses(value)}>
-        {value ? "LANÇADO" : "PENDENTE"}
+        {getStatusLabel(value)}
       </span>
     ),
     width: "6%",

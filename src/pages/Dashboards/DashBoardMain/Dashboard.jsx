@@ -66,7 +66,7 @@ export const Dashboard = () => {
 
   // --- Filtros ---
   const [filters, setFilters] = useState({
-    statusLancamento: "false", // ✅ PADRÃO: "Não (Pendente)" - mostra apenas lançamentos pendentes
+    statusLancamento: "PENDENTE", // ✅ PADRÃO: mostra apenas lançamentos pendentes
     formaDePagamento: "",
     data: "",
     dataInicio: "",
@@ -287,8 +287,7 @@ export const Dashboard = () => {
   const filteredRequests = requests.filter((req) => {
     // FILTRO DE STATUS
     if (filters.statusLancamento !== "") {
-      const filterBool = filters.statusLancamento === "true";
-      if (req.statusLancamento !== filterBool) return false;
+      if (req.statusLancamento !== filters.statusLancamento) return false;
     }
 
     // FILTRO DE FORMA DE PAGAMENTO
@@ -428,7 +427,7 @@ export const Dashboard = () => {
 
   const clearFilters = () => {
     setFilters({
-      statusLancamento: "false", // ✅ Mantém padrão "Não (Pendente)"
+      statusLancamento: "PENDENTE", // ✅ Mantém padrão "Pendente"
       formaDePagamento: "",
       data: "",
       dataInicio: "",
@@ -744,21 +743,25 @@ export const Dashboard = () => {
   // =========================================================================
   // ✅ NOVO HANDLER: Toggle Status de Lançamento
   // =========================================================================
-  const handleToggleLancamento = async (id, isCurrentlyLancado) => {
+  const handleToggleLancamento = async (id, currentStatus) => {
     if (editingId) {
       toast.error("Finalize a edição atual antes de mudar o status.");
       return;
     }
     
-    const novoStatus = !isCurrentlyLancado;
-    const actionText = novoStatus ? "Lançado" : "Pendente";
+    // Cicla entre os 3 status: PENDENTE -> LANCADO -> NAO_AUTORIZADO -> PENDENTE
+    let novoStatus;
+    if (currentStatus === 'PENDENTE') novoStatus = 'LANCADO';
+    else if (currentStatus === 'LANCADO') novoStatus = 'NAO_AUTORIZADO';
+    else novoStatus = 'PENDENTE';
+    
+    const labels = { LANCADO: 'Lançado', PENDENTE: 'Pendente', NAO_AUTORIZADO: 'Não Autorizado' };
+    const actionText = labels[novoStatus] || novoStatus;
     
     const toastId = toast.loading(`Atualizando status para ${actionText}...`);
     try {
-      // 1. Chama o serviço API para atualizar no banco de dados
       await atualizarStatusLancamento(id, novoStatus);
       
-      // 2. Atualiza o estado local para uma resposta rápida da UI
       setRequests(prevRequests =>
         prevRequests.map(req =>
           req.id === id ? { ...req, statusLancamento: novoStatus } : req
@@ -1178,10 +1181,10 @@ export const Dashboard = () => {
       let statusUpdateErrors = 0;
       for (const id of selectedRequests) {
         const request = requests.find((r) => r.id === id);
-        if (request && !request.statusLancamento) {
-          // Se status é false (Pendente), atualiza para true (Lançado)
+        if (request && request.statusLancamento === 'PENDENTE') {
+          // Se status é PENDENTE, atualiza para LANCADO
           try {
-            await atualizarStatusLancamento(id, true);
+            await atualizarStatusLancamento(id, 'LANCADO');
           } catch (error) {
             console.error(`Erro ao atualizar status do ID ${id}:`, error);
             statusUpdateErrors++;
@@ -1400,8 +1403,9 @@ export const Dashboard = () => {
                 className="w-full p-2 border border-gray-300 rounded-lg text-sm"
               >
                 <option value="">Todos</option>
-                <option value="true">Sim (Lançado)</option>
-                <option value="false">Não (Pendente)</option>
+                <option value="PENDENTE">Pendente</option>
+                <option value="LANCADO">Lançado</option>
+                <option value="NAO_AUTORIZADO">Não Autorizado</option>
               </select>
             </div>
 

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Edit, Save, Trash2, X, Loader2, ChevronDown, Flag, Repeat } from "lucide-react";
 import toast from "react-hot-toast";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
-import { formatCurrencyDisplay, getStatusClasses, getNameById } from "./dashboard.data";
+import { formatCurrencyDisplay, getStatusClasses, getStatusLabel, statusOptions, getNameById } from "./dashboard.data";
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
@@ -291,6 +291,24 @@ const PaymentTable = ({
               document.body
             )}
           </div>
+        );
+      }
+
+      // --- STATUS (DROPDOWN com 3 opções: PENDENTE, LANÇADO, NÃO AUTORIZADO) ---
+      if (fieldConfig.type === "status") {
+        return (
+          <select
+            name={key}
+            value={value || "PENDENTE"}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            {statusOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         );
       }
 

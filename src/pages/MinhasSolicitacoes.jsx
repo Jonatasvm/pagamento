@@ -8,6 +8,7 @@ import {
   formatDatePT,
   getNameById,
   getStatusClasses,
+  getStatusLabel,
 } from "./Dashboards/DashBoardMain/dashboard.data";
 
 const API_URL = "http://91.98.132.210:5631";
@@ -116,8 +117,9 @@ export default function MinhasSolicitacoes() {
       }
 
       // Filtro status lançamento
-      if (filtroStatus === "pendente" && r.statusLancamento) return false;
-      if (filtroStatus === "lancado" && !r.statusLancamento) return false;
+      if (filtroStatus === "pendente" && r.statusLancamento !== 'PENDENTE') return false;
+      if (filtroStatus === "lancado" && r.statusLancamento !== 'LANCADO') return false;
+      if (filtroStatus === "nao_autorizado" && r.statusLancamento !== 'NAO_AUTORIZADO') return false;
 
       // Filtro data
       if (filtroDataInicio && r.dataPagamento < filtroDataInicio) return false;
@@ -215,8 +217,9 @@ export default function MinhasSolicitacoes() {
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Todos</option>
-            <option value="pendente">Não Lançados</option>
-            <option value="lancado">Lançados</option>
+            <option value="pendente">Pendente</option>
+            <option value="lancado">Lançado</option>
+            <option value="nao_autorizado">Não Autorizado</option>
           </select>
 
           {/* Data início */}
@@ -320,7 +323,7 @@ export default function MinhasSolicitacoes() {
                 <tr key={r.id} className="hover:bg-gray-50">
                   <td className="px-3 py-2">
                     <span className={getStatusClasses(r.statusLancamento)}>
-                      {r.statusLancamento ? "LANÇADO" : "PENDENTE"}
+                      {getStatusLabel(r.statusLancamento)}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">{formatDatePT(r.dataPagamento)}</td>
