@@ -92,10 +92,27 @@ export default function MinhasSolicitacoes() {
       // Filtro obra
       if (filtroObra && String(r.obra) !== filtroObra) return false;
 
-      // Filtro fornecedor (busca parcial no titular)
+      // Filtro fornecedor (busca em múltiplos campos: titular, referente, obra, CPF/CNPJ, chave pix, valor)
       if (filtroFornecedor) {
+        const termo = filtroFornecedor.toLowerCase().trim();
         const titular = String(r.titular || "").toLowerCase();
-        if (!titular.includes(filtroFornecedor.toLowerCase())) return false;
+        const referente = String(r.referente || "").toLowerCase();
+        const cpfCnpj = String(r.cpfCnpjTitularConta || "").toLowerCase();
+        const chavePix = String(r.chavePix || "").toLowerCase();
+        const valorStr = r.valor != null ? formatCurrencyDisplay(r.valor).toLowerCase() : "";
+        const valorRaw = String(r.valor || "");
+        const obraNome = getNameById(listaObras, r.obra).toLowerCase();
+
+        const encontrou =
+          titular.includes(termo) ||
+          referente.includes(termo) ||
+          obraNome.includes(termo) ||
+          cpfCnpj.includes(termo) ||
+          chavePix.includes(termo) ||
+          valorStr.includes(termo) ||
+          valorRaw.includes(termo);
+
+        if (!encontrou) return false;
       }
 
       // Filtro status lançamento
@@ -108,7 +125,7 @@ export default function MinhasSolicitacoes() {
 
       return true;
     });
-  }, [minhasSolicitacoes, filtroObra, filtroFornecedor, filtroStatus, filtroDataInicio, filtroDataFim]);
+  }, [minhasSolicitacoes, filtroObra, filtroFornecedor, filtroStatus, filtroDataInicio, filtroDataFim, listaObras]);
 
   // Obras disponíveis para o filtro (apenas as que o usuário tem solicitações)
   const obrasDoUsuario = useMemo(() => {
@@ -162,7 +179,7 @@ export default function MinhasSolicitacoes() {
           <span className="text-sm font-semibold text-gray-700">Filtros</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {/* Obra */}
           <select
             value={filtroObra}
@@ -179,14 +196,14 @@ export default function MinhasSolicitacoes() {
               ))}
           </select>
 
-          {/* Fornecedor */}
-          <div className="relative">
+          {/* Busca geral */}
+          <div className="relative col-span-2 sm:col-span-2 lg:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={filtroFornecedor}
               onChange={(e) => setFiltroFornecedor(e.target.value)}
-              placeholder="Fornecedor..."
+              placeholder="Buscar: fornecedor, referente, obra, CPF/CNPJ, pix, valor..."
               className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
