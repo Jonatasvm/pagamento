@@ -78,6 +78,7 @@ export const Dashboard = () => {
     busca: "",
     multiplayosLancamentos: "todos", // ✅ NOVO: Filtro para múltiplos lançamentos - padrão é "todos"
     codigoBarraStatus: "todos", // NOVO: filtro código de barra
+    ordenacao: "id_desc", // ✅ NOVO: Ordenação padrão por ID decrescente (mais recente primeiro)
   });
 
   // =========================================================================
@@ -395,21 +396,54 @@ export const Dashboard = () => {
     return lancamentos;
   };
 
-  // ✅ ORDENAR POR DATA, DEPOIS POR NÚMERO DE PARCELA
+  // ✅ ORDENAÇÃO DINÂMICA baseada no filtro de ordenação
   const sortedAndFilteredRequests = [...filteredRequests].sort((a, b) => {
-    // Primeiro, ordena por data de pagamento (crescente)
-    const dateA = new Date(a.dataPagamento || "1900-01-01");
-    const dateB = new Date(b.dataPagamento || "1900-01-01");
+    const ord = filters.ordenacao || "id_desc";
     
-    if (dateA.getTime() !== dateB.getTime()) {
-      return dateA.getTime() - dateB.getTime();
+    switch (ord) {
+      case "id_desc": // ID: mais recente primeiro
+        return (b.id || 0) - (a.id || 0);
+      case "id_asc": // ID: mais antigo primeiro
+        return (a.id || 0) - (b.id || 0);
+      case "valor_desc": // Valor: maior primeiro
+        return (b.valor || 0) - (a.valor || 0);
+      case "valor_asc": // Valor: menor primeiro
+        return (a.valor || 0) - (b.valor || 0);
+      case "titular_asc": // Titular: A-Z
+        return String(a.titular || "").localeCompare(String(b.titular || ""), "pt-BR", { sensitivity: "base" });
+      case "titular_desc": // Titular: Z-A
+        return String(b.titular || "").localeCompare(String(a.titular || ""), "pt-BR", { sensitivity: "base" });
+      case "referente_asc": // Referente: A-Z
+        return String(a.referente || "").localeCompare(String(b.referente || ""), "pt-BR", { sensitivity: "base" });
+      case "referente_desc": // Referente: Z-A
+        return String(b.referente || "").localeCompare(String(a.referente || ""), "pt-BR", { sensitivity: "base" });
+      case "dataLancamento_desc": { // Data Lançamento: mais recente primeiro
+        const dA = a.dataLancamento || "1900-01-01";
+        const dB = b.dataLancamento || "1900-01-01";
+        return dB.localeCompare(dA);
+      }
+      case "dataLancamento_asc": { // Data Lançamento: mais antiga primeiro
+        const dA = a.dataLancamento || "1900-01-01";
+        const dB = b.dataLancamento || "1900-01-01";
+        return dA.localeCompare(dB);
+      }
+      case "dataPagamento_desc": { // Data Pagamento: mais recente primeiro
+        const dA = a.dataPagamento || "1900-01-01";
+        const dB = b.dataPagamento || "1900-01-01";
+        return dB.localeCompare(dA);
+      }
+      case "dataPagamento_asc": { // Data Pagamento: mais antiga primeiro
+        const dA = a.dataPagamento || "1900-01-01";
+        const dB = b.dataPagamento || "1900-01-01";
+        if (dA !== dB) return dA.localeCompare(dB);
+        // Se mesma data, ordena por parcela
+        const installmentA = extractInstallmentNumber(a.referente);
+        const installmentB = extractInstallmentNumber(b.referente);
+        return installmentA - installmentB;
+      }
+      default: // Fallback: ID desc
+        return (b.id || 0) - (a.id || 0);
     }
-
-    // Se as datas são iguais, ordena por número de parcela (crescente)
-    const installmentA = extractInstallmentNumber(a.referente);
-    const installmentB = extractInstallmentNumber(b.referente);
-    
-    return installmentA - installmentB;
   });
 
   // ✅ NOVO: Agrupar lançamentos por grupo_lancamento
@@ -439,6 +473,7 @@ export const Dashboard = () => {
       busca: "",
       multiplayosLancamentos: "todos", // ✅ CORREÇÃO: Resetar filtro de múltiplos
       codigoBarraStatus: "todos", // NOVO: Resetar filtro de código de barra
+      ordenacao: "id_desc", // ✅ NOVO: Resetar ordenação
     });
     setObraFilterText("");
     setIsObraDropdownOpen(false);
@@ -1619,8 +1654,8 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Linha 3: Descrição (Referente), Busca Mista, Botão Limpar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          {/* Linha 3: Descrição (Referente), Busca Mista, Código Barra, Ordenação, Botão Limpar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             
             {/* Descrição (Referente) */}
             <div className="flex flex-col gap-1">
@@ -1669,10 +1704,48 @@ export const Dashboard = () => {
               </select>
             </div>
 
-            {/* Botão Limpar - Espande para 2 colunas em telas pequenas */}
+            {/* ✅ NOVO: Ordenação */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase">
+                Ordenação
+              </label>
+              <select
+                name="ordenacao"
+                value={filters.ordenacao}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <optgroup label="ID (Registro)">
+                  <option value="id_desc">ID ↓ Mais recente</option>
+                  <option value="id_asc">ID ↑ Mais antigo</option>
+                </optgroup>
+                <optgroup label="Valor">
+                  <option value="valor_desc">Valor ↓ Maior primeiro</option>
+                  <option value="valor_asc">Valor ↑ Menor primeiro</option>
+                </optgroup>
+                <optgroup label="Titular">
+                  <option value="titular_asc">Titular ↑ A–Z</option>
+                  <option value="titular_desc">Titular ↓ Z–A</option>
+                </optgroup>
+                <optgroup label="Referente">
+                  <option value="referente_asc">Referente ↑ A–Z</option>
+                  <option value="referente_desc">Referente ↓ Z–A</option>
+                </optgroup>
+                <optgroup label="Data de Lançamento">
+                  <option value="dataLancamento_desc">Dt. Lançamento ↓ Recente</option>
+                  <option value="dataLancamento_asc">Dt. Lançamento ↑ Antiga</option>
+                </optgroup>
+                <optgroup label="Data de Pagamento">
+                  <option value="dataPagamento_desc">Dt. Pagamento ↓ Recente</option>
+                  <option value="dataPagamento_asc">Dt. Pagamento ↑ Antiga</option>
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Botão Limpar */}
             <button
               onClick={clearFilters}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm h-[42px] lg:col-span-2"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm h-[42px]"
             >
               <RotateCcw className="w-4 h-4" /> Limpar Filtros
             </button>
