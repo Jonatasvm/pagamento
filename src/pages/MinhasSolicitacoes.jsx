@@ -118,6 +118,7 @@ export default function MinhasSolicitacoes() {
 
       // Filtro status lançamento
       if (filtroStatus === "pendente" && r.statusLancamento !== 'PENDENTE') return false;
+      if (filtroStatus === "aprovado" && r.statusLancamento !== 'APROVADO') return false;
       if (filtroStatus === "lancado" && r.statusLancamento !== 'LANCADO') return false;
       if (filtroStatus === "nao_autorizado" && r.statusLancamento !== 'NAO_AUTORIZADO') return false;
 
@@ -218,6 +219,7 @@ export default function MinhasSolicitacoes() {
           >
             <option value="">Todos</option>
             <option value="pendente">Pendente</option>
+            <option value="aprovado">Aprovado</option>
             <option value="lancado">Lançado</option>
             <option value="nao_autorizado">Não Autorizado</option>
           </select>

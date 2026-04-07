@@ -116,6 +116,8 @@ export function formatCurrencyDisplay(value) {
 export function getStatusClasses(status) {
     if (status === 'LANCADO' || status === true)
         return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800";
+    if (status === 'APROVADO')
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800";
     if (status === 'NAO_AUTORIZADO')
         return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800";
     // PENDENTE ou false
@@ -124,6 +126,7 @@ export function getStatusClasses(status) {
 
 export function getStatusLabel(status) {
     if (status === 'LANCADO' || status === true) return "LANÇADO";
+    if (status === 'APROVADO') return "APROVADO";
     if (status === 'NAO_AUTORIZADO') return "NÃO AUTORIZADO";
     return "PENDENTE";
 }
@@ -131,6 +134,7 @@ export function getStatusLabel(status) {
 // Opções de status para selects e filtros
 export const statusOptions = [
   { value: "PENDENTE", label: "PENDENTE" },
+  { value: "APROVADO", label: "APROVADO" },
   { value: "LANCADO", label: "LANÇADO" },
   { value: "NAO_AUTORIZADO", label: "NÃO AUTORIZADO" },
 ];

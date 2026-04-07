@@ -294,7 +294,7 @@ const PaymentTable = ({
         );
       }
 
-      // --- STATUS (DROPDOWN com 3 opções: PENDENTE, LANÇADO, NÃO AUTORIZADO) ---
+      // --- STATUS (DROPDOWN com 4 opções: PENDENTE, APROVADO, LANÇADO, NÃO AUTORIZADO) ---
       if (fieldConfig.type === "status") {
         return (
           <select

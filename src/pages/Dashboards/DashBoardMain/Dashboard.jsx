@@ -388,66 +388,116 @@ export const Dashboard = () => {
     return match ? parseInt(match[1], 10) : 0;
   };
 
-  // ✅ NOVO: Agrupar lançamentos por grupo_lancamento (para múltiplos lançamentos)
-  // NOTA: O backend já retorna apenas 1 por grupo, então essa função não precisa fazer muito
-  const groupLancamentosByGroup = (lancamentos) => {
-    // O backend já retorna apenas o primeiro de cada grupo
-    // Apenas retorna os dados como estão
-    return lancamentos;
+  // ✅ Função auxiliar: extrai a "base" do referente sem o número de parcela
+  // Ex: "Compra de cimento (3/12)" → "compra de cimento"
+  const extractReferenteBase = (referente) => {
+    if (!referente) return "";
+    return referente.replace(/\s*\(\d+\/\d+\)\s*$/, "").toLowerCase().trim();
   };
 
-  // ✅ ORDENAÇÃO DINÂMICA baseada no filtro de ordenação
-  const sortedAndFilteredRequests = [...filteredRequests].sort((a, b) => {
-    const ord = filters.ordenacao || "id_desc";
-    
-    switch (ord) {
-      case "id_desc": // ID: mais recente primeiro
-        return (b.id || 0) - (a.id || 0);
-      case "id_asc": // ID: mais antigo primeiro
-        return (a.id || 0) - (b.id || 0);
-      case "valor_desc": // Valor: maior primeiro
-        return (b.valor || 0) - (a.valor || 0);
-      case "valor_asc": // Valor: menor primeiro
-        return (a.valor || 0) - (b.valor || 0);
-      case "titular_asc": // Titular: A-Z
-        return String(a.titular || "").localeCompare(String(b.titular || ""), "pt-BR", { sensitivity: "base" });
-      case "titular_desc": // Titular: Z-A
-        return String(b.titular || "").localeCompare(String(a.titular || ""), "pt-BR", { sensitivity: "base" });
-      case "referente_asc": // Referente: A-Z
-        return String(a.referente || "").localeCompare(String(b.referente || ""), "pt-BR", { sensitivity: "base" });
-      case "referente_desc": // Referente: Z-A
-        return String(b.referente || "").localeCompare(String(a.referente || ""), "pt-BR", { sensitivity: "base" });
-      case "dataLancamento_desc": { // Data Lançamento: mais recente primeiro
-        const dA = a.dataLancamento || "1900-01-01";
-        const dB = b.dataLancamento || "1900-01-01";
-        return dB.localeCompare(dA);
-      }
-      case "dataLancamento_asc": { // Data Lançamento: mais antiga primeiro
-        const dA = a.dataLancamento || "1900-01-01";
-        const dB = b.dataLancamento || "1900-01-01";
-        return dA.localeCompare(dB);
-      }
-      case "dataPagamento_desc": { // Data Pagamento: mais recente primeiro
-        const dA = a.dataPagamento || "1900-01-01";
-        const dB = b.dataPagamento || "1900-01-01";
-        return dB.localeCompare(dA);
-      }
-      case "dataPagamento_asc": { // Data Pagamento: mais antiga primeiro
-        const dA = a.dataPagamento || "1900-01-01";
-        const dB = b.dataPagamento || "1900-01-01";
-        if (dA !== dB) return dA.localeCompare(dB);
-        // Se mesma data, ordena por parcela
-        const installmentA = extractInstallmentNumber(a.referente);
-        const installmentB = extractInstallmentNumber(b.referente);
-        return installmentA - installmentB;
-      }
-      default: // Fallback: ID desc
-        return (b.id || 0) - (a.id || 0);
-    }
-  });
+  // ✅ Gera uma chave de grupo para identificar parcelas do mesmo lançamento
+  const getParcelaGroupKey = (item) => {
+    const base = extractReferenteBase(item.referente);
+    const titular = String(item.titular || "").toLowerCase().trim();
+    const inst = extractInstallmentNumber(item.referente);
+    // Só agrupa se tiver número de parcela (ex: "(2/12)")
+    if (inst > 0 && base) return `${titular}|||${base}`;
+    return null; // Não é parcela, não agrupa
+  };
 
-  // ✅ NOVO: Agrupar lançamentos por grupo_lancamento
-  const groupedAndSortedRequests = groupLancamentosByGroup(sortedAndFilteredRequests);
+  // ✅ ORDENAÇÃO EM 2 ETAPAS:
+  // 1) Ordena pelo critério principal (ID, valor, data, etc.)
+  // 2) Pós-processa para agrupar parcelas juntas e sub-ordenar por número de parcela
+
+  // ETAPA 1: Ordenação principal
+  const primarySorted = useMemo(() => {
+    return [...filteredRequests].sort((a, b) => {
+      const ord = filters.ordenacao || "id_desc";
+      switch (ord) {
+        case "id_desc":
+          return (b.id || 0) - (a.id || 0);
+        case "id_asc":
+          return (a.id || 0) - (b.id || 0);
+        case "valor_desc":
+          return (b.valor || 0) - (a.valor || 0);
+        case "valor_asc":
+          return (a.valor || 0) - (b.valor || 0);
+        case "titular_asc":
+          return String(a.titular || "").localeCompare(String(b.titular || ""), "pt-BR", { sensitivity: "base" });
+        case "titular_desc":
+          return String(b.titular || "").localeCompare(String(a.titular || ""), "pt-BR", { sensitivity: "base" });
+        case "referente_asc":
+          return String(a.referente || "").localeCompare(String(b.referente || ""), "pt-BR", { sensitivity: "base" });
+        case "referente_desc":
+          return String(b.referente || "").localeCompare(String(a.referente || ""), "pt-BR", { sensitivity: "base" });
+        case "dataLancamento_desc":
+          return (b.dataLancamento || "1900-01-01").localeCompare(a.dataLancamento || "1900-01-01");
+        case "dataLancamento_asc":
+          return (a.dataLancamento || "1900-01-01").localeCompare(b.dataLancamento || "1900-01-01");
+        case "dataPagamento_desc":
+          return (b.dataPagamento || "1900-01-01").localeCompare(a.dataPagamento || "1900-01-01");
+        case "dataPagamento_asc":
+          return (a.dataPagamento || "1900-01-01").localeCompare(b.dataPagamento || "1900-01-01");
+        default:
+          return (b.id || 0) - (a.id || 0);
+      }
+    });
+  }, [filteredRequests, filters.ordenacao]);
+
+  // ETAPA 2: Agrupar parcelas juntas e sub-ordenar por número de parcela
+  const groupedAndSortedRequests = useMemo(() => {
+    const ord = filters.ordenacao || "id_desc";
+    const isDesc = ord.includes("_desc");
+    
+    // Mapeia cada grupo de parcelas → { posição da primeira aparição, itens }
+    const groupMap = new Map(); // groupKey → { firstIndex, items[] }
+    const result = [];
+    const processed = new Set();
+
+    // Primeira passagem: identifica os grupos e suas posições
+    primarySorted.forEach((item, index) => {
+      const groupKey = getParcelaGroupKey(item);
+      if (groupKey) {
+        if (!groupMap.has(groupKey)) {
+          groupMap.set(groupKey, { firstIndex: index, items: [] });
+        }
+        groupMap.get(groupKey).items.push(item);
+      }
+    });
+
+    // Sub-ordena cada grupo por número de parcela (decrescente se desc, crescente se asc)
+    groupMap.forEach((group) => {
+      group.items.sort((a, b) => {
+        const instA = extractInstallmentNumber(a.referente);
+        const instB = extractInstallmentNumber(b.referente);
+        return isDesc ? (instB - instA) : (instA - instB);
+      });
+    });
+
+    // Segunda passagem: reconstrói o array final
+    // Quando encontra o primeiro item de um grupo, insere todas as parcelas do grupo ali
+    primarySorted.forEach((item) => {
+      if (processed.has(item.id)) return;
+      
+      const groupKey = getParcelaGroupKey(item);
+      if (groupKey && groupMap.has(groupKey)) {
+        // Insere todas as parcelas do grupo na posição do primeiro item encontrado
+        const group = groupMap.get(groupKey);
+        group.items.forEach((groupItem) => {
+          if (!processed.has(groupItem.id)) {
+            result.push(groupItem);
+            processed.add(groupItem.id);
+          }
+        });
+      } else {
+        // Item sem parcela, insere normalmente
+        result.push(item);
+        processed.add(item.id);
+      }
+    });
+
+    return result;
+  }, [primarySorted, filters.ordenacao]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -531,7 +581,7 @@ export const Dashboard = () => {
   };
 
   const isAllSelected =
-    sortedAndFilteredRequests.length > 0 &&
+    groupedAndSortedRequests.length > 0 &&
     selectedRequests.length === groupedAndSortedRequests.length;
 
   const handleEdit = (request) => {
@@ -784,13 +834,14 @@ export const Dashboard = () => {
       return;
     }
     
-    // Cicla entre os 3 status: PENDENTE -> LANCADO -> NAO_AUTORIZADO -> PENDENTE
+    // Cicla entre os 4 status: PENDENTE -> APROVADO -> LANCADO -> NAO_AUTORIZADO -> PENDENTE
     let novoStatus;
-    if (currentStatus === 'PENDENTE') novoStatus = 'LANCADO';
+    if (currentStatus === 'PENDENTE') novoStatus = 'APROVADO';
+    else if (currentStatus === 'APROVADO') novoStatus = 'LANCADO';
     else if (currentStatus === 'LANCADO') novoStatus = 'NAO_AUTORIZADO';
     else novoStatus = 'PENDENTE';
     
-    const labels = { LANCADO: 'Lançado', PENDENTE: 'Pendente', NAO_AUTORIZADO: 'Não Autorizado' };
+    const labels = { LANCADO: 'Lançado', PENDENTE: 'Pendente', NAO_AUTORIZADO: 'Não Autorizado', APROVADO: 'Aprovado' };
     const actionText = labels[novoStatus] || novoStatus;
     
     const toastId = toast.loading(`Atualizando status para ${actionText}...`);
@@ -1439,6 +1490,7 @@ export const Dashboard = () => {
               >
                 <option value="">Todos</option>
                 <option value="PENDENTE">Pendente</option>
+                <option value="APROVADO">Aprovado</option>
                 <option value="LANCADO">Lançado</option>
                 <option value="NAO_AUTORIZADO">Não Autorizado</option>
               </select>
