@@ -154,6 +154,15 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     width: "6%",
   },
   {
+    key: "solicitante",
+    label: "Solicitante",
+    type: "select",
+    options: listaUsuarios,
+    width: "9%",
+    editable: false,
+    format: (value) => String(value),
+  },
+  {
     key: "dataPagamento",
     label: "Data Pagto",
     type: "date",
@@ -204,18 +213,9 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "CONTA BANCÁRIA",
     type: "select",
     options: listaBancos,
-    width: "12%",
+    width: "13%",
     editable: true,
     format: (value) => getNameById(listaBancos, value),
-  },
-  {
-    key: "solicitante",
-    label: "Solicitante",
-    type: "select",
-    options: listaUsuarios,
-    width: "10%",
-    editable: false,
-    format: (value) => String(value),
   },
 ];
 
