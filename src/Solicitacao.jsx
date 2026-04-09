@@ -141,7 +141,7 @@ const PIX_LIMITS = {
   CNPJ: { len: 14, type: "numeric" },
   Telefone: { len: 14, type: "numeric" },
   "E-mail": { len: 100, type: "text" },
-  "Chave Aleatoria": { len: 36, type: "text" },
+  "Chave Aleatoria": { len: 500, type: "text" },
 };
 const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -1151,16 +1151,31 @@ const TelaSolicitacao = () => {
                     Chave PIX <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <input
-                      type="text"
-                      name="pixKey"
-                      value={formData.pixKey}
-                      onChange={handleChange}
-                      placeholder="Chave do recebedor"
-                      className={`${inputClass} pl-10`}
-                    />
-                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    {formData.pixKeyType === "Chave Aleatoria" ? (
+                      <textarea
+                        name="pixKey"
+                        value={formData.pixKey}
+                        onChange={handleChange}
+                        placeholder="Cole aqui a chave PIX (Copia e Cola, QR Code, chave aleatória...)"
+                        rows={3}
+                        maxLength={500}
+                        className={`${inputClass} pl-10 resize-none`}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        name="pixKey"
+                        value={formData.pixKey}
+                        onChange={handleChange}
+                        placeholder="Chave do recebedor"
+                        className={`${inputClass} pl-10`}
+                      />
+                    )}
+                    <Key className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                   </div>
+                  {formData.pixKeyType === "Chave Aleatoria" && formData.pixKey.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">{formData.pixKey.length}/500 caracteres</p>
+                  )}
                 </div>
               </div>
             )}
