@@ -1263,12 +1263,12 @@ export const Dashboard = () => {
         URL.revokeObjectURL(url);
       }, 100);
       
-      // Atualizar status para "Lançado" se estiver "Pendente"
+      // Atualizar status para "Lançado" se estiver "Pendente" ou "Aprovado"
       let statusUpdateErrors = 0;
       for (const id of selectedRequests) {
         const request = requests.find((r) => r.id === id);
-        if (request && request.statusLancamento === 'PENDENTE') {
-          // Se status é PENDENTE, atualiza para LANCADO
+        if (request && (request.statusLancamento === 'PENDENTE' || request.statusLancamento === 'APROVADO')) {
+          // Se status é PENDENTE ou APROVADO, atualiza para LANCADO
           try {
             await atualizarStatusLancamento(id, 'LANCADO');
           } catch (error) {

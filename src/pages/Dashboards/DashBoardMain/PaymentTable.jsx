@@ -1,9 +1,111 @@
-import React from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Edit, Save, Trash2, X, Loader2, ChevronDown, Flag, Repeat } from "lucide-react";
+import { Edit, Save, Trash2, X, Loader2, ChevronDown, Flag, Repeat, Search } from "lucide-react";
 import toast from "react-hot-toast";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
 import { formatCurrencyDisplay, getStatusClasses, getStatusLabel, statusOptions, getNameById } from "./dashboard.data";
+
+// ✅ COMPONENTE: Select com busca para campos com muitas opções (ex: Obra)
+const SearchableSelect = ({ name, value, options, onChange, placeholder = "Buscar..." }) => {
+  const [searchText, setSearchText] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  // Nome da opção selecionada atualmente
+  const selectedName = useMemo(() => {
+    if (!value) return "";
+    const found = options.find((o) => String(o.id) === String(value));
+    return found ? (found.nome || found.name || "") : "";
+  }, [value, options]);
+
+  // Opções filtradas pela busca
+  const filteredOptions = useMemo(() => {
+    if (!searchText.trim()) return options;
+    const search = searchText.trim().toLowerCase();
+    return options.filter((o) => (o.nome || o.name || "").toLowerCase().includes(search));
+  }, [options, searchText]);
+
+  // Fechar ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (opt) => {
+    onChange({ target: { name, value: String(opt.id), type: "text" } });
+    setSearchText("");
+    setIsOpen(false);
+  };
+
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange({ target: { name, value: "", type: "text" } });
+    setSearchText("");
+  };
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      {/* Exibe o nome selecionado */}
+      {selectedName && (
+        <div className="flex items-center justify-between mb-1">
+          <span className="block text-xs text-green-700 font-semibold break-words leading-tight truncate max-w-[85%]">
+            {selectedName}
+          </span>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-red-400 hover:text-red-600 text-xs ml-1 flex-shrink-0"
+            title="Limpar seleção"
+          >✕</button>
+        </div>
+      )}
+      {/* Input de busca */}
+      <div className="relative">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={searchText}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full pl-7 pr-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      {/* Dropdown de opções */}
+      {isOpen && (
+        <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+          {filteredOptions.length === 0 ? (
+            <li className="px-3 py-2 text-sm text-gray-400 italic">Nenhuma obra encontrada</li>
+          ) : (
+            filteredOptions.map((opt) => (
+              <li
+                key={opt.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect(opt);
+                }}
+                className={`px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 ${
+                  String(value) === String(opt.id) ? "bg-indigo-100 font-semibold" : ""
+                }`}
+              >
+                {opt.nome || opt.name}
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 const PaymentTable = ({
   // Novas props para configuração dinâmica
@@ -149,6 +251,13 @@ const PaymentTable = ({
         } else if (key === "categoria") {
             selectOptions = listaCategorias;
         }
+
+        // ✅ ORDENAR OPÇÕES ALFABETICAMENTE (para objetos com nome)
+        if (selectOptions.length > 0 && typeof selectOptions[0] === "object") {
+          selectOptions = [...selectOptions].sort((a, b) =>
+            (a.nome || a.name || "").localeCompare(b.nome || b.name || "", "pt-BR")
+          );
+        }
         
         // Verifica se é um select de IDs (Objeto {id, nome})
         const isIdSelect = 
@@ -156,6 +265,18 @@ const PaymentTable = ({
             ["quemPaga", "solicitante"].includes(key) ||
             (selectOptions.length > 0 && typeof selectOptions[0] === "object");
 
+        // ✅ CAMPO DE OBRA COM BUSCA — usa SearchableSelect
+        if (key === "obra" && isIdSelect) {
+          return (
+            <SearchableSelect
+              name={key}
+              value={value}
+              options={selectOptions}
+              onChange={handleEditChange}
+              placeholder="Buscar obra..."
+            />
+          );
+        }
 
         // Encontrar o nome da opção selecionada para exibir acima do select
         // Remover exibição para categoria, obra, conta e formaDePagamento
@@ -676,9 +797,9 @@ const PaymentTable = ({
                                         className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
                                       >
                                         <option value="">Selecione uma obra...</option>
-                                        {listaObras.map((opt) => (
+                                        {[...listaObras].sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map((opt) => (
                                           <option key={opt.id} value={opt.id}>
-                                            {opt.nome} (ID: {opt.id})
+                                            {opt.nome}
                                           </option>
                                         ))}
                                       </select>
