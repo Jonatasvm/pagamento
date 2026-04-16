@@ -31,7 +31,6 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        // Verificar se o clique foi dentro do dropdown do portal
         const portalDropdown = e.target.closest('ul[style*="z-index: 99999"]');
         if (portalDropdown) return;
         setIsOpen(false);
@@ -42,6 +41,19 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Fechar dropdown ao fazer scroll (evita que fique "voando")
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleScroll = () => {
+      setIsOpen(false);
+      setIsSearching(false);
+      setSearchText("");
+    };
+    // Captura scroll em qualquer elemento (useCapture = true)
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [isOpen]);
 
   const handleSelect = (opt) => {
     onChange({ target: { name, value: String(opt.id), type: "text" } });
