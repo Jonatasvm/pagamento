@@ -9,7 +9,9 @@ import { formatCurrencyDisplay, getStatusClasses, getStatusLabel, statusOptions,
 const SearchableSelect = ({ name, value, options, onChange, placeholder = "Buscar..." }) => {
   const [searchText, setSearchText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const containerRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Nome da opção selecionada atualmente
   const selectedName = useMemo(() => {
@@ -20,16 +22,18 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
 
   // Opções filtradas pela busca
   const filteredOptions = useMemo(() => {
-    if (!searchText.trim()) return options;
+    if (!isSearching || !searchText.trim()) return options;
     const search = searchText.trim().toLowerCase();
     return options.filter((o) => (o.nome || o.name || "").toLowerCase().includes(search));
-  }, [options, searchText]);
+  }, [options, searchText, isSearching]);
 
   // Fechar ao clicar fora
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsOpen(false);
+        setIsSearching(false);
+        setSearchText("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -39,52 +43,62 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
   const handleSelect = (opt) => {
     onChange({ target: { name, value: String(opt.id), type: "text" } });
     setSearchText("");
+    setIsSearching(false);
     setIsOpen(false);
   };
 
-  const handleClear = (e) => {
-    e.stopPropagation();
-    onChange({ target: { name, value: "", type: "text" } });
-    setSearchText("");
+  const handleInputChange = (e) => {
+    setSearchText(e.target.value);
+    setIsSearching(true);
+    setIsOpen(true);
   };
+
+  const handleFocus = () => {
+    setIsOpen(true);
+    // Se tem obra selecionada e o usuário clica, limpa para permitir busca
+    if (selectedName && !isSearching) {
+      setSearchText("");
+      setIsSearching(true);
+    }
+  };
+
+  // Texto exibido no input: se está buscando mostra o que digitou, senão mostra a obra selecionada
+  const displayValue = isSearching ? searchText : (selectedName || "");
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Exibe o nome selecionado */}
-      {selectedName ? (
-        <div className="flex items-center justify-between mb-1 bg-green-50 border border-green-300 rounded px-2 py-0.5">
-          <span className="block text-xs text-green-800 font-semibold leading-tight truncate max-w-[85%]" title={selectedName}>
-            ✅ {selectedName}
-          </span>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-red-400 hover:text-red-600 text-xs ml-1 shrink-0"
-            title="Limpar seleção"
-          >✕</button>
-        </div>
-      ) : (
-        <div className="flex items-center mb-1 bg-orange-50 border border-orange-300 rounded px-2 py-0.5">
-          <span className="block text-xs text-orange-600 font-medium leading-tight">
-            ⚠️ Nenhuma obra selecionada
-          </span>
-        </div>
-      )}
-      {/* Input de busca */}
+      {/* Input único — mostra obra selecionada ou campo de busca */}
       <div className="relative">
         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         <input
+          ref={inputRef}
           type="text"
           placeholder={placeholder}
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-            setIsOpen(true);
-          }}
-          onFocus={() => setIsOpen(true)}
+          value={displayValue}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
           onClick={(e) => e.stopPropagation()}
-          className="w-full pl-7 pr-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          className={`w-full pl-7 pr-7 py-1.5 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 ${
+            selectedName && !isSearching
+              ? "border-green-400 bg-green-50 text-green-800 font-semibold"
+              : "border-blue-400"
+          }`}
         />
+        {/* Botão limpar */}
+        {selectedName && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange({ target: { name, value: "", type: "text" } });
+              setSearchText("");
+              setIsSearching(false);
+              inputRef.current?.focus();
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600 text-xs"
+            title="Limpar seleção"
+          >✕</button>
+        )}
       </div>
       {/* Dropdown de opções */}
       {isOpen && (
