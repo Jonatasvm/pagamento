@@ -13,7 +13,7 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
 
   // Nome da opção selecionada atualmente
   const selectedName = useMemo(() => {
-    if (!value) return "";
+    if (value === null || value === undefined || value === "") return "";
     const found = options.find((o) => String(o.id) === String(value));
     return found ? (found.nome || found.name || "") : "";
   }, [value, options]);
@@ -51,17 +51,23 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
   return (
     <div ref={containerRef} className="relative w-full">
       {/* Exibe o nome selecionado */}
-      {selectedName && (
-        <div className="flex items-center justify-between mb-1">
-          <span className="block text-xs text-green-700 font-semibold break-words leading-tight truncate max-w-[85%]">
-            {selectedName}
+      {selectedName ? (
+        <div className="flex items-center justify-between mb-1 bg-green-50 border border-green-300 rounded px-2 py-0.5">
+          <span className="block text-xs text-green-800 font-semibold leading-tight truncate max-w-[85%]" title={selectedName}>
+            ✅ {selectedName}
           </span>
           <button
             type="button"
             onClick={handleClear}
-            className="text-red-400 hover:text-red-600 text-xs ml-1 flex-shrink-0"
+            className="text-red-400 hover:text-red-600 text-xs ml-1 shrink-0"
             title="Limpar seleção"
           >✕</button>
+        </div>
+      ) : (
+        <div className="flex items-center mb-1 bg-orange-50 border border-orange-300 rounded px-2 py-0.5">
+          <span className="block text-xs text-orange-600 font-medium leading-tight">
+            ⚠️ Nenhuma obra selecionada
+          </span>
         </div>
       )}
       {/* Input de busca */}
