@@ -31,6 +31,9 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
+        // Verificar se o clique foi dentro do dropdown do portal
+        const portalDropdown = e.target.closest('ul[style*="z-index: 99999"]');
+        if (portalDropdown) return;
         setIsOpen(false);
         setIsSearching(false);
         setSearchText("");
@@ -80,7 +83,7 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
           onClick={(e) => e.stopPropagation()}
           className={`w-full pl-7 pr-7 py-1.5 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 ${
             selectedName && !isSearching
-              ? "border-green-400 bg-green-50 text-green-800 font-semibold"
+              ? "border-blue-400"
               : "border-blue-400"
           }`}
         />
@@ -100,9 +103,18 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
           >✕</button>
         )}
       </div>
-      {/* Dropdown de opções */}
-      {isOpen && (
-        <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+      {/* Dropdown de opções — via Portal para não ficar cortado pelo overflow da tabela */}
+      {isOpen && containerRef.current && createPortal(
+        <ul 
+          className="bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto"
+          style={{
+            position: 'fixed',
+            zIndex: 99999,
+            width: containerRef.current.getBoundingClientRect().width,
+            left: containerRef.current.getBoundingClientRect().left,
+            top: containerRef.current.getBoundingClientRect().bottom + 4,
+          }}
+        >
           {filteredOptions.length === 0 ? (
             <li className="px-3 py-2 text-sm text-gray-400 italic">Nenhuma obra encontrada</li>
           ) : (
@@ -121,7 +133,8 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
               </li>
             ))
           )}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   );
