@@ -42,15 +42,17 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fechar dropdown ao fazer scroll (evita que fique "voando")
+  // Fechar dropdown ao fazer scroll FORA dele (evita que fique "voando")
+  const dropdownRef = useRef(null);
   useEffect(() => {
     if (!isOpen) return;
-    const handleScroll = () => {
+    const handleScroll = (e) => {
+      // Ignora scroll dentro do próprio dropdown
+      if (dropdownRef.current && dropdownRef.current.contains(e.target)) return;
       setIsOpen(false);
       setIsSearching(false);
       setSearchText("");
     };
-    // Captura scroll em qualquer elemento (useCapture = true)
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, [isOpen]);
@@ -118,6 +120,7 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
       {/* Dropdown de opções — via Portal para não ficar cortado pelo overflow da tabela */}
       {isOpen && containerRef.current && createPortal(
         <ul 
+          ref={dropdownRef}
           className="bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto"
           style={{
             position: 'fixed',
