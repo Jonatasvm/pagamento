@@ -500,6 +500,19 @@ const PaymentTable = ({
           );
         }
 
+        // ✅ CAMPO DE TITULAR COM BUSCA — usa SearchableSelect
+        if (key === "titular" && isIdSelect) {
+          return (
+            <SearchableSelect
+              name={key}
+              value={value}
+              options={selectOptions}
+              onChange={handleEditChange}
+              placeholder="Buscar fornecedor..."
+            />
+          );
+        }
+
         // Encontrar o nome da opção selecionada para exibir acima do select
         // Remover exibição para categoria, obra, conta e formaDePagamento
         const showSelectedName = !["categoria", "obra", "conta", "formaDePagamento", "titular"].includes(key);
