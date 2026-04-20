@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { Edit, Trash2, Save, X, Plus, Zap, Search } from "lucide-react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { Edit, Trash2, Save, X, Plus, Zap, Search, ChevronDown, CheckSquare, Square } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 // CORREÇÃO AQUI: As chaves { } garantem que as props sejam lidas corretamente
@@ -7,19 +7,149 @@ export const ObrasManager = ({
   obras,
   isLoading,
   availableBanks,
+  availableUsers = [],
   onAddObra,
   onUpdateObra,
   onRequestDeleteObra,
 }) => {
   const [newObraName, setNewObraName] = useState("");
   const [newBankId, setNewBankId] = useState("");
+  const [newSelectedUsers, setNewSelectedUsers] = useState([]);
+  const [newUserDropdownOpen, setNewUserDropdownOpen] = useState(false);
+  const [newUserSearch, setNewUserSearch] = useState("");
+  const newUserDropdownRef = useRef(null);
 
   const [editingObraId, setEditingObraId] = useState(null);
   const [editedObraName, setEditedObraName] = useState("");
   const [editedBankId, setEditedBankId] = useState("");
+  const [editSelectedUsers, setEditSelectedUsers] = useState([]);
+  const [editUserDropdownOpen, setEditUserDropdownOpen] = useState(false);
+  const [editUserSearch, setEditUserSearch] = useState("");
+  const editUserDropdownRef = useRef(null);
 
   // ✅ NOVO: Estado para busca
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Fechar dropdowns ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (newUserDropdownRef.current && !newUserDropdownRef.current.contains(e.target)) {
+        setNewUserDropdownOpen(false);
+      }
+      if (editUserDropdownRef.current && !editUserDropdownRef.current.contains(e.target)) {
+        setEditUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Lista de usuários ordenada e filtrada
+  const getFilteredUsers = (search) => {
+    const sorted = [...(availableUsers || [])].sort((a, b) =>
+      (a.nome || a.username || "").localeCompare(b.nome || b.username || "", "pt-BR")
+    );
+    if (!search.trim()) return sorted;
+    const termo = search.toLowerCase().trim();
+    return sorted.filter(
+      (u) =>
+        (u.nome || "").toLowerCase().includes(termo) ||
+        (u.username || "").toLowerCase().includes(termo)
+    );
+  };
+
+  const toggleUser = (userId, selectedUsers, setSelectedUsers) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const selectAllUsers = (filteredUsers, selectedUsers, setSelectedUsers) => {
+    const allIds = filteredUsers.map((u) => u.user_id || u.id);
+    const allSelected = allIds.every((id) => selectedUsers.includes(id));
+    if (allSelected) {
+      setSelectedUsers((prev) => prev.filter((id) => !allIds.includes(id)));
+    } else {
+      setSelectedUsers((prev) => [...new Set([...prev, ...allIds])]);
+    }
+  };
+
+  // Componente de multi-select de usuários reutilizável
+  const UserMultiSelect = ({ selectedUsers, setSelectedUsers, isOpen, setIsOpen, search, setSearch, dropdownRef }) => {
+    const filtered = getFilteredUsers(search);
+    const allIds = filtered.map((u) => u.user_id || u.id);
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedUsers.includes(id));
+
+    return (
+      <div ref={dropdownRef} className="relative w-full">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 transition flex items-center justify-between bg-white"
+        >
+          <span className={selectedUsers.length === 0 ? "text-gray-400" : "text-gray-700"}>
+            {selectedUsers.length === 0
+              ? "-- Selecione funcionários --"
+              : `${selectedUsers.length} funcionário(s) selecionado(s)`}
+          </span>
+          <ChevronDown size={16} className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        {isOpen && (
+          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-hidden">
+            {/* Campo de busca */}
+            <div className="p-2 border-b border-gray-200">
+              <div className="relative">
+                <Search size={14} className="absolute left-2 top-2.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar funcionário..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-7 pr-3 py-1.5 border border-gray-200 rounded text-sm outline-none focus:border-blue-400"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+
+            {/* Selecionar todos */}
+            <div
+              onClick={() => selectAllUsers(filtered, selectedUsers, setSelectedUsers)}
+              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 text-xs font-semibold text-blue-600"
+            >
+              {allSelected ? <CheckSquare size={14} /> : <Square size={14} />}
+              {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+            </div>
+
+            {/* Lista de usuários */}
+            <div className="max-h-40 overflow-y-auto">
+              {filtered.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-gray-400 italic">Nenhum funcionário encontrado</div>
+              ) : (
+                filtered.map((user) => {
+                  const uid = user.user_id || user.id;
+                  const isChecked = selectedUsers.includes(uid);
+                  return (
+                    <div
+                      key={uid}
+                      onClick={() => toggleUser(uid, selectedUsers, setSelectedUsers)}
+                      className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 text-sm ${isChecked ? "bg-blue-50" : ""}`}
+                    >
+                      {isChecked ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} className="text-gray-400" />}
+                      <span className="font-medium">{user.nome || user.username}</span>
+                      {user.nome && user.username && (
+                        <span className="text-xs text-gray-400">({user.username})</span>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ✅ NOVO: Filtrar obras por busca (reativo)
   const obrasFiltradas = useMemo(() => {
@@ -75,16 +205,22 @@ export const ObrasManager = ({
     }
 
     // Chama a função do Pai com o nome do banco e o ID
-    onAddObra(trimmedName, selectedBank.nome, selectedBank.id);
+    onAddObra(trimmedName, selectedBank.nome, selectedBank.id, newSelectedUsers);
 
     setNewObraName("");
     setNewBankId("");
+    setNewSelectedUsers([]);
+    setNewUserSearch("");
   };
 
   const handleStartEdit = (id, name, bankId) => {
     setEditingObraId(id);
     setEditedObraName(name);
     setEditedBankId(bankId || "");
+    // Carrega os usuários vinculados à obra
+    const obra = obras.find((o) => o.id === id);
+    setEditSelectedUsers(obra?.user_ids || []);
+    setEditUserSearch("");
   };
 
   const handleSaveClick = (id) => {
@@ -110,10 +246,12 @@ export const ObrasManager = ({
       return;
     }
 
-    onUpdateObra(id, trimmedName, selectedBank.nome, selectedBank.id);
+    onUpdateObra(id, trimmedName, selectedBank.nome, selectedBank.id, editSelectedUsers);
     setEditingObraId(null);
     setEditedObraName("");
     setEditedBankId("");
+    setEditSelectedUsers([]);
+    setEditUserSearch("");
   };
 
   const handleDeleteClick = (id) => {
@@ -163,6 +301,20 @@ export const ObrasManager = ({
             )}
           </select>
         </div>
+        <div className="flex-1 w-full">
+          <label className="text-xs text-gray-500 font-semibold mb-1 block">
+            Funcionários
+          </label>
+          <UserMultiSelect
+            selectedUsers={newSelectedUsers}
+            setSelectedUsers={setNewSelectedUsers}
+            isOpen={newUserDropdownOpen}
+            setIsOpen={setNewUserDropdownOpen}
+            search={newUserSearch}
+            setSearch={setNewUserSearch}
+            dropdownRef={newUserDropdownRef}
+          />
+        </div>
         <div className="shrink-0 w-full md:w-auto">
           <button
             onClick={handleAddClick}
@@ -198,16 +350,17 @@ export const ObrasManager = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-blue-500">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Nome da Obra</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase w-1/3">Conta Bancária</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Nome da Obra</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Conta Bancária</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Funcionários</th>
               <th className="px-6 py-3 text-right text-xs font-semibold text-white uppercase">Ações</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {isLoading && (!obras || obras.length === 0) ? (
-              <tr><td colSpan="3" className="p-6 text-center text-gray-500">Carregando dados...</td></tr>
+              <tr><td colSpan="4" className="p-6 text-center text-gray-500">Carregando dados...</td></tr>
             ) : !obras || obras.length === 0 ? (
-              <tr><td colSpan="3" className="p-6 text-center text-gray-500 italic">Nenhuma obra disponível.</td></tr>
+              <tr><td colSpan="4" className="p-6 text-center text-gray-500 italic">Nenhuma obra disponível.</td></tr>
             ) : (
               obrasFiltradas.map((obra) => (
                 <tr key={obra.id} className="hover:bg-blue-50 transition duration-150">
@@ -231,6 +384,37 @@ export const ObrasManager = ({
                         ))}
                       </select>
                     ) : (obra.quem_paga || "-")}
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-600 align-middle">
+                    {editingObraId === obra.id ? (
+                      <UserMultiSelect
+                        selectedUsers={editSelectedUsers}
+                        setSelectedUsers={setEditSelectedUsers}
+                        isOpen={editUserDropdownOpen}
+                        setIsOpen={setEditUserDropdownOpen}
+                        search={editUserSearch}
+                        setSearch={setEditUserSearch}
+                        dropdownRef={editUserDropdownRef}
+                      />
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {(obra.user_ids || []).length === 0 ? (
+                          <span className="text-gray-400 italic text-xs">Nenhum</span>
+                        ) : (
+                          (obra.user_ids || []).map((uid) => {
+                            const user = (availableUsers || []).find((u) => (u.user_id || u.id) === uid);
+                            return (
+                              <span
+                                key={uid}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+                              >
+                                {user ? (user.nome || user.username) : `ID ${uid}`}
+                              </span>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-3 text-right align-middle">
                     <div className="flex gap-2 justify-end">

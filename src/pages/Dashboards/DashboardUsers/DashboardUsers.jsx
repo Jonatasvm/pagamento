@@ -31,6 +31,23 @@ export default function DashboardUsers() {
   const [categoriasList, setCategoriasList] = useState([]);
   const [loadingCategorias, setLoadingCategorias] = useState(false);
 
+  const [usersList, setUsersList] = useState([]);
+
+  // --- Buscar Usuários (simplificado, para multi-select de obras) ---
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_IP}/usuarios`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      setUsersList(data);
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+    }
+  };
+
   // --- 1. GET: Buscar Obras ---
   const fetchObras = async () => {
     setLoadingObras(true);
@@ -49,20 +66,22 @@ export default function DashboardUsers() {
 
   useEffect(() => {
     fetchObras();
-    fetchBanks(); // ✅ NOVO: Carrega também a lista de bancos ao iniciar
-    fetchFornecedores(); // ✅ NOVO: Carrega também a lista de fornecedores ao iniciar
-    fetchCategorias(); // ✅ NOVO: Carrega também a lista de categorias ao iniciar
+    fetchBanks();
+    fetchFornecedores();
+    fetchCategorias();
+    fetchUsers();
   }, []);
 
   // --- 2. POST: Adicionar Obra ---
   // Esta é a função que o ObrasManager está reclamando que não existe.
-  const handleAddObra = async (nomeObra, quemPaga, bancoId) => {
+  const handleAddObra = async (nomeObra, quemPaga, bancoId, userIds) => {
     setLoadingObras(true);
     try {
       const payload = {
         nome: nomeObra,
         quem_paga: quemPaga,
-        banco_id: bancoId ? Number(bancoId) : null, // ✅ NOVO: Enviar banco_id
+        banco_id: bancoId ? Number(bancoId) : null,
+        user_ids: userIds || [],
       };
 
       const response = await fetch(`${API_IP}/obras`, {
@@ -87,12 +106,13 @@ export default function DashboardUsers() {
   };
 
   // --- 3. PUT: Atualizar Obra ---
-  const handleUpdateObra = async (id, novoNome, novoQuemPaga, bancoId) => {
+  const handleUpdateObra = async (id, novoNome, novoQuemPaga, bancoId, userIds) => {
     try {
       const payload = {
         nome: novoNome,
         quem_paga: novoQuemPaga,
         banco_id: bancoId ? Number(bancoId) : null,
+        user_ids: userIds || [],
       };
 
 
@@ -406,7 +426,8 @@ export default function DashboardUsers() {
                 onClick={() => {
                   setCurrentTab("obras");
                   fetchObras();
-                  fetchBanks(); // ✅ NOVO: Carrega também os bancos ao abrir a aba de obras
+                  fetchBanks();
+                  fetchUsers();
                 }}
                 className="h-48 bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all p-6 flex flex-col items-center justify-center gap-4 text-white"
               >
@@ -494,6 +515,7 @@ export default function DashboardUsers() {
               obras={obrasList}
               isLoading={loadingObras}
               availableBanks={banksList}
+              availableUsers={usersList}
               onAddObra={handleAddObra}
               onUpdateObra={handleUpdateObra}
               onRequestDeleteObra={handleDeleteObra}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Edit, Save, Trash2, X, Loader2, ChevronDown, Flag, Repeat, Search } from "lucide-react";
+import { Edit, Save, Trash2, X, Loader2, ChevronDown, Flag, Repeat, Search, Download } from "lucide-react";
 import toast from "react-hot-toast";
 // ✅ CORREÇÃO DE IMPORT: Garantindo que getNameById seja importado corretamente
 import { formatCurrencyDisplay, getStatusClasses, getStatusLabel, statusOptions, getNameById } from "./dashboard.data";
@@ -228,6 +228,44 @@ const PaymentTable = ({
     } catch (error) {
       console.error("Erro ao fazer download:", error);
       toast.error("Erro ao fazer download do arquivo");
+    }
+  };
+
+  // ✅ Download de todos os anexos de um lançamento
+  const handleDownloadAllAnexos = async (linkAnexo) => {
+    try {
+      const anexos = typeof linkAnexo === "string" ? JSON.parse(linkAnexo) : linkAnexo;
+      if (!Array.isArray(anexos) || anexos.length === 0) {
+        toast.error("Nenhum anexo disponível");
+        return;
+      }
+
+      for (let i = 0; i < anexos.length; i++) {
+        const anexo = anexos[i];
+        const downloadUrl = anexo.download || `https://drive.google.com/uc?export=download&id=${anexo.drive_id}`;
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = downloadUrl;
+        document.body.appendChild(iframe);
+        setTimeout(() => { document.body.removeChild(iframe); }, 5000);
+        if (i < anexos.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      toast.success(`Download de ${anexos.length} anexo(s) iniciado!`);
+    } catch {
+      toast.error("Erro ao baixar anexos");
+    }
+  };
+
+  // Verifica se um lançamento tem anexos
+  const hasAnexos = (linkAnexo) => {
+    if (!linkAnexo) return false;
+    try {
+      const anexos = typeof linkAnexo === "string" ? JSON.parse(linkAnexo) : linkAnexo;
+      return Array.isArray(anexos) && anexos.length > 0;
+    } catch {
+      return false;
     }
   };
   
@@ -778,6 +816,19 @@ const PaymentTable = ({
                             className={`w-4 h-4 transform transition-transform ${
                               isExpanded ? "rotate-180" : "rotate-0"
                             }`}
+                          />
+                        </button>
+                        {/* Botão de download de anexos */}
+                        {hasAnexos(request.link_anexo) && (
+                          <button
+                            onClick={() => handleDownloadAllAnexos(request.link_anexo)}
+                            disabled={editingId !== null}
+                            title="Baixar todos os anexos"
+                            className="p-1.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
                           />
                         </button>
                       </div>
