@@ -502,7 +502,7 @@ const PaymentTable = ({
 
         // Encontrar o nome da opção selecionada para exibir acima do select
         // Remover exibição para categoria, obra, conta e formaDePagamento
-        const showSelectedName = !["categoria", "obra", "conta", "formaDePagamento"].includes(key);
+        const showSelectedName = !["categoria", "obra", "conta", "formaDePagamento", "titular"].includes(key);
         const currentSelectedName = (() => {
           if (!value) return null;
           if (isIdSelect) {
