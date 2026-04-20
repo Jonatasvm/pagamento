@@ -180,7 +180,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
   {
     key: "titular",
     label: "Titular / Favorecido",
-    type: "text",
+    type: "select",
     width: "16%",
     format: (value) => String(value), 
   },

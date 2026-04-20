@@ -25,7 +25,7 @@ export default function MinhasSolicitacoes() {
   // Filtros
   const [filtroObra, setFiltroObra] = useState("");
   const [filtroFornecedor, setFiltroFornecedor] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState("pendente"); // "pendente" por padrão
+  const [filtroStatus, setFiltroStatus] = useState(""); // Mostra todas por padrão
   const [filtroDataInicio, setFiltroDataInicio] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
 

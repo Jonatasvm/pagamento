@@ -346,7 +346,91 @@ const PaymentTable = ({
     
     // --- MODO DE EDIÇÃO ---
     if (isEditing && editable) {
-      
+
+      // --- CAMPO ESPECIAL: TITULAR COM AUTOCOMPLETE (somente no modo edição completa) ---
+      if (key === "titular" && editingId) {
+        return (
+          <div
+            ref={autocompleteDropdownRef}
+            className="relative w-full"
+          >
+            <div className="flex items-center gap-1">
+              <textarea
+                name={key}
+                value={value || ""}
+                onChange={handleEditChange}
+                onKeyDown={handleKeyDown}
+                onFocus={handleTitularFocus}
+                placeholder="Digite o nome do fornecedor..."
+                className={`w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none ${
+                  isTitularLocked ? "bg-gray-100" : ""
+                }`}
+                disabled={isTitularLocked}
+                autoComplete="off"
+                rows="2"
+              />
+              {isTitularLocked && (
+                <button
+                  type="button"
+                  onClick={handleUnlockTitular}
+                  title="Trocar fornecedor"
+                  className="p-1 rounded-full text-orange-600 hover:bg-orange-100 transition-colors flex-shrink-0"
+                >
+                  <Repeat className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown de Sugestões - Renderizado via Portal */}
+            {showTitularSuggestions && autocompleteDropdownRef?.current && createPortal(
+              <div 
+                ref={suggestionsPortalRef}
+                className="bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                style={{
+                  position: 'fixed',
+                  zIndex: 99999,
+                  width: autocompleteDropdownRef.current.getBoundingClientRect().width,
+                  left: autocompleteDropdownRef.current.getBoundingClientRect().left,
+                  top: autocompleteDropdownRef.current.getBoundingClientRect().bottom + 4,
+                }}
+              >
+                {isLoadingSuggestions ? (
+                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                    Carregando...
+                  </div>
+                ) : titularSuggestions.length > 0 ? (
+                  <ul className="divide-y divide-gray-200">
+                    {titularSuggestions.map((suggestion, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleSelectTitular(suggestion)}
+                        className={`px-4 py-3 cursor-pointer transition ${
+                          index === selectedSuggestionIndex
+                            ? "bg-blue-100 text-blue-900"
+                            : "hover:bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        <div className="font-medium text-sm">
+                          {suggestion.titular}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {suggestion.cpf_cnpj}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                    Nenhum fornecedor encontrado.
+                  </div>
+                )}
+              </div>,
+              document.body
+            )}
+          </div>
+        );
+      }
+
       // --- CURRENCY ---
       if (fieldConfig.type === "currency") {
         return (
@@ -465,90 +549,6 @@ const PaymentTable = ({
               return null; // Ignora outros formatos
             })}
           </select>
-          </div>
-        );
-      }
-
-      // --- CAMPO ESPECIAL: TITULAR COM AUTOCOMPLETE ---
-      if (key === "titular" && editingId) {
-        return (
-          <div
-            ref={autocompleteDropdownRef}
-            className="relative w-full"
-          >
-            <div className="flex items-center gap-1">
-              <textarea
-                name={key}
-                value={value || ""}
-                onChange={handleEditChange}
-                onKeyDown={handleKeyDown}
-                onFocus={handleTitularFocus}
-                placeholder="Digite o nome do fornecedor..."
-                className={`w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none ${
-                  isTitularLocked ? "bg-gray-100" : ""
-                }`}
-                disabled={isTitularLocked}
-                autoComplete="off"
-                rows="2"
-              />
-              {isTitularLocked && (
-                <button
-                  type="button"
-                  onClick={handleUnlockTitular}
-                  title="Trocar fornecedor"
-                  className="p-1 rounded-full text-orange-600 hover:bg-orange-100 transition-colors flex-shrink-0"
-                >
-                  <Repeat className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Dropdown de Sugestões - Renderizado via Portal para evitar corte por overflow */}
-            {showTitularSuggestions && autocompleteDropdownRef?.current && createPortal(
-              <div 
-                ref={suggestionsPortalRef}
-                className="bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto"
-                style={{
-                  position: 'fixed',
-                  zIndex: 99999,
-                  width: autocompleteDropdownRef.current.getBoundingClientRect().width,
-                  left: autocompleteDropdownRef.current.getBoundingClientRect().left,
-                  top: autocompleteDropdownRef.current.getBoundingClientRect().bottom + 4,
-                }}
-              >
-                {isLoadingSuggestions ? (
-                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
-                    Carregando...
-                  </div>
-                ) : titularSuggestions.length > 0 ? (
-                  <ul className="divide-y divide-gray-200">
-                    {titularSuggestions.map((suggestion, index) => (
-                      <li
-                        key={index}
-                        onClick={() => handleSelectTitular(suggestion)}
-                        className={`px-4 py-3 cursor-pointer transition ${
-                          index === selectedSuggestionIndex
-                            ? "bg-blue-100 text-blue-900"
-                            : "hover:bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        <div className="font-medium text-sm">
-                          {suggestion.titular}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {suggestion.cpf_cnpj}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
-                    Nenhum fornecedor encontrado.
-                  </div>
-                )}
-              </div>,
-              document.body
-            )}
           </div>
         );
       }
