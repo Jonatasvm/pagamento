@@ -694,7 +694,6 @@ const PaymentTable = ({
             {columns.map((col) => (
               <col key={col.key} style={{ width: col.width || "auto" }} />
             ))}
-            <col style={{ width: "50px" }} />
           </colgroup>
           <thead className="bg-gray-50 sticky top-0 z-20">
             <tr>
@@ -719,7 +718,6 @@ const PaymentTable = ({
                   {col.label}
                 </th>
               ))}
-              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Opções</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -820,6 +818,17 @@ const PaymentTable = ({
                             }`}
                           />
                         </button>
+                        {/* Botão de download de anexos */}
+                        {hasAnexos(request.link_anexo) && (
+                          <button
+                            onClick={() => handleDownloadAllAnexos(request.link_anexo)}
+                            disabled={editingId !== null}
+                            title="Baixar todos os anexos"
+                            className="p-1.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
 
@@ -841,20 +850,6 @@ const PaymentTable = ({
                         )}
                       </td>
                     ))}
-
-                    {/* Coluna Opções - Download de anexos */}
-                    <td className={`px-2 py-3 text-center ${rowClasses}`}>
-                      {hasAnexos(request.link_anexo) && (
-                        <button
-                          onClick={() => handleDownloadAllAnexos(request.link_anexo)}
-                          disabled={editingId !== null}
-                          title="Baixar todos os anexos"
-                          className="p-1.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50 transition-colors inline-flex"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                      )}
-                    </td>
                   </tr>
 
                   {/* Linha Expandida */}
@@ -864,7 +859,7 @@ const PaymentTable = ({
                         isEditing ? "border-yellow-400" : "border-gray-200"
                       }`}
                     >
-                      <td colSpan={columns.length + 2} className="p-4">
+                      <td colSpan={columns.length + 1} className="p-4">
                         <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                           <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
                           Detalhes Adicionais

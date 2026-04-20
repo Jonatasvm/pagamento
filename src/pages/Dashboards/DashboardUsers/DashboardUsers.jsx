@@ -36,13 +36,10 @@ export default function DashboardUsers() {
   // --- Buscar Usuários (simplificado, para multi-select de obras) ---
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_IP}/usuarios`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(`${API_IP}/usuarios/lista`);
       if (!response.ok) return;
       const data = await response.json();
-      setUsersList(data.usuarios || data);
+      setUsersList(data);
     } catch (error) {
       console.error("Erro ao carregar usuários:", error);
     }

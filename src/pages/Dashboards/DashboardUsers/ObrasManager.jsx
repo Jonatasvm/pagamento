@@ -398,20 +398,17 @@ export const ObrasManager = ({
                       />
                     ) : (
                       <div className="flex flex-wrap gap-1">
-                        {(obra.user_ids || []).length === 0 ? (
+                        {(obra.users || []).length === 0 ? (
                           <span className="text-gray-400 italic text-xs">Nenhum</span>
                         ) : (
-                          (obra.user_ids || []).map((uid) => {
-                            const user = (availableUsers || []).find((u) => (u.user_id || u.id) === uid);
-                            return (
+                          (obra.users || []).map((user) => (
                               <span
-                                key={uid}
+                                key={user.id}
                                 className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
                               >
-                                {user ? (user.nome || user.username) : `ID ${uid}`}
+                                {user.nome || user.username}
                               </span>
-                            );
-                          })
+                          ))
                         )}
                       </div>
                     )}
