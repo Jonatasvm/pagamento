@@ -42,7 +42,7 @@ export default function DashboardUsers() {
       });
       if (!response.ok) return;
       const data = await response.json();
-      setUsersList(data);
+      setUsersList(data.usuarios || data);
     } catch (error) {
       console.error("Erro ao carregar usuários:", error);
     }
