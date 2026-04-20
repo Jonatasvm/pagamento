@@ -277,8 +277,8 @@ export const Dashboard = () => {
   );
 
   const expandedFieldsConfig = useMemo(
-    () => getExpandedFields(listaUsuarios, listaCategorias),
-    [listaUsuarios, listaCategorias]
+    () => getExpandedFields(listaUsuarios, listaCategorias, listaBancos),
+    [listaUsuarios, listaCategorias, listaBancos]
   );
 
   // =========================================================================
@@ -781,6 +781,19 @@ export const Dashboard = () => {
     setEditFormData({});
     setIsTitularLocked(false);
     toast("Edição cancelada.", { icon: "👋" });
+  };
+
+  // ✅ Handler para salvar edição inline (campos da linha principal)
+  const handleInlineSave = async (requestId, mergedData) => {
+    // Converter valor de reais (com vírgula) para centavos
+    const normalizedValue = String(mergedData.valor).replace(",", ".");
+    const rawValue = normalizedValue.replace(/[^\d.]/g, "");
+    const valorEmReais = rawValue ? Number(rawValue) : 0;
+    const valorEmCentavos = Math.round(valorEmReais * 100);
+
+    const dataToSave = { ...mergedData, valor: valorEmCentavos };
+    await atualizarFormulario(requestId, dataToSave);
+    await fetchRequests(true);
   };
 
   const handleRemove = async (id) => {
@@ -1842,6 +1855,7 @@ export const Dashboard = () => {
             toggleRowExpansion={toggleRowExpansion}
             handleEditChange={handleEditChange}
             handleEditObraRelacionada={handleEditObraRelacionada} // ✅ NOVO
+            onInlineSave={handleInlineSave}
             handleToggleLancamento={handleToggleLancamento}
 
             // Props de Autocomplete

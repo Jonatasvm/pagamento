@@ -183,7 +183,8 @@ const PaymentTable = ({
   handleRemove,
   toggleRowExpansion,
   handleEditChange,
-  handleEditObraRelacionada, // ✅ NOVO: Para editar obras relacionadas 
+  handleEditObraRelacionada,
+  onInlineSave, // Nova prop para salvar edição inline 
 
   // Props para autocomplete de titular
   titularSuggestions = [],
@@ -268,7 +269,58 @@ const PaymentTable = ({
       return false;
     }
   };
-  
+
+  // ✅ Estado para edição inline (campos da linha principal)
+  const [inlineEditData, setInlineEditData] = useState({});
+  const [inlineSavingId, setInlineSavingId] = useState(null);
+
+  // Campos editáveis inline (da linha principal, exceto solicitante)
+  const inlineEditableKeys = columns
+    .filter((c) => c.editable !== false && c.key !== "solicitante")
+    .map((c) => c.key);
+
+  const handleInlineChange = (requestId, fieldName, value) => {
+    setInlineEditData((prev) => ({
+      ...prev,
+      [requestId]: {
+        ...(prev[requestId] || {}),
+        [fieldName]: value,
+      },
+    }));
+  };
+
+  const hasInlineChanges = (requestId) => {
+    return inlineEditData[requestId] && Object.keys(inlineEditData[requestId]).length > 0;
+  };
+
+  const handleInlineSave = async (request) => {
+    if (!onInlineSave || !hasInlineChanges(request.id)) return;
+    setInlineSavingId(request.id);
+    try {
+      const changes = inlineEditData[request.id];
+      await onInlineSave(request.id, { ...request, ...changes });
+      setInlineEditData((prev) => {
+        const next = { ...prev };
+        delete next[request.id];
+        return next;
+      });
+      toast.success("Salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar inline:", error);
+      toast.error("Erro ao salvar.");
+    } finally {
+      setInlineSavingId(null);
+    }
+  };
+
+  const handleInlineCancelRow = (requestId) => {
+    setInlineEditData((prev) => {
+      const next = { ...prev };
+      delete next[requestId];
+      return next;
+    });
+  };
+
   // --- Lógica de Renderização de Campos ---
   const renderField = (key, data, isEditing, colConfig = {}, request, handleEditChange) => {
     // ✅ CORREÇÃO: Para campos expandidos, priorizar colConfig (que vem direto do expandedFieldsConfig)
@@ -789,10 +841,38 @@ const PaymentTable = ({
                           </>
                         ) : (
                           <>
+                            {/* Botão salvar inline (aparece quando há mudanças) */}
+                            {hasInlineChanges(request.id) && (
+                              <>
+                                <button
+                                  onClick={() => handleInlineSave(request)}
+                                  disabled={inlineSavingId === request.id}
+                                  title="Salvar alterações"
+                                  className={`p-1.5 rounded-full transition-colors ${
+                                    inlineSavingId === request.id
+                                      ? "bg-gray-400 cursor-not-allowed"
+                                      : "bg-green-500 text-white hover:bg-green-600"
+                                  }`}
+                                >
+                                  {inlineSavingId === request.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Save className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleInlineCancelRow(request.id)}
+                                  title="Cancelar alterações"
+                                  className="p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
                             <button
                               onClick={() => handleEdit(request)}
                               disabled={editingId !== null}
-                              title="Editar"
+                              title="Editar detalhes"
                               className="p-1.5 rounded-full text-blue-600 hover:bg-blue-100 disabled:opacity-50 transition-colors"
                             >
                               <Edit className="w-4 h-4" />
@@ -833,23 +913,67 @@ const PaymentTable = ({
                     </td>
 
                     {/* Células de Dados */}
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        className={`px-3 py-3 text-sm ${rowClasses} overflow-hidden ${isEditing ? '' : 'break-words'}`}
-                        style={isEditing ? { pointerEvents: 'auto', wordBreak: 'break-word' } : { wordBreak: 'break-word' }}
-                        title={typeof (isEditing ? editFormData[col.key] : request[col.key]) === 'string' ? (isEditing ? editFormData[col.key] : request[col.key]) : ''}
-                      >
-                        {renderField(
-                          col.key,
-                          currentRowData,
-                          isEditing,
-                          col,
-                          request,
-                          handleEditChange
-                        )}
-                      </td>
-                    ))}
+                    {columns.map((col) => {
+                      const isInlineEditable = !isEditing && inlineEditableKeys.includes(col.key);
+                      const inlineRow = inlineEditData[request.id] || {};
+                      const inlineValue = col.key in inlineRow ? inlineRow[col.key] : request[col.key];
+                      // Build data for inline: merge request with inline changes
+                      const inlineRowData = isInlineEditable ? { ...request, ...inlineRow } : currentRowData;
+                      const shouldEdit = isEditing || isInlineEditable;
+
+                      const inlineChangeHandler = isInlineEditable
+                        ? (e) => {
+                            const { name, value, type, checked } = e.target;
+                            let newVal = value;
+                            if (name === "valor") {
+                              newVal = value.replace(/[^\d,]/g, "");
+                              const parts = newVal.split(",");
+                              if (parts.length > 2) newVal = parts[0] + "," + parts.slice(1).join("");
+                              if (parts.length === 2 && parts[1].length > 2) newVal = parts[0] + "," + parts[1].slice(0, 2);
+                            }
+                            if (type === "checkbox") newVal = checked;
+                            if (["quemPaga", "obra", "conta", "titular"].includes(name)) {
+                              if (name === "titular" && typeof value === "string") {
+                                newVal = value;
+                              } else {
+                                newVal = Number(value);
+                              }
+                            }
+                            handleInlineChange(request.id, name, newVal);
+                          }
+                        : handleEditChange;
+
+                      // For inline edit, we need to convert valor from centavos to display format
+                      const displayData = isInlineEditable
+                        ? (() => {
+                            const d = { ...inlineRowData };
+                            if (col.key === "valor" && !(col.key in inlineRow)) {
+                              // Convert centavos to reais for display
+                              const centavos = Number(d.valor) || 0;
+                              d.valor = (centavos / 100).toFixed(2).replace(".", ",");
+                            }
+                            return d;
+                          })()
+                        : currentRowData;
+
+                      return (
+                        <td
+                          key={col.key}
+                          className={`px-3 py-3 text-sm ${rowClasses} overflow-hidden ${shouldEdit ? '' : 'break-words'}`}
+                          style={shouldEdit ? { pointerEvents: 'auto', wordBreak: 'break-word' } : { wordBreak: 'break-word' }}
+                          title={typeof (shouldEdit ? displayData[col.key] : request[col.key]) === 'string' ? (shouldEdit ? displayData[col.key] : request[col.key]) : ''}
+                        >
+                          {renderField(
+                            col.key,
+                            displayData,
+                            shouldEdit,
+                            col,
+                            request,
+                            inlineChangeHandler
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
 
                   {/* Linha Expandida */}

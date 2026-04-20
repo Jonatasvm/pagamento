@@ -209,18 +209,16 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     format: (value) => getNameById(listaObras, value),
   },
   {
-    key: "conta",
-    label: "CONTA BANCÁRIA",
-    type: "select",
-    options: listaBancos,
+    key: "chavePix",
+    label: "Cód. Barra / Chave",
+    type: "text",
     width: "13%",
     editable: true,
-    format: (value) => getNameById(listaBancos, value),
   },
 ];
 
 // --- CONFIGURAÇÃO DE CAMPOS EXPANDIDOS (Detalhes Ocultos) ---
-export const getExpandedFields = (listaUsuarios, listaCategorias = []) => [
+export const getExpandedFields = (listaUsuarios, listaCategorias = [], listaBancos = []) => [
   {
     key: "dataLancamento",
     label: "Data Lançamento",
@@ -247,14 +245,12 @@ export const getExpandedFields = (listaUsuarios, listaCategorias = []) => [
     format: (value) => formatCPFCNPJ(value),
   },
   {
-    key: "chavePix",
-    label: "Chave PIX",
-    type: "text",
-  },
-  {
     key: "conta",
-    label: "Conta (Banco/Ag/C)",
-    type: "text",
+    label: "CONTA BANC\u00c1RIA",
+    type: "select",
+    options: listaBancos,
+    editable: true,
+    format: (value) => getNameById(listaBancos, value),
   },
   {
     key: "link_anexo",
