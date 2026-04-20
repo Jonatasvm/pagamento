@@ -690,7 +690,7 @@ const PaymentTable = ({
         <div className="overflow-x-auto rounded-2xl">
         <table className="w-full divide-y divide-gray-200" style={{ tableLayout: "fixed" }}>
           <colgroup>
-            <col style={{ width: "130px" }} />
+            <col style={{ width: "145px" }} />
             {columns.map((col) => (
               <col key={col.key} style={{ width: col.width || "auto" }} />
             ))}
