@@ -728,6 +728,11 @@ export const Dashboard = () => {
       setIsSaving(false);
       return;
     }
+    if (!editFormData.titular || !String(editFormData.titular).trim()) {
+      toast.error("O campo 'Titular / Favorecido' é obrigatório.");
+      setIsSaving(false);
+      return;
+    }
 
     try {
       // ✅ CORREÇÃO: O valor está em reais (ex: "12.89"), converter para centavos antes de salvar
@@ -785,6 +790,11 @@ export const Dashboard = () => {
 
   // ✅ Handler para salvar edição inline (campos da linha principal)
   const handleInlineSave = async (requestId, mergedData) => {
+    // Validação de titular
+    if (!mergedData.titular || !String(mergedData.titular).trim()) {
+      toast.error("O campo 'Titular / Favorecido' é obrigatório.");
+      throw new Error("Titular obrigatório");
+    }
     // Converter valor de reais (com vírgula) para centavos
     const normalizedValue = String(mergedData.valor).replace(",", ".");
     const rawValue = normalizedValue.replace(/[^\d.]/g, "");
