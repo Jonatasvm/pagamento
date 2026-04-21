@@ -21,10 +21,12 @@ import {
 } from "./formularioService";
 
 const API_URL = "http://91.98.132.210:5631";
+const PAGE_SIZE = 100;
 
 export const Dashboard = () => {
   const [requests, setRequests] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // --- Estados para Dados Auxiliares ---
   const [listaUsuarios, setListaUsuarios] = useState([]); // Se houver rota para usuários, deve ser preenchida
@@ -502,11 +504,13 @@ export const Dashboard = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
+    setCurrentPage(1);
   };
 
   const handleCodigoBarraStatusChange = (e) => {
     const { value } = e.target;
     setFilters((prev) => ({ ...prev, codigoBarraStatus: value }));
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
@@ -529,6 +533,7 @@ export const Dashboard = () => {
     setIsObraDropdownOpen(false);
     setTitularFilterText("");
     setIsTitularDropdownOpen(false);
+    setCurrentPage(1);
     toast.success("Filtros limpos");
   };
 
@@ -1854,7 +1859,7 @@ export const Dashboard = () => {
             listaCategorias={listaCategorias}
             
             // Props de Dados (✅ USANDO DADOS AGRUPADOS POR GRUPO_LANCAMENTO)
-            filteredRequests={groupedAndSortedRequests}
+            filteredRequests={groupedAndSortedRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)}
             isAllSelected={isAllSelected}
             selectedRequests={selectedRequests}
             editingId={editingId}
@@ -1888,6 +1893,61 @@ export const Dashboard = () => {
             autocompleteDropdownRef={autocompleteDropdownRef}
             suggestionsPortalRef={suggestionsPortalRef}
           />
+        )}
+
+        {/* Paginação */}
+        {!isLoadingData && groupedAndSortedRequests.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl mt-3">
+            <span className="text-sm text-gray-600">
+              Exibindo <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong>–<strong>{Math.min(currentPage * PAGE_SIZE, groupedAndSortedRequests.length)}</strong> de <strong>{groupedAndSortedRequests.length}</strong> lançamentos
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-2 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+                title="Primeira página"
+              >«</button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+              >Anterior</button>
+              {Array.from({ length: Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE) }, (_, i) => i + 1)
+                .filter((page) => page === 1 || page === Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE) || Math.abs(page - currentPage) <= 2)
+                .reduce((acc, page, idx, arr) => {
+                  if (idx > 0 && page - arr[idx - 1] > 1) acc.push('...');
+                  acc.push(page);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm">...</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => setCurrentPage(item)}
+                      className={`px-3 py-1 text-sm rounded-md border ${
+                        currentPage === item
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >{item}</button>
+                  )
+                )}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE), p + 1))}
+                disabled={currentPage === Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE)}
+                className="px-3 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+              >Próxima</button>
+              <button
+                onClick={() => setCurrentPage(Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE))}
+                disabled={currentPage === Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE)}
+                className="px-2 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+                title="Última página"
+              >»</button>
+            </div>
+          </div>
         )}
 
         {/* Espaçador para não sobrepor a barra fixa do totalizador */}
