@@ -661,18 +661,6 @@ const PaymentTable = ({
       }
 
       // --- INPUT DE TEXTO PADRÃO ---
-      // Campos de texto longos (referente, titular) usam textarea para permitir quebra de linha
-      if (["referente", "titular"].includes(key)) {
-        return (
-          <textarea
-            name={key}
-            value={value || ""}
-            onChange={handleEditChange}
-            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
-            rows="2"
-          />
-        );
-      }
       return (
         <input
           type="text"
