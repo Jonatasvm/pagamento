@@ -789,17 +789,24 @@ export const Dashboard = () => {
   };
 
   // ✅ Handler para salvar edição inline (campos da linha principal)
-  const handleInlineSave = async (requestId, mergedData) => {
+  const handleInlineSave = async (requestId, mergedData, changes = {}) => {
     // Validação de titular
     if (!mergedData.titular || !String(mergedData.titular).trim()) {
       toast.error("O campo 'Titular / Favorecido' é obrigatório.");
       throw new Error("Titular obrigatório");
     }
-    // Converter valor de reais (com vírgula) para centavos
-    const normalizedValue = String(mergedData.valor).replace(",", ".");
-    const rawValue = normalizedValue.replace(/[^\d.]/g, "");
-    const valorEmReais = rawValue ? Number(rawValue) : 0;
-    const valorEmCentavos = Math.round(valorEmReais * 100);
+    // Só converte valor se ele foi realmente editado pelo usuário.
+    // Se não foi editado, mergedData.valor já está em centavos (vindo do backend).
+    let valorEmCentavos;
+    if ('valor' in changes) {
+      // Usuário digitou o valor — está em reais com vírgula (ex: "5000,00")
+      const normalizedValue = String(mergedData.valor).replace(",", ".");
+      const rawValue = normalizedValue.replace(/[^\d.]/g, "");
+      valorEmCentavos = Math.round((rawValue ? Number(rawValue) : 0) * 100);
+    } else {
+      // Valor não foi alterado — já está em centavos
+      valorEmCentavos = Number(mergedData.valor) || 0;
+    }
 
     const dataToSave = { ...mergedData, valor: valorEmCentavos };
     await atualizarFormulario(requestId, dataToSave);

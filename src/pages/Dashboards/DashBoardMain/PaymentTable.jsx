@@ -299,7 +299,7 @@ const PaymentTable = ({
     setInlineSavingId(request.id);
     try {
       const changes = inlineEditData[request.id];
-      await onInlineSave(request.id, { ...request, ...changes });
+      await onInlineSave(request.id, { ...request, ...changes }, changes);
       setInlineEditData((prev) => {
         const next = { ...prev };
         delete next[request.id];
