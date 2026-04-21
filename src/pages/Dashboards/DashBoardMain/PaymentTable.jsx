@@ -993,7 +993,7 @@ const PaymentTable = ({
                       return (
                         <td
                           key={col.key}
-                          className={`px-3 py-3 text-sm ${rowClasses} overflow-hidden ${shouldEdit ? '' : 'break-words'}`}
+                          className={`px-3 py-3 text-sm ${rowClasses} ${col.key === 'statusLancamento' ? 'overflow-visible' : 'overflow-hidden'} ${shouldEdit ? '' : 'break-words'}`}
                           style={shouldEdit ? { pointerEvents: 'auto', wordBreak: 'break-word' } : { wordBreak: 'break-word' }}
                           title={typeof (shouldEdit ? displayData[col.key] : request[col.key]) === 'string' ? (shouldEdit ? displayData[col.key] : request[col.key]) : ''}
                         >
