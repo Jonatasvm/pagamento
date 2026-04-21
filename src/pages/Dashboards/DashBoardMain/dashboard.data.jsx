@@ -151,7 +151,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
         {getStatusLabel(value)}
       </span>
     ),
-    width: "7%",
+    width: "10%",
   },
   {
     key: "solicitante",
@@ -181,14 +181,14 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "titular",
     label: "Titular / Favorecido",
     type: "select",
-    width: "14%",
+    width: "13%",
     format: (value) => String(value), 
   },
   {
     key: "referente",
     label: "Referente",
     type: "text",
-    width: "14%",
+    width: "12%",
   },
   {
     key: "categoria",
