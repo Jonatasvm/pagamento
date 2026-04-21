@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { formatCurrencyDisplay, getStatusClasses, getStatusLabel, statusOptions, getNameById } from "./dashboard.data";
 
 // ✅ COMPONENTE: Select com busca para campos com muitas opções (ex: Obra)
-const SearchableSelect = ({ name, value, options, onChange, placeholder = "Buscar..." }) => {
+const SearchableSelect = ({ name, value, options, onChange, placeholder = "Buscar...", rowLines = 1 }) => {
   const [searchText, setSearchText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -100,6 +100,7 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
               ? "border-blue-400"
               : "border-blue-400"
           }`}
+          style={rowLines === 2 ? { height: '48px' } : undefined}
         />
         {/* Botão limpar */}
         {selectedName && (
@@ -322,7 +323,7 @@ const PaymentTable = ({
   };
 
   // --- Lógica de Renderização de Campos ---
-  const renderField = (key, data, isEditing, colConfig = {}, request, handleEditChange) => {
+  const renderField = (key, data, isEditing, colConfig = {}, request, handleEditChange, rowLines = 1) => {
     // ✅ CORREÇÃO: Para campos expandidos, priorizar colConfig (que vem direto do expandedFieldsConfig)
     // para evitar conflito quando o mesmo key existe nas columns e nos expandedFields (ex: "conta")
     const fieldConfig =
@@ -372,7 +373,7 @@ const PaymentTable = ({
                 }`}
                 disabled={isTitularLocked}
                 autoComplete="off"
-                rows="2"
+                rows={rowLines}
               />
               {isTitularLocked && (
                 <button
@@ -456,6 +457,7 @@ const PaymentTable = ({
             }}
             placeholder="0,00"
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
+            style={rowLines === 2 ? { height: '48px' } : undefined}
             autoFocus
           />
         );
@@ -501,6 +503,7 @@ const PaymentTable = ({
               options={selectOptions}
               onChange={handleEditChange}
               placeholder="Buscar obra..."
+              rowLines={rowLines}
             />
           );
         }
@@ -516,6 +519,7 @@ const PaymentTable = ({
                 options={selectOptions}
                 onChange={handleEditChange}
                 placeholder="Buscar fornecedor..."
+                rowLines={rowLines}
               />
             </div>
           );
@@ -545,6 +549,7 @@ const PaymentTable = ({
               value={value != null ? String(value) : ""}
               onChange={handleEditChange}
               className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+              style={rowLines === 2 ? { height: '48px' } : undefined}
             >
             <option value="">Selecione...</option>
             {selectOptions.map((opt) => {
@@ -582,6 +587,7 @@ const PaymentTable = ({
             value={value || "PENDENTE"}
             onChange={handleEditChange}
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            style={rowLines === 2 ? { height: '48px' } : undefined}
           >
             {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -625,6 +631,7 @@ const PaymentTable = ({
             value={value || ""}
             onChange={handleEditChange}
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            style={rowLines === 2 ? { height: '48px' } : undefined}
           />
         );
       }
@@ -656,6 +663,20 @@ const PaymentTable = ({
             onChange={handleEditChange}
             placeholder={placeholder}
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            style={rowLines === 2 ? { height: '48px' } : undefined}
+          />
+        );
+      }
+
+      // --- REFERENTE (textarea dinâmico) ---
+      if (key === "referente") {
+        return (
+          <textarea
+            name={key}
+            value={value || ""}
+            onChange={handleEditChange}
+            className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={rowLines}
           />
         );
       }
@@ -668,6 +689,7 @@ const PaymentTable = ({
           value={value || ""}
           onChange={handleEditChange}
           className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+          style={rowLines === 2 ? { height: '48px' } : undefined}
         />
       );
     }
@@ -922,7 +944,10 @@ const PaymentTable = ({
                     </td>
 
                     {/* Células de Dados */}
-                    {columns.map((col) => {
+                    {(() => {
+                      const referenteText = String((inlineEditData[request.id]?.referente ?? request.referente) || '');
+                      const rowLines = referenteText.length > 30 || referenteText.includes('\n') ? 2 : 1;
+                      return columns.map((col) => {
                       const isInlineEditable = !isEditing && inlineEditableKeys.includes(col.key);
                       const inlineRow = inlineEditData[request.id] || {};
                       const inlineValue = col.key in inlineRow ? inlineRow[col.key] : request[col.key];
@@ -978,11 +1003,13 @@ const PaymentTable = ({
                             shouldEdit,
                             col,
                             request,
-                            inlineChangeHandler
+                            inlineChangeHandler,
+                            rowLines
                           )}
                         </td>
                       );
-                    })}
+                    });
+                    })()}
                   </tr>
 
                   {/* Linha Expandida */}
