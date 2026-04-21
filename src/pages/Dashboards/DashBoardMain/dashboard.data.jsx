@@ -151,14 +151,14 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
         {getStatusLabel(value)}
       </span>
     ),
-    width: "6%",
+    width: "7%",
   },
   {
     key: "solicitante",
     label: "Solicitante",
     type: "select",
     options: listaUsuarios,
-    width: "9%",
+    width: "10%",
     editable: false,
     format: (value) => String(value),
   },
@@ -166,7 +166,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "dataPagamento",
     label: "Data Pagto",
     type: "date",
-    width: "8%",
+    width: "9%",
     format: (value) => formatDatePT(value),
   },
   {
@@ -174,21 +174,21 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Valor",
     type: "currency",
     format: formatCurrencyDisplay,
-    width: "7%",
+    width: "8%",
     editable: true,
   },
   {
     key: "titular",
     label: "Titular / Favorecido",
     type: "select",
-    width: "16%",
+    width: "14%",
     format: (value) => String(value), 
   },
   {
     key: "referente",
     label: "Referente",
     type: "text",
-    width: "20%",
+    width: "14%",
   },
   {
     key: "categoria",
@@ -196,7 +196,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     type: "select",
     options: listaCategorias,
     editable: true,
-    width: "7%",
+    width: "8%",
     format: (value) => getNameById(listaCategorias, value),
   },
   {
@@ -204,7 +204,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     label: "Obra",
     type: "select",
     options: listaObras,
-    width: "14%",
+    width: "16%",
     editable: true,
     format: (value) => getNameById(listaObras, value),
   },
@@ -212,7 +212,7 @@ export const getTableColumns = (listaUsuarios, listaObras, listaTitulares, lista
     key: "chavePix",
     label: "Cód. Barra / Chave",
     type: "text",
-    width: "13%",
+    width: "14%",
     editable: true,
   },
 ];

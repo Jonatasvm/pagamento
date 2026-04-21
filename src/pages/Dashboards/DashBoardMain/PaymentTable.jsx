@@ -349,6 +349,7 @@ const PaymentTable = ({
 
       // --- CAMPO ESPECIAL: TITULAR COM AUTOCOMPLETE (somente no modo edição completa) ---
       if (key === "titular" && editingId) {
+        const isUnregistered = !isTitularLocked && (request?.fornecedor_novo || request?.fornecedorNovo);
         return (
           <div
             ref={autocompleteDropdownRef}
@@ -362,8 +363,12 @@ const PaymentTable = ({
                 onKeyDown={handleKeyDown}
                 onFocus={handleTitularFocus}
                 placeholder="Digite o nome do fornecedor..."
-                className={`w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 resize-none ${
-                  isTitularLocked ? "bg-gray-100" : ""
+                className={`w-full px-2 py-1 border rounded-md text-sm focus:ring-2 resize-none ${
+                  isTitularLocked
+                    ? "bg-gray-100 border-blue-400 focus:ring-blue-500"
+                    : isUnregistered
+                    ? "border-red-500 bg-red-50 focus:ring-red-400"
+                    : "border-blue-400 focus:ring-blue-500"
                 }`}
                 disabled={isTitularLocked}
                 autoComplete="off"
@@ -502,14 +507,17 @@ const PaymentTable = ({
 
         // ✅ CAMPO DE TITULAR COM BUSCA — usa SearchableSelect
         if (key === "titular" && isIdSelect) {
+          const isUnregistered = request?.fornecedor_novo || request?.fornecedorNovo;
           return (
-            <SearchableSelect
-              name={key}
-              value={value}
-              options={selectOptions}
-              onChange={handleEditChange}
-              placeholder="Buscar fornecedor..."
-            />
+            <div className={`w-full ${isUnregistered ? "rounded-md ring-2 ring-red-400" : ""}`}>
+              <SearchableSelect
+                name={key}
+                value={value}
+                options={selectOptions}
+                onChange={handleEditChange}
+                placeholder="Buscar fornecedor..."
+              />
+            </div>
           );
         }
 
@@ -814,9 +822,9 @@ const PaymentTable = ({
                   >
                     {/* Célula de Ações Fixa */}
                     <td
-                      className={`px-3 py-3 whitespace-nowrap sticky left-0 z-10 ${rowClasses} shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}
+                      className={`px-3 py-3 sticky left-0 z-10 ${rowClasses} shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <input
                           type="checkbox"
                           checked={isSelected}
