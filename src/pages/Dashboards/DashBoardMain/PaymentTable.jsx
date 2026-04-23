@@ -16,8 +16,12 @@ const SearchableSelect = ({ name, value, options, onChange, placeholder = "Busca
   // Nome da opção selecionada atualmente
   const selectedName = useMemo(() => {
     if (value === null || value === undefined || value === "") return "";
+    // Primeiro tenta encontrar pelo ID
     const found = options.find((o) => String(o.id) === String(value));
-    return found ? (found.nome || found.name || "") : "";
+    if (found) return found.nome || found.name || "";
+    // Fallback: se o valor não é numérico, pode ser o nome direto (ex: titular salvo como texto)
+    if (isNaN(Number(value))) return String(value);
+    return "";
   }, [value, options]);
 
   // Opções filtradas pela busca
@@ -458,7 +462,7 @@ const PaymentTable = ({
             placeholder="0,00"
             className="w-full px-2 py-1 border border-blue-400 rounded-md text-sm focus:ring-2 focus:ring-blue-500 font-semibold text-green-600"
             style={rowLines === 2 ? { height: '48px' } : undefined}
-            autoFocus
+            autoFocus={!!(editingId && editingId === request?.id)}
           />
         );
       }
