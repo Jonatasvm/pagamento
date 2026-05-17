@@ -30,7 +30,7 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <PrivateRoute>
+              <PrivateRoute roleRequired="admin">
                 <Header />
                 <Dashboard />
               </PrivateRoute>
@@ -40,7 +40,7 @@ export default function App() {
           <Route
             path="/dashboard/users"
             element={
-              <PrivateRoute>
+              <PrivateRoute roleRequired="admin">
                 <Header />
                 <DashboardUsers />
               </PrivateRoute>
