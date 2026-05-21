@@ -157,6 +157,7 @@ const TelaSolicitacao = () => {
     paymentMethod: "Pix",
     pixKeyType: "CPF",
     pixKey: "",
+    codigoBarras: "", // ✅ NOVO: Campo de código de barras para Boleto
     titular: "",
     cpfCnpj: "",
     dataVencimento: "",
@@ -431,6 +432,7 @@ const TelaSolicitacao = () => {
         [name]: newValue,
         pixKey: "",
         pixKeyType: "CPF",
+        codigoBarras: "", // ✅ Limpar código de barras ao trocar de forma de pagamento
       }));
       return;
     }
@@ -679,7 +681,7 @@ const TelaSolicitacao = () => {
         forma_pagamento: formData.paymentMethod, // Usando o estado atual
         lancado: "N",
         cpf_cnpj: cleanDigits(formData.cpfCnpj), // Enviar sem formatacao
-        chave_pix: formData.pixKey || "",
+        chave_pix: formData.paymentMethod === "Boleto" ? (formData.codigoBarras || "") : (formData.pixKey || ""), // ✅ NOVO: Enviar código de barras para Boleto
         observacao: formData.observacao || "", // ? NOVO: Usar observacao do formulario
         conta: formData.conta ? Number(formData.conta) : null, // ? NOVO: Enviar o banco (conta)
         multiplos_lancamentos: multipleWorks ? 1 : 0, // ✅ NOVO: Flag para múltiplas obras
@@ -785,6 +787,7 @@ const TelaSolicitacao = () => {
         paymentMethod: "Pix",
         pixKeyType: "CPF",
         pixKey: "",
+        codigoBarras: "", // ✅ Reset código de barras
         titular: "",
         cpfCnpj: "",
         dataVencimento: "",
@@ -1147,9 +1150,12 @@ const TelaSolicitacao = () => {
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className={labelClass}>
-                    Chave PIX <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex justify-between items-center gap-2 mb-1.5">
+                    <label className={labelClass}>
+                      Chave PIX <span className="text-red-500">*</span>
+                    </label>
+                    <button type="button" onClick={async () => { try { const t = await navigator.clipboard.readText(); setFormData((prev) => ({ ...prev, pixKey: t })); toast.success("Chave PIX colada!"); } catch (e) { toast.error("Erro ao colar"); } }} className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 whitespace-nowrap">Colar</button>
+                  </div>
                   <div className="relative">
                     {formData.pixKeyType === "Chave Aleatoria" ? (
                       <textarea
@@ -1177,6 +1183,24 @@ const TelaSolicitacao = () => {
                     <p className="text-xs text-gray-400 mt-1">{formData.pixKey.length}/500 caracteres</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* ✅ NOVO: Campo de código de barras para Boleto */}
+            {formData.paymentMethod === "Boleto" && (
+              <div className="animate-fadeIn">
+                <label className={labelClass}>
+                  <Paperclip className="w-4 h-4 mr-2 text-blue-600" /> Código de Barras do Boleto
+                </label>
+                <input
+                  type="text"
+                  name="codigoBarras"
+                  value={formData.codigoBarras}
+                  onChange={handleChange}
+                  placeholder="Digite ou cole o código de barras (opcional)"
+                  className={inputClass}
+                />
+                <p className="text-xs text-gray-500 mt-1">Campo opcional - você pode deixar em branco</p>
               </div>
             )}
 

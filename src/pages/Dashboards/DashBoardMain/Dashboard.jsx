@@ -80,7 +80,7 @@ export const Dashboard = () => {
     busca: "",
     multiplayosLancamentos: "todos", // ✅ NOVO: Filtro para múltiplos lançamentos - padrão é "todos"
     codigoBarraStatus: "todos", // NOVO: filtro código de barra
-    ordenacao: "id_desc", // ✅ NOVO: Ordenação padrão por ID decrescente (mais recente primeiro)
+    ordenacao: "id_asc", // ✅ ALTERADO: Ordenação padrão por ID ascendente (mais antigo primeiro)
   });
 
   // =========================================================================
@@ -252,6 +252,17 @@ export const Dashboard = () => {
     }
   };
 
+  const fetchListaUsuarios = async () => {
+    try {
+      const response = await fetch(`${API_URL}/usuarios/lista`);
+      if (!response.ok) throw new Error("Erro ao buscar lista de usuários");
+      const data = await response.json();
+      setListaUsuarios(data);
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+    }
+  };
+
   // Carrega tudo ao montar o componente
   useEffect(() => {
     fetchRequests();
@@ -259,8 +270,8 @@ export const Dashboard = () => {
     fetchListaTitulares();
     fetchListaBancos();
     fetchListaCategorias();
+    fetchListaUsuarios(); // ✅ NOVO: Carregar lista de usuários
     fetchHistorico();
-    // Se tiver fetchListaUsuarios(), chame aqui
   }, []);
 
   // Recarrega lançamentos ao mudar filtro de código de barra
@@ -414,7 +425,7 @@ export const Dashboard = () => {
   // ETAPA 1: Ordenação principal
   const primarySorted = useMemo(() => {
     return [...filteredRequests].sort((a, b) => {
-      const ord = filters.ordenacao || "id_desc";
+      const ord = filters.ordenacao || "id_asc"; // ✅ ALTERADO: Fallback para id_asc
       switch (ord) {
         case "id_desc":
           return (b.id || 0) - (a.id || 0);
@@ -448,7 +459,7 @@ export const Dashboard = () => {
 
   // ETAPA 2: Agrupar parcelas juntas e sub-ordenar por número de parcela
   const groupedAndSortedRequests = useMemo(() => {
-    const ord = filters.ordenacao || "id_desc";
+    const ord = filters.ordenacao || "id_asc"; // ✅ ALTERADO: Fallback para id_asc
     const isDesc = ord.includes("_desc");
     
     // Mapeia cada grupo de parcelas → { posição da primeira aparição, itens }
@@ -527,7 +538,7 @@ export const Dashboard = () => {
       busca: "",
       multiplayosLancamentos: "todos", // ✅ CORREÇÃO: Resetar filtro de múltiplos
       codigoBarraStatus: "todos", // NOVO: Resetar filtro de código de barra
-      ordenacao: "id_desc", // ✅ NOVO: Resetar ordenação
+      ordenacao: "id_asc", // ✅ ALTERADO: Resetar ordenação para ID ascendente
     });
     setObraFilterText("");
     setIsObraDropdownOpen(false);
