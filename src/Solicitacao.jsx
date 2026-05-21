@@ -1154,7 +1154,7 @@ const TelaSolicitacao = () => {
                     <label className={labelClass}>
                       Chave PIX <span className="text-red-500">*</span>
                     </label>
-                    <button type="button" onClick={async () => { try { const t = await navigator.clipboard.readText(); setFormData((prev) => ({ ...prev, pixKey: t })); toast.success("Chave PIX colada!"); } catch (e) { toast.error("Erro ao colar"); } }} className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 whitespace-nowrap">Colar</button>
+                    <button type="button" onClick={() => { const input = document.createElement("input"); input.value = ""; document.body.appendChild(input); input.select(); try { if (document.execCommand("paste")) { const text = input.value.trim(); if (text) { setFormData((prev) => ({ ...prev, pixKey: text })); toast.success("Chave PIX colada!"); } else { toast.error("Área de transferência vazia"); } } else { toast.error("Seu navegador não permite colar desta forma. Cole manualmente."); } } catch (e) { toast.error("Erro ao colar. Cole manualmente no campo."); } finally { document.body.removeChild(input); } }} className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 whitespace-nowrap">Colar</button>
                   </div>
                   <div className="relative">
                     {formData.pixKeyType === "Chave Aleatoria" ? (
