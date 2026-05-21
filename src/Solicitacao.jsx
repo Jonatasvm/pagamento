@@ -149,6 +149,7 @@ const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 const TelaSolicitacao = () => {
   const fileInputRef = useRef(null);
   const autocompleteDropdownRef = useRef(null);
+  const pasteInputRef = useRef(null); // ✅ NOVO: Para capturar paste do clipboard
   // Estado do Formulario
   const [formData, setFormData] = useState({
     obra: "",
@@ -815,6 +816,23 @@ const TelaSolicitacao = () => {
     <div className="min-h-screen bg-gray-50 flex justify-center py-2 px-2 sm:px-2 lg:px-2 font-sans">
       <Toaster position="top-right" />
 
+      {/* ✅ NOVO: Input hidden para capturar paste do clipboard */}
+      <input
+        ref={pasteInputRef}
+        type="text"
+        style={{ position: "absolute", left: "-9999px" }}
+        onPaste={(e) => {
+          const text = e.clipboardData?.getData("text") || "";
+          if (text.trim()) {
+            setFormData((prev) => ({ ...prev, pixKey: text.trim() }));
+            toast.success("Chave PIX colada com sucesso!");
+            pasteInputRef.current?.blur();
+          } else {
+            toast.error("Área de transferência vazia");
+          }
+        }}
+      />
+
       <div className="max-w-4xl w-full bg-white shadow-2xl rounded-xl border border-gray-100 p-4 md:p-10">
         {/* HEADER */}
         <div className="border-b-4 border-blue-500/50 pb-4 mb-8">
@@ -1154,7 +1172,7 @@ const TelaSolicitacao = () => {
                     <label className={labelClass}>
                       Chave PIX <span className="text-red-500">*</span>
                     </label>
-                    <button type="button" onClick={() => { const input = document.createElement("input"); input.value = ""; document.body.appendChild(input); input.select(); try { if (document.execCommand("paste")) { const text = input.value.trim(); if (text) { setFormData((prev) => ({ ...prev, pixKey: text })); toast.success("Chave PIX colada!"); } else { toast.error("Área de transferência vazia"); } } else { toast.error("Seu navegador não permite colar desta forma. Cole manualmente."); } } catch (e) { toast.error("Erro ao colar. Cole manualmente no campo."); } finally { document.body.removeChild(input); } }} className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 whitespace-nowrap">Colar</button>
+                    <button type="button" onClick={() => { if (pasteInputRef.current) { pasteInputRef.current.value = ""; pasteInputRef.current.focus(); document.execCommand("paste"); } }} className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 whitespace-nowrap">Colar</button>
                   </div>
                   <div className="relative">
                     {formData.pixKeyType === "Chave Aleatoria" ? (
