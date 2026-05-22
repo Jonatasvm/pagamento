@@ -135,12 +135,13 @@ const calculateInstallments = (totalValueStr, count, startDateStr) => {
 };
 
 // --- CONSTANTES ESTATICAS ---
-const PIX_KEY_TYPES = ["CPF", "CNPJ", "E-mail", "Telefone", "Chave Aleatoria"];
+const PIX_KEY_TYPES = ["CPF", "CNPJ", "E-mail", "Telefone", "Pix copia e cola", "Chave Aleatoria"];
 const PIX_LIMITS = {
   CPF: { len: 11, type: "numeric" },
   CNPJ: { len: 14, type: "numeric" },
   Telefone: { len: 14, type: "numeric" },
   "E-mail": { len: 100, type: "text" },
+  "Pix copia e cola": { len: 500, type: "text" },
   "Chave Aleatoria": { len: 500, type: "text" },
 };
 const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -599,6 +600,13 @@ const TelaSolicitacao = () => {
     const hasEmptyFields = required.some((field) => !formData[field]);
     if (hasEmptyFields) {
       toast.error("Preencha todos os campos obrigatorios.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // ✅ NOVO: Validação de CPF/CNPJ para novos fornecedores
+    if (!isCpfCnpjLocked && !formData.cpfCnpj) {
+      toast.error("CPF/CNPJ é obrigatório ao cadastrar um novo fornecedor.");
       setIsSubmitting(false);
       return;
     }
@@ -1168,12 +1176,9 @@ const TelaSolicitacao = () => {
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <div className="flex justify-between items-center gap-2 mb-1.5">
-                    <label className={labelClass}>
-                      Chave PIX <span className="text-red-500">*</span>
-                    </label>
-                    <button type="button" onClick={() => { if (pasteInputRef.current) { pasteInputRef.current.value = ""; pasteInputRef.current.focus(); document.execCommand("paste"); } }} className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 whitespace-nowrap">Colar</button>
-                  </div>
+                  <label className={labelClass}>
+                    Chave PIX <span className="text-red-500">*</span>
+                  </label>
                   <div className="relative">
                     {formData.pixKeyType === "Chave Aleatoria" ? (
                       <textarea
