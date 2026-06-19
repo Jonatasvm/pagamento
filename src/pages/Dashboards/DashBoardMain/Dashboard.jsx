@@ -17,7 +17,8 @@ import {
   listarFormularios,
   atualizarFormulario,
   deletarFormulario,
-  atualizarStatusLancamento, // ✅ NOVO IMPORT: Para o toggle de status
+  atualizarStatusLancamento,
+  buscarFormularioPorId,
 } from "./formularioService";
 
 const API_URL = "http://91.98.132.210:5631";
@@ -27,6 +28,7 @@ export const Dashboard = () => {
   const [requests, setRequests] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   // --- Estados para Dados Auxiliares ---
   const [listaUsuarios, setListaUsuarios] = useState([]); // Se houver rota para usuários, deve ser preenchida
@@ -195,11 +197,37 @@ export const Dashboard = () => {
   // 1. CARREGAMENTO DE DADOS (Consolidado)
   // =========================================================================
   
-  const fetchRequests = async (silent = false) => {
+  const fetchRequests = async (silent = false, pageOverride = null) => {
     if (!silent) setIsLoadingData(true);
     try {
-      const data = await listarFormularios({ codigo_barra_status: filters.codigoBarraStatus });
-      setRequests(data);
+      const result = await listarFormularios({
+        page: pageOverride || currentPage,
+        per_page: PAGE_SIZE,
+        status: filters.statusLancamento || undefined,
+        forma_pagamento: filters.formaDePagamento || undefined,
+        data: filters.data || undefined,
+        data_inicio: filters.dataInicio || undefined,
+        data_fim: filters.dataFim || undefined,
+        obra: filters.obra || undefined,
+        titular: filters.titular || undefined,
+        solicitante: filters.solicitante || undefined,
+        referente: filters.referente || undefined,
+        busca: filters.busca || undefined,
+        multiplos: filters.multiplayosLancamentos || 'todos',
+        codigo_barra_status: filters.codigoBarraStatus || 'todos',
+        ordenacao: filters.ordenacao || 'id_asc',
+        ids: historicoFilterIds ? historicoFilterIds.join(',') : undefined,
+      });
+      
+      // Resposta paginada
+      if (result && result.data) {
+        setRequests(result.data);
+        setTotalCount(result.total);
+      } else {
+        // Backward compat: array puro
+        setRequests(result);
+        setTotalCount(Array.isArray(result) ? result.length : 0);
+      }
     } catch (error) {
       console.error("Erro ao carregar requisições:", error);
       toast.error("Erro ao carregar a lista de lançamentos.");
@@ -263,21 +291,37 @@ export const Dashboard = () => {
     }
   };
 
-  // Carrega tudo ao montar o componente
+  // Carrega listas auxiliares ao montar (são estáticas)
   useEffect(() => {
-    fetchRequests();
     fetchListaObras();
     fetchListaTitulares();
     fetchListaBancos();
     fetchListaCategorias();
-    fetchListaUsuarios(); // ✅ NOVO: Carregar lista de usuários
+    fetchListaUsuarios();
     fetchHistorico();
   }, []);
 
-  // Recarrega lançamentos ao mudar filtro de código de barra
+  // Refetch debounced quando filtros, página ou histórico mudam
+  const filtersRef = useRef(filters);
+  const pageRef = useRef(currentPage);
+  const historicoIdsRef = useRef(historicoFilterIds);
+  filtersRef.current = filters;
+  pageRef.current = currentPage;
+  historicoIdsRef.current = historicoFilterIds;
+
   useEffect(() => {
-    fetchRequests(true);
-  }, [filters.codigoBarraStatus]);
+    const timer = setTimeout(() => {
+      fetchRequests(false, currentPage);
+    }, 250);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    filters.statusLancamento, filters.formaDePagamento, filters.data,
+    filters.dataInicio, filters.dataFim, filters.obra, filters.titular,
+    filters.solicitante, filters.referente, filters.busca,
+    filters.multiplayosLancamentos, filters.codigoBarraStatus,
+    filters.ordenacao, currentPage, historicoFilterIds,
+  ]);
 
   // =========================================================================
   // 2. GERAÇÃO DINÂMICA DE COLUNAS
@@ -298,177 +342,38 @@ export const Dashboard = () => {
   // 3. LÓGICA DE FILTRAGEM
   // =========================================================================
   
-  const filteredRequests = requests.filter((req) => {
-    // FILTRO DE STATUS
-    if (filters.statusLancamento !== "") {
-      if (req.statusLancamento !== filters.statusLancamento) return false;
-    }
+  // ✅ Backend já filtra e ordena — 'requests' já contém apenas os dados da página atual
+  // Mantemos apenas o agrupamento de parcelas (leve, opera só nos dados da página)
 
-    // FILTRO DE FORMA DE PAGAMENTO
-    if (filters.formaDePagamento) {
-      const filterValue = filters.formaDePagamento.trim().toUpperCase();
-      const requestValue = req.formaDePagamento
-        ? String(req.formaDePagamento).trim().toUpperCase()
-        : "";
-      if (requestValue !== filterValue) return false;
-    }
-
-    // FILTRO DE DATA (Single Date)
-    if (filters.data && req.dataPagamento !== filters.data) return false;
-
-    // FILTRO DE DATA INTERVALO (Data Início - Fim)
-    if (filters.dataInicio && req.dataPagamento < filters.dataInicio) return false;
-    if (filters.dataFim && req.dataPagamento > filters.dataFim) return false;
-
-    // FILTRO DE OBRA (Comparação Robusta de IDs)
-    if (filters.obra) {
-      const filterIdString = String(filters.obra);
-      const requestObraIdString = req.obra ? String(req.obra) : "";
-      if (requestObraIdString !== filterIdString) return false;
-    }
-
-    // FILTRO DE TITULAR (por nome)
-    if (filters.titular) {
-      const filterValue = filters.titular.trim().toUpperCase();
-      const requestValue = req.titular
-        ? String(req.titular).trim().toUpperCase()
-        : "";
-      if (requestValue !== filterValue) return false;
-    }
-
-    // FILTRO DE SOLICITANTE
-    if (filters.solicitante) {
-      const filterValue = filters.solicitante.trim().toUpperCase();
-      const requestValue = req.solicitante
-        ? String(req.solicitante).trim().toUpperCase()
-        : "";
-      if (!requestValue.includes(filterValue)) return false;
-    }
-
-    // FILTRO DE REFERENTE (DESCRIÇÃO)
-    if (filters.referente) {
-      const filterValue = filters.referente.trim().toUpperCase();
-      const requestValue = req.referente
-        ? String(req.referente).trim().toUpperCase()
-        : "";
-      if (!requestValue.includes(filterValue)) return false;
-    }
-
-    // FILTRO DE BUSCA MISTA (Valor, Titular, Referente)
-    if (filters.busca) {
-      const searchValue = filters.busca.trim().toUpperCase();
-      const valor = req.valor ? String(req.valor).toUpperCase() : "";
-      const titular = req.titular ? String(req.titular).toUpperCase() : "";
-      const referente = req.referente ? String(req.referente).toUpperCase() : "";
-      
-      // ✅ CORREÇÃO: Também busca no valor formatado em reais (ex: "30,02")
-      // O valor no banco está em centavos (3002), formata para "30,02" para comparação
-      const valorReaisFormatado = req.valor 
-        ? (Number(req.valor) / 100).toFixed(2).replace(".", ",") 
-        : "";
-      
-      const encontrado = valor.includes(searchValue) || 
-                        valorReaisFormatado.includes(searchValue) ||
-                        titular.includes(searchValue) || 
-                        referente.includes(searchValue);
-      
-      if (!encontrado) return false;
-    }
-
-    // ✅ NOVO: FILTRO DE MÚLTIPLOS LANÇAMENTOS (usando grupo_lancamento ao invés de multiplos_lancamentos)
-    if (filters.multiplayosLancamentos === "sim") {
-      // Mostra apenas lançamentos que têm grupo_lancamento (múltiplos)
-      if (!req.grupo_lancamento) return false;
-    } else if (filters.multiplayosLancamentos === "nao") {
-      // Mostra apenas lançamentos que NÃO têm grupo_lancamento (simples)
-      if (req.grupo_lancamento) return false;
-    }
-    // Se "todos", não filtra nada
-
-    // FILTRO DE HISTÓRICO DE EXPORTAÇÃO
-    if (historicoFilterIds && historicoFilterIds.length > 0) {
-      if (!historicoFilterIds.includes(req.id)) return false;
-    }
-
-    return true;
-  });
-
-  // ✅ FUNÇÃO PARA EXTRAIR NÚMERO DE PARCELA DO REFERENTE
-  // Exemplo: "Compra de cimento (2/3)" → 2
   const extractInstallmentNumber = (referente) => {
     if (!referente) return 0;
     const match = referente.match(/\((\d+)\/\d+\)$/);
     return match ? parseInt(match[1], 10) : 0;
   };
 
-  // ✅ Função auxiliar: extrai a "base" do referente sem o número de parcela
-  // Ex: "Compra de cimento (3/12)" → "compra de cimento"
   const extractReferenteBase = (referente) => {
     if (!referente) return "";
     return referente.replace(/\s*\(\d+\/\d+\)\s*$/, "").toLowerCase().trim();
   };
 
-  // ✅ Gera uma chave de grupo para identificar parcelas do mesmo lançamento
   const getParcelaGroupKey = (item) => {
     const base = extractReferenteBase(item.referente);
     const titular = String(item.titular || "").toLowerCase().trim();
     const inst = extractInstallmentNumber(item.referente);
-    // Só agrupa se tiver número de parcela (ex: "(2/12)")
     if (inst > 0 && base) return `${titular}|||${base}`;
-    return null; // Não é parcela, não agrupa
+    return null;
   };
 
-  // ✅ ORDENAÇÃO EM 2 ETAPAS:
-  // 1) Ordena pelo critério principal (ID, valor, data, etc.)
-  // 2) Pós-processa para agrupar parcelas juntas e sub-ordenar por número de parcela
-
-  // ETAPA 1: Ordenação principal
-  const primarySorted = useMemo(() => {
-    return [...filteredRequests].sort((a, b) => {
-      const ord = filters.ordenacao || "id_asc"; // ✅ ALTERADO: Fallback para id_asc
-      switch (ord) {
-        case "id_desc":
-          return (b.id || 0) - (a.id || 0);
-        case "id_asc":
-          return (a.id || 0) - (b.id || 0);
-        case "valor_desc":
-          return (b.valor || 0) - (a.valor || 0);
-        case "valor_asc":
-          return (a.valor || 0) - (b.valor || 0);
-        case "titular_asc":
-          return String(a.titular || "").localeCompare(String(b.titular || ""), "pt-BR", { sensitivity: "base" });
-        case "titular_desc":
-          return String(b.titular || "").localeCompare(String(a.titular || ""), "pt-BR", { sensitivity: "base" });
-        case "referente_asc":
-          return String(a.referente || "").localeCompare(String(b.referente || ""), "pt-BR", { sensitivity: "base" });
-        case "referente_desc":
-          return String(b.referente || "").localeCompare(String(a.referente || ""), "pt-BR", { sensitivity: "base" });
-        case "dataLancamento_desc":
-          return (b.dataLancamento || "1900-01-01").localeCompare(a.dataLancamento || "1900-01-01");
-        case "dataLancamento_asc":
-          return (a.dataLancamento || "1900-01-01").localeCompare(b.dataLancamento || "1900-01-01");
-        case "dataPagamento_desc":
-          return (b.dataPagamento || "1900-01-01").localeCompare(a.dataPagamento || "1900-01-01");
-        case "dataPagamento_asc":
-          return (a.dataPagamento || "1900-01-01").localeCompare(b.dataPagamento || "1900-01-01");
-        default:
-          return (b.id || 0) - (a.id || 0);
-      }
-    });
-  }, [filteredRequests, filters.ordenacao]);
-
-  // ETAPA 2: Agrupar parcelas juntas e sub-ordenar por número de parcela
+  // Agrupamento de parcelas (leve — opera apenas nos dados já paginados do backend)
   const groupedAndSortedRequests = useMemo(() => {
-    const ord = filters.ordenacao || "id_asc"; // ✅ ALTERADO: Fallback para id_asc
+    const ord = filters.ordenacao || "id_asc";
     const isDesc = ord.includes("_desc");
     
-    // Mapeia cada grupo de parcelas → { posição da primeira aparição, itens }
-    const groupMap = new Map(); // groupKey → { firstIndex, items[] }
+    const groupMap = new Map();
     const result = [];
     const processed = new Set();
 
-    // Primeira passagem: identifica os grupos e suas posições
-    primarySorted.forEach((item, index) => {
+    requests.forEach((item, index) => {
       const groupKey = getParcelaGroupKey(item);
       if (groupKey) {
         if (!groupMap.has(groupKey)) {
@@ -478,7 +383,6 @@ export const Dashboard = () => {
       }
     });
 
-    // Sub-ordena cada grupo por número de parcela (decrescente se desc, crescente se asc)
     groupMap.forEach((group) => {
       group.items.sort((a, b) => {
         const instA = extractInstallmentNumber(a.referente);
@@ -487,14 +391,11 @@ export const Dashboard = () => {
       });
     });
 
-    // Segunda passagem: reconstrói o array final
-    // Quando encontra o primeiro item de um grupo, insere todas as parcelas do grupo ali
-    primarySorted.forEach((item) => {
+    requests.forEach((item) => {
       if (processed.has(item.id)) return;
       
       const groupKey = getParcelaGroupKey(item);
       if (groupKey && groupMap.has(groupKey)) {
-        // Insere todas as parcelas do grupo na posição do primeiro item encontrado
         const group = groupMap.get(groupKey);
         group.items.forEach((groupItem) => {
           if (!processed.has(groupItem.id)) {
@@ -503,14 +404,13 @@ export const Dashboard = () => {
           }
         });
       } else {
-        // Item sem parcela, insere normalmente
         result.push(item);
         processed.add(item.id);
       }
     });
 
     return result;
-  }, [primarySorted, filters.ordenacao]);
+  }, [requests, filters.ordenacao]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -785,10 +685,18 @@ export const Dashboard = () => {
       toast.success("Solicitação atualizada com sucesso!");
       // ✅ Recolhe a linha expandida após salvar
       setExpandedRows((prev) => prev.filter((rowId) => rowId !== editingId));
+      const savedId = editingId;
       setEditingId(null);
       setEditFormData({});
       setIsTitularLocked(false);
-      await fetchRequests(true);
+      // ✅ FIX: Refresh apenas o registro editado ao invés de recarregar tudo
+      try {
+        const updated = await buscarFormularioPorId(savedId);
+        setRequests((prev) => prev.map((r) => r.id === savedId ? updated : r));
+      } catch {
+        // Fallback: se falhar o fetch individual, recarrega a página
+        await fetchRequests(true);
+      }
     } catch (error) {
       console.error("❌ ERRO ao salvar:", error);
       toast.error("Erro ao salvar alterações.");
@@ -826,7 +734,13 @@ export const Dashboard = () => {
 
     const dataToSave = { ...mergedData, valor: valorEmCentavos };
     await atualizarFormulario(requestId, dataToSave);
-    await fetchRequests(true);
+    // ✅ FIX: Refresh apenas o registro editado
+    try {
+      const updated = await buscarFormularioPorId(requestId);
+      setRequests((prev) => prev.map((r) => r.id === requestId ? updated : r));
+    } catch {
+      await fetchRequests(true);
+    }
   };
 
   const handleRemove = async (id) => {
@@ -1870,7 +1784,7 @@ export const Dashboard = () => {
             listaCategorias={listaCategorias}
             
             // Props de Dados (✅ USANDO DADOS AGRUPADOS POR GRUPO_LANCAMENTO)
-            filteredRequests={groupedAndSortedRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)}
+            filteredRequests={groupedAndSortedRequests}
             isAllSelected={isAllSelected}
             selectedRequests={selectedRequests}
             editingId={editingId}
@@ -1907,10 +1821,12 @@ export const Dashboard = () => {
         )}
 
         {/* Paginação */}
-        {!isLoadingData && groupedAndSortedRequests.length > PAGE_SIZE && (
+        {!isLoadingData && totalCount > PAGE_SIZE && (() => {
+          const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+          return (
           <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl mt-3">
             <span className="text-sm text-gray-600">
-              Exibindo <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong>–<strong>{Math.min(currentPage * PAGE_SIZE, groupedAndSortedRequests.length)}</strong> de <strong>{groupedAndSortedRequests.length}</strong> lançamentos
+              Exibindo <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong>–<strong>{Math.min(currentPage * PAGE_SIZE, totalCount)}</strong> de <strong>{totalCount}</strong> lançamentos
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -1924,11 +1840,11 @@ export const Dashboard = () => {
                 disabled={currentPage === 1}
                 className="px-3 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
               >Anterior</button>
-              {Array.from({ length: Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE) }, (_, i) => i + 1)
-                .filter((page) => page === 1 || page === Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE) || Math.abs(page - currentPage) <= 2)
-                .reduce((acc, page, idx, arr) => {
-                  if (idx > 0 && page - arr[idx - 1] > 1) acc.push('...');
-                  acc.push(page);
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((pg) => pg === 1 || pg === totalPages || Math.abs(pg - currentPage) <= 2)
+                .reduce((acc, pg, idx, arr) => {
+                  if (idx > 0 && pg - arr[idx - 1] > 1) acc.push('...');
+                  acc.push(pg);
                   return acc;
                 }, [])
                 .map((item, idx) =>
@@ -1947,19 +1863,20 @@ export const Dashboard = () => {
                   )
                 )}
               <button
-                onClick={() => setCurrentPage((p) => Math.min(Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE), p + 1))}
-                disabled={currentPage === Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE)}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
                 className="px-3 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
               >Próxima</button>
               <button
-                onClick={() => setCurrentPage(Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE))}
-                disabled={currentPage === Math.ceil(groupedAndSortedRequests.length / PAGE_SIZE)}
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
                 className="px-2 py-1 text-sm rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
                 title="Última página"
               >»</button>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Espaçador para não sobrepor a barra fixa do totalizador */}
         {selectedRequests.length > 0 && <div className="h-20" />}

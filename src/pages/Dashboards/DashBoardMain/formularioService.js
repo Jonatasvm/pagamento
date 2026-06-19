@@ -104,21 +104,57 @@ const adapterFrontendToBackend = (data) => {
 
 // --- CHAMADAS API ---
 export const listarFormularios = async (params = {}) => {
-  // Monta query string para filtros
+  // Monta query string para todos os filtros + paginação
   const searchParams = new URLSearchParams();
+  
+  // Paginação
+  if (params.page) searchParams.append('page', params.page);
+  if (params.per_page) searchParams.append('per_page', params.per_page);
+  
+  // Filtros
+  if (params.status) searchParams.append('status', params.status);
+  if (params.forma_pagamento) searchParams.append('forma_pagamento', params.forma_pagamento);
+  if (params.data) searchParams.append('data', params.data);
+  if (params.data_inicio) searchParams.append('data_inicio', params.data_inicio);
+  if (params.data_fim) searchParams.append('data_fim', params.data_fim);
+  if (params.obra) searchParams.append('obra', params.obra);
+  if (params.titular) searchParams.append('titular', params.titular);
+  if (params.solicitante) searchParams.append('solicitante', params.solicitante);
+  if (params.referente) searchParams.append('referente', params.referente);
+  if (params.busca) searchParams.append('busca', params.busca);
+  if (params.multiplos && params.multiplos !== 'todos') searchParams.append('multiplos', params.multiplos);
   if (params.codigo_barra_status && params.codigo_barra_status !== 'todos') {
     searchParams.append('codigo_barra_status', params.codigo_barra_status);
   }
-  // Adicione outros filtros se necessário
+  if (params.ids) searchParams.append('ids', params.ids);
+  if (params.ordenacao) searchParams.append('ordenacao', params.ordenacao);
+  
   const url = "/formulario" + (searchParams.toString() ? `?${searchParams.toString()}` : "");
   const response = await api.get(url);
-  // Debug mínimo: apenas resumo
-  if (response.data && response.data.length > 0) {
-    const novos = response.data.filter(item => item.fornecedor_novo === true || item.fornecedor_novo === 1);
-    console.log(`[formularioService] Total: ${response.data.length} | fornecedor_novo=true: ${novos.length}`);
+  
+  // Suporta resposta paginada {data, total, page, per_page} ou array puro (backward compat)
+  const rawData = response.data;
+  const isPaginated = rawData && !Array.isArray(rawData) && Array.isArray(rawData.data);
+  
+  const items = isPaginated ? rawData.data : rawData;
+  const adapted = items.map(adapterBackendToFrontend);
+  
+  if (isPaginated) {
+    return {
+      data: adapted,
+      total: rawData.total,
+      page: rawData.page,
+      per_page: rawData.per_page,
+    };
   }
-  const adapted = response.data.map(adapterBackendToFrontend);
+  
   return adapted;
+};
+
+// --- BUSCAR FORMULÁRIO POR ID (para refresh após edição) ---
+export const buscarFormularioPorId = async (id) => {
+  const response = await api.get(`/formulario/${id}`);
+  return adapterBackendToFrontend(response.data);
 };
 
 export const atualizarFormulario = async (id, data) => {
