@@ -82,7 +82,7 @@ export const Dashboard = () => {
     busca: "",
     multiplayosLancamentos: "todos", // ✅ NOVO: Filtro para múltiplos lançamentos - padrão é "todos"
     codigoBarraStatus: "todos", // NOVO: filtro código de barra
-    ordenacao: "id_asc", // ✅ ALTERADO: Ordenação padrão por ID ascendente (mais antigo primeiro)
+    ordenacao: "id_desc", // ✅ ALTERADO: Ordenação padrão por ID descendente (mais recente primeiro)
   });
 
   // =========================================================================
@@ -215,7 +215,7 @@ export const Dashboard = () => {
         busca: filters.busca || undefined,
         multiplos: filters.multiplayosLancamentos || 'todos',
         codigo_barra_status: filters.codigoBarraStatus || 'todos',
-        ordenacao: filters.ordenacao || 'id_asc',
+        ordenacao: filters.ordenacao || 'id_desc',
         ids: historicoFilterIds ? historicoFilterIds.join(',') : undefined,
       });
       
@@ -438,7 +438,7 @@ export const Dashboard = () => {
       busca: "",
       multiplayosLancamentos: "todos", // ✅ CORREÇÃO: Resetar filtro de múltiplos
       codigoBarraStatus: "todos", // NOVO: Resetar filtro de código de barra
-      ordenacao: "id_asc", // ✅ ALTERADO: Resetar ordenação para ID ascendente
+      ordenacao: "id_desc", // ✅ ALTERADO: Resetar ordenação para ID descendente (mais recente primeiro)
     });
     setObraFilterText("");
     setIsObraDropdownOpen(false);
