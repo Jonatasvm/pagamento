@@ -692,7 +692,14 @@ export const Dashboard = () => {
       // ✅ FIX: Refresh apenas o registro editado ao invés de recarregar tudo
       try {
         const updated = await buscarFormularioPorId(savedId);
-        setRequests((prev) => prev.map((r) => r.id === savedId ? updated : r));
+        const activeStatusFilter = filters.statusLancamento;
+        // Se há filtro de status ativo e o registro não combina mais, remove da lista
+        if (activeStatusFilter && updated.statusLancamento !== activeStatusFilter) {
+          setRequests((prev) => prev.filter((r) => r.id !== savedId));
+          setTotalCount((prev) => Math.max(0, prev - 1));
+        } else {
+          setRequests((prev) => prev.map((r) => r.id === savedId ? updated : r));
+        }
       } catch {
         // Fallback: se falhar o fetch individual, recarrega a página
         await fetchRequests(true);
@@ -737,7 +744,14 @@ export const Dashboard = () => {
     // ✅ FIX: Refresh apenas o registro editado
     try {
       const updated = await buscarFormularioPorId(requestId);
-      setRequests((prev) => prev.map((r) => r.id === requestId ? updated : r));
+      const activeStatusFilter = filters.statusLancamento;
+      // Se há filtro de status ativo e o registro não combina mais, remove da lista
+      if (activeStatusFilter && updated.statusLancamento !== activeStatusFilter) {
+        setRequests((prev) => prev.filter((r) => r.id !== requestId));
+        setTotalCount((prev) => Math.max(0, prev - 1));
+      } else {
+        setRequests((prev) => prev.map((r) => r.id === requestId ? updated : r));
+      }
     } catch {
       await fetchRequests(true);
     }
@@ -808,11 +822,19 @@ export const Dashboard = () => {
     try {
       await atualizarStatusLancamento(id, novoStatus);
       
-      setRequests(prevRequests =>
-        prevRequests.map(req =>
-          req.id === id ? { ...req, statusLancamento: novoStatus } : req
-        )
-      );
+      const activeStatusFilter = filters.statusLancamento;
+      // Se há filtro de status ativo e o novo status não combina, remove da lista
+      if (activeStatusFilter && novoStatus !== activeStatusFilter) {
+        setRequests(prevRequests => prevRequests.filter(req => req.id !== id));
+        setSelectedRequests(prev => prev.filter(reqId => reqId !== id));
+        setTotalCount((prev) => Math.max(0, prev - 1));
+      } else {
+        setRequests(prevRequests =>
+          prevRequests.map(req =>
+            req.id === id ? { ...req, statusLancamento: novoStatus } : req
+          )
+        );
+      }
       
       toast.success(`Status alterado para ${actionText} com sucesso.`, { id: toastId });
     } catch (error) {
