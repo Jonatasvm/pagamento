@@ -56,8 +56,8 @@ const adapterBackendToFrontend = (data) => {
     obra: data.obra ? Number(data.obra) : null,
     dataPagamento: dataPagamentoFormatada,
     formaDePagamento: data.forma_pagamento,
-    // Status: 'Y' = Lançado, 'N' = Pendente, 'X' = Não autorizado, 'A' = Aprovado
-    statusLancamento: data.lancado === 'X' ? 'NAO_AUTORIZADO' : data.lancado === 'A' ? 'APROVADO' : (data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y') ? 'LANCADO' : 'PENDENTE',
+    // Status: 'Y' = Lançado, 'N' = Pendente, 'X' = Não autorizado, 'A' = Aprovado, 'P' = Pago
+    statusLancamento: data.lancado === 'P' ? 'PAGO' : data.lancado === 'X' ? 'NAO_AUTORIZADO' : data.lancado === 'A' ? 'APROVADO' : (data.lancado == 1 || data.lancado === 'S' || data.lancado === 'Y') ? 'LANCADO' : 'PENDENTE',
     cpfCnpjTitularConta: data.cpf_cnpj,
     chavePix: data.chave_pix,
     dataCompetencia: dataCompetenciaFormatada,
@@ -89,8 +89,8 @@ const adapterFrontendToBackend = (data) => {
     obra: Number(data.obra),
     data_pagamento: data.dataPagamento,
     forma_pagamento: data.formaDePagamento,
-    // Status: LANCADO -> Y, NAO_AUTORIZADO -> X, APROVADO -> A, PENDENTE -> N
-    lancado: data.statusLancamento === 'LANCADO' ? 'Y' : data.statusLancamento === 'NAO_AUTORIZADO' ? 'X' : data.statusLancamento === 'APROVADO' ? 'A' : 'N',
+    // Status: LANCADO -> Y, NAO_AUTORIZADO -> X, APROVADO -> A, PAGO -> P, PENDENTE -> N
+    lancado: data.statusLancamento === 'LANCADO' ? 'Y' : data.statusLancamento === 'NAO_AUTORIZADO' ? 'X' : data.statusLancamento === 'APROVADO' ? 'A' : data.statusLancamento === 'PAGO' ? 'P' : 'N',
     cpf_cnpj: data.cpfCnpjTitularConta,
     chave_pix: data.chavePix,
     data_competencia: data.dataCompetencia,
@@ -189,7 +189,7 @@ export const atualizarStatusLancamento = async (id, novoStatus) => {
   if (typeof novoStatus === 'boolean') {
     statusBackend = novoStatus ? 'Y' : 'N';
   } else {
-    statusBackend = novoStatus === 'LANCADO' ? 'Y' : novoStatus === 'NAO_AUTORIZADO' ? 'X' : novoStatus === 'APROVADO' ? 'A' : 'N';
+    statusBackend = novoStatus === 'LANCADO' ? 'Y' : novoStatus === 'NAO_AUTORIZADO' ? 'X' : novoStatus === 'APROVADO' ? 'A' : novoStatus === 'PAGO' ? 'P' : 'N';
   }
   
   const payload = {

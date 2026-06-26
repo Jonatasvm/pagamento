@@ -808,14 +808,15 @@ export const Dashboard = () => {
       return;
     }
     
-    // Cicla entre os 4 status: PENDENTE -> APROVADO -> LANCADO -> NAO_AUTORIZADO -> PENDENTE
+    // Cicla entre os 5 status: PENDENTE -> APROVADO -> LANCADO -> PAGO -> NAO_AUTORIZADO -> PENDENTE
     let novoStatus;
     if (currentStatus === 'PENDENTE') novoStatus = 'APROVADO';
     else if (currentStatus === 'APROVADO') novoStatus = 'LANCADO';
-    else if (currentStatus === 'LANCADO') novoStatus = 'NAO_AUTORIZADO';
+    else if (currentStatus === 'LANCADO') novoStatus = 'PAGO';
+    else if (currentStatus === 'PAGO') novoStatus = 'NAO_AUTORIZADO';
     else novoStatus = 'PENDENTE';
     
-    const labels = { LANCADO: 'Lançado', PENDENTE: 'Pendente', NAO_AUTORIZADO: 'Não Autorizado', APROVADO: 'Aprovado' };
+    const labels = { LANCADO: 'Lançado', PENDENTE: 'Pendente', NAO_AUTORIZADO: 'Não Autorizado', APROVADO: 'Aprovado', PAGO: 'Pago' };
     const actionText = labels[novoStatus] || novoStatus;
     
     const toastId = toast.loading(`Atualizando status para ${actionText}...`);
@@ -1475,6 +1476,7 @@ export const Dashboard = () => {
                 <option value="APROVADO">Aprovado</option>
                 <option value="LANCADO">Lançado</option>
                 <option value="NAO_AUTORIZADO">Não Autorizado</option>
+                <option value="PAGO">Pago</option>
               </select>
             </div>
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-import { ArrowLeft, Filter, Loader2, Search } from "lucide-react";
-import { listarFormularios } from "./Dashboards/DashBoardMain/formularioService";
+import { ArrowLeft, Filter, Loader2, Search, CheckCircle } from "lucide-react";
+import { listarFormularios, atualizarStatusLancamento } from "./Dashboards/DashBoardMain/formularioService";
 import {
   formatCurrencyDisplay,
   formatDatePT,
@@ -121,13 +121,16 @@ export default function MinhasSolicitacoes() {
       if (filtroStatus === "aprovado" && r.statusLancamento !== 'APROVADO') return false;
       if (filtroStatus === "lancado" && r.statusLancamento !== 'LANCADO') return false;
       if (filtroStatus === "nao_autorizado" && r.statusLancamento !== 'NAO_AUTORIZADO') return false;
+      if (filtroStatus === "pago" && r.statusLancamento !== 'PAGO') return false;
 
       // Filtro data
       if (filtroDataInicio && r.dataPagamento < filtroDataInicio) return false;
       if (filtroDataFim && r.dataPagamento > filtroDataFim) return false;
 
       return true;
-    });
+    })
+    // Ordenar por ID decrescente (lançamentos mais recentes primeiro)
+    .sort((a, b) => b.id - a.id);
   }, [minhasSolicitacoes, filtroObra, filtroFornecedor, filtroStatus, filtroDataInicio, filtroDataFim, listaObras]);
 
   // Obras disponíveis para o filtro (apenas as que o usuário tem solicitações)
@@ -222,6 +225,7 @@ export default function MinhasSolicitacoes() {
             <option value="aprovado">Aprovado</option>
             <option value="lancado">Lançado</option>
             <option value="nao_autorizado">Não Autorizado</option>
+            <option value="pago">Pago</option>
           </select>
 
           {/* Data início */}
@@ -297,6 +301,36 @@ export default function MinhasSolicitacoes() {
               <p className="text-xs text-gray-500 truncate mt-0.5">
                 {r.referente || "—"}
               </p>
+              <div className="flex items-center justify-between mt-2">
+                <span className={getStatusClasses(r.statusLancamento)}>
+                  {getStatusLabel(r.statusLancamento)}
+                </span>
+                {r.statusLancamento !== 'PAGO' && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await atualizarStatusLancamento(r.id, 'PAGO');
+                        setRequests((prev) =>
+                          prev.map((req) =>
+                            req.id === r.id
+                              ? { ...req, statusLancamento: 'PAGO' }
+                              : req
+                          )
+                        );
+                        toast.success(`Lançamento #${r.id} marcado como Pago.`);
+                      } catch (error) {
+                        console.error(error);
+                        toast.error('Erro ao marcar como pago.');
+                      }
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition"
+                    title="Marcar como Pago"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Pago
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -306,6 +340,7 @@ export default function MinhasSolicitacoes() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Data Pgto</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
@@ -323,6 +358,35 @@ export default function MinhasSolicitacoes() {
             <tbody className="divide-y divide-gray-200">
               {filteredRequests.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">
+                    {r.statusLancamento !== 'PAGO' ? (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await atualizarStatusLancamento(r.id, 'PAGO');
+                            setRequests((prev) =>
+                              prev.map((req) =>
+                                req.id === r.id
+                                  ? { ...req, statusLancamento: 'PAGO' }
+                                  : req
+                              )
+                            );
+                            toast.success(`Lançamento #${r.id} marcado como Pago.`);
+                          } catch (error) {
+                            console.error(error);
+                            toast.error('Erro ao marcar como pago.');
+                          }
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition whitespace-nowrap"
+                        title="Marcar como Pago"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Pago
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2">
                     <span className={getStatusClasses(r.statusLancamento)}>
                       {getStatusLabel(r.statusLancamento)}

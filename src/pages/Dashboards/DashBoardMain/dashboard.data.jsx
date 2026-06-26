@@ -120,6 +120,8 @@ export function getStatusClasses(status) {
         return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800";
     if (status === 'NAO_AUTORIZADO')
         return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800";
+    if (status === 'PAGO')
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800";
     // PENDENTE ou false
     return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
 }
@@ -128,6 +130,7 @@ export function getStatusLabel(status) {
     if (status === 'LANCADO' || status === true) return "LANÇADO";
     if (status === 'APROVADO') return "APROVADO";
     if (status === 'NAO_AUTORIZADO') return "NÃO AUTORIZADO";
+    if (status === 'PAGO') return "PAGO";
     return "PENDENTE";
 }
 
@@ -137,6 +140,7 @@ export const statusOptions = [
   { value: "APROVADO", label: "APROVADO" },
   { value: "LANCADO", label: "LANÇADO" },
   { value: "NAO_AUTORIZADO", label: "NÃO AUTORIZADO" },
+  { value: "PAGO", label: "PAGO" },
 ];
 
 // --- CONFIGURAÇÃO DE COLUNAS DA TABELA (Colunas Visíveis) ---
